@@ -26,12 +26,20 @@ const ProductsPage: React.FC = () => {
 
   // Filter products based on selected filters and search term
   const filteredProducts = (() => {
-    let result: Product[] = [...products];
+    let result: Product[] = [];
     
-    // If a vehicle is selected, only show one product per selected vehicle
+    // If a vehicle is selected, only show one product for the selected vehicle
     if (selectedVehicle) {
       const vehicleProducts = productsByVehicle.get(selectedVehicle) || [];
       result = vehicleProducts.length > 0 ? [vehicleProducts[0]] : [];
+    } else {
+      // If no vehicle is selected, show one product per vehicle
+      vehicles.forEach(vehicle => {
+        const vehicleProducts = productsByVehicle.get(vehicle) || [];
+        if (vehicleProducts.length > 0) {
+          result.push(vehicleProducts[0]);
+        }
+      });
     }
     
     // Apply category filter if selected

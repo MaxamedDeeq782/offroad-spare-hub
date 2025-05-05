@@ -5,7 +5,7 @@ import { products, Product } from '../models/Product';
 
 const VehiclePage: React.FC = () => {
   const { vehicleSlug } = useParams<{ vehicleSlug: string }>();
-  const [vehicleProducts, setVehicleProducts] = useState<Product[]>([]);
+  const [vehicleProduct, setVehicleProduct] = useState<Product | null>(null);
 
   // Convert slug to vehicle name
   const getVehicleName = (slug: string): string => {
@@ -19,14 +19,20 @@ const VehiclePage: React.FC = () => {
     return nameMappings[slug] || slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
-  // Get vehicle products
+  // Get a single vehicle product
   useEffect(() => {
     if (vehicleSlug) {
       const vehicleName = getVehicleName(vehicleSlug);
       const filtered = products.filter(product => 
         product.vehicleCompatibility.includes(vehicleName)
       );
-      setVehicleProducts(filtered);
+      
+      // Only get the first product for this vehicle
+      if (filtered.length > 0) {
+        setVehicleProduct(filtered[0]);
+      } else {
+        setVehicleProduct(null);
+      }
     }
   }, [vehicleSlug]);
 
@@ -43,7 +49,7 @@ const VehiclePage: React.FC = () => {
 
       <h1 className="text-3xl font-bold mb-6">{getVehicleName(vehicleSlug || '')} Parts</h1>
       
-      {vehicleProducts.length === 0 ? (
+      {!vehicleProduct ? (
         <div className="bg-white p-8 rounded-lg shadow text-center">
           <p className="text-xl mb-6">No parts found for this vehicle</p>
           <Link to="/products" className="btn btn-primary px-6 py-2">
@@ -51,24 +57,24 @@ const VehiclePage: React.FC = () => {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {vehicleProducts.map((product) => (
-            <div key={product.id} className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="h-48 bg-gray-200 relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-medium">Product Image</span>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                <p className="text-sm text-gray-600 mb-4">{product.description.substring(0, 100)}...</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-xl font-bold">${product.price.toFixed(2)}</span>
-                  <Link to={`/product/${product.id}`} className="btn btn-primary">View Details</Link>
-                </div>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="h-64 bg-gray-200 relative">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-medium">Product Image</span>
               </div>
             </div>
-          ))}
+            <div className="p-6">
+              <h3 className="font-semibold text-2xl mb-3">{vehicleProduct.name}</h3>
+              <p className="text-gray-600 mb-4">{vehicleProduct.description}</p>
+              <div className="flex justify-between items-center mt-6">
+                <span className="text-2xl font-bold">${vehicleProduct.price.toFixed(2)}</span>
+                <Link to={`/product/${vehicleProduct.id}`} className="btn btn-primary px-6 py-2">
+                  View Details
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

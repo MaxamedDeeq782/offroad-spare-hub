@@ -1,12 +1,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { products } from '../models/Product';
 
 const HomePage: React.FC = () => {
-  // Get featured products
-  const featuredProducts = products.filter(product => product.featured);
-  
   // Available vehicle makes
   const vehicles = [
     {
@@ -68,37 +64,6 @@ const HomePage: React.FC = () => {
                 </div>
               </Link>
             ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Products */}
-      <div className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8 text-center">Featured Products</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <div key={product.id} className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="h-48 bg-gray-200 relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-lg font-medium">Product Image</span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                  <p className="text-sm text-gray-600 mb-4">{product.description.substring(0, 100)}...</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xl font-bold">${product.price.toFixed(2)}</span>
-                    <Link to={`/product/${product.id}`} className="btn btn-primary">View Details</Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-10 text-center">
-            <Link to="/products" className="btn btn-secondary px-8 py-3">View All Products</Link>
           </div>
         </div>
       </div>

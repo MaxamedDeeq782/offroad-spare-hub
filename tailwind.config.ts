@@ -74,11 +74,11 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontWeight: {
-        normal: '400',
-        medium: '500',
-        semibold: '600',
-        bold: '700',
-        extrabold: '800',
+        normal: '500', // Increased from 400
+        medium: '600', // Increased from 500
+        semibold: '700', // Increased from 600
+        bold: '800', // Increased from 700
+        extrabold: '900', // Increased from 800
       },
     },
   },

@@ -38,9 +38,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const foundUser = users.find(u => u.email === email && u.password === password);
     
     if (foundUser) {
-      // Remove password before storing
-      const { password, ...userWithoutPassword } = foundUser;
+      // Create a copy of the user object without exposing the password in state
+      const { password: _, ...userWithoutPassword } = foundUser;
+      
+      // Set the user in state
       setUser(foundUser);
+      
+      // Store user in localStorage, but without the password
       localStorage.setItem('user', JSON.stringify(foundUser));
       return true;
     }
@@ -66,6 +70,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     users.push(newUser);
+    
+    // Create a copy of the user object without exposing the password in state
+    const { password: _, ...userWithoutPassword } = newUser;
     
     // Login the new user
     setUser(newUser);

@@ -1,26 +1,39 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import AccountDrawer from './AccountDrawer';
+import { Order, orders as allOrders } from '../models/Order';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { cart } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
 
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+
+  useEffect(() => {
+    if (user) {
+      // Filter orders for current user
+      const filteredOrders = allOrders.filter(order => order.userId === user.id);
+      setUserOrders(filteredOrders);
+    } else {
+      setUserOrders([]);
+    }
+  }, [user]);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
   return (
-    <header className="bg-white shadow-md">
+    <header className="bg-white shadow-md dark:bg-gray-900 dark:text-white transition-colors duration-200">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-primary">
+            <Link to="/" className="text-2xl font-bold">
               <span style={{ color: 'var(--color-primary)' }}>Offroad</span>
               <span style={{ color: 'var(--color-secondary)' }}>SpareHub</span>
             </Link>
@@ -44,9 +57,7 @@ const Header: React.FC = () => {
             </Link>
 
             {user ? (
-              <button onClick={logout} className="btn btn-secondary py-1 px-3">
-                Logout
-              </button>
+              <AccountDrawer userOrders={userOrders} />
             ) : (
               <div className="flex items-center space-x-2">
                 <Link to="/login" className="btn btn-secondary py-1 px-3">Login</Link>

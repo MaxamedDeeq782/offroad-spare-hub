@@ -28,20 +28,6 @@ const Header: React.FC = () => {
           
           <div className="hidden md:flex space-x-6">
             <Link to="/" className="hover:text-primary">Home</Link>
-            <div className="relative group">
-              <button className="hover:text-primary">
-                Vehicles
-              </button>
-              <div className="absolute hidden group-hover:block bg-white shadow-lg p-4 z-50 min-w-48">
-                <Link to="/vehicle/toyota-hilux" className="block py-2 hover:text-primary">Toyota Hilux</Link>
-                <Link to="/vehicle/toyota-land-cruiser" className="block py-2 hover:text-primary">Toyota Land Cruiser</Link>
-                <Link to="/vehicle/nissan-patrol" className="block py-2 hover:text-primary">Nissan Patrol</Link>
-                <Link to="/vehicle/mitsubishi-l200" className="block py-2 hover:text-primary">Mitsubishi L200</Link>
-              </div>
-            </div>
-            <Link to="/products" className="hover:text-primary">All Products</Link>
-            <Link to="/about" className="hover:text-primary">About Us</Link>
-            <Link to="/contact" className="hover:text-primary">Contact</Link>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -58,24 +44,9 @@ const Header: React.FC = () => {
             </Link>
 
             {user ? (
-              <div className="relative group">
-                <button className="flex items-center space-x-1 hover:text-primary">
-                  <span>Hi, {user.name.split(' ')[0]}</span>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className="absolute right-0 hidden group-hover:block bg-white shadow-lg p-4 z-50 min-w-48">
-                  {user.isAdmin && (
-                    <Link to="/admin" className="block py-2 hover:text-primary">Admin Dashboard</Link>
-                  )}
-                  <Link to="/account" className="block py-2 hover:text-primary">My Account</Link>
-                  <Link to="/orders" className="block py-2 hover:text-primary">My Orders</Link>
-                  <button onClick={logout} className="block w-full text-left py-2 hover:text-primary">
-                    Logout
-                  </button>
-                </div>
-              </div>
+              <button onClick={logout} className="btn btn-secondary py-1 px-3">
+                Logout
+              </button>
             ) : (
               <div className="flex items-center space-x-2">
                 <Link to="/login" className="btn btn-secondary py-1 px-3">Login</Link>
@@ -93,25 +64,8 @@ const Header: React.FC = () => {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-4 space-y-3">
+          <div className="md:hidden mt-4">
             <Link to="/" className="block hover:text-primary py-2">Home</Link>
-            <div className="py-2">
-              <button className="flex items-center justify-between w-full hover:text-primary">
-                <span>Vehicles</span>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div className="pl-4 mt-1 space-y-1">
-                <Link to="/vehicle/toyota-hilux" className="block py-1 hover:text-primary">Toyota Hilux</Link>
-                <Link to="/vehicle/toyota-land-cruiser" className="block py-1 hover:text-primary">Toyota Land Cruiser</Link>
-                <Link to="/vehicle/nissan-patrol" className="block py-1 hover:text-primary">Nissan Patrol</Link>
-                <Link to="/vehicle/mitsubishi-l200" className="block py-1 hover:text-primary">Mitsubishi L200</Link>
-              </div>
-            </div>
-            <Link to="/products" className="block hover:text-primary py-2">All Products</Link>
-            <Link to="/about" className="block hover:text-primary py-2">About Us</Link>
-            <Link to="/contact" className="block hover:text-primary py-2">Contact</Link>
           </div>
         )}
       </div>

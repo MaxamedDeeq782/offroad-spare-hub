@@ -14,23 +14,41 @@ const ProductsPage: React.FC = () => {
     new Set(products.flatMap(product => product.vehicleCompatibility))
   );
 
-  // Filter products based on selected filters and search term
-  const filteredProducts = products.filter(product => {
-    const matchesVehicle = selectedVehicle 
-      ? product.vehicleCompatibility.includes(selectedVehicle) 
-      : true;
-      
-    const matchesCategory = selectedCategory 
-      ? product.category === selectedCategory 
-      : true;
-      
-    const matchesSearch = searchTerm 
-      ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
-      : true;
-      
-    return matchesVehicle && matchesCategory && matchesSearch;
+  // Group products by vehicle for filtering
+  const productsByVehicle = new Map<string, Product[]>();
+  
+  vehicles.forEach(vehicle => {
+    productsByVehicle.set(
+      vehicle,
+      products.filter(product => product.vehicleCompatibility.includes(vehicle))
+    );
   });
+
+  // Filter products based on selected filters and search term
+  const filteredProducts = (() => {
+    let result: Product[] = [...products];
+    
+    // If a vehicle is selected, only show one product per selected vehicle
+    if (selectedVehicle) {
+      const vehicleProducts = productsByVehicle.get(selectedVehicle) || [];
+      result = vehicleProducts.length > 0 ? [vehicleProducts[0]] : [];
+    }
+    
+    // Apply category filter if selected
+    if (selectedCategory) {
+      result = result.filter(product => product.category === selectedCategory);
+    }
+    
+    // Apply search term if provided
+    if (searchTerm) {
+      result = result.filter(product => 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    return result;
+  })();
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -1,15 +1,17 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User } from 'lucide-react';
+import { User, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 
 const Header: React.FC = () => {
   const { user } = useAuth();
   const { cart } = useCart();
+  const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
@@ -35,6 +37,15 @@ const Header: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleTheme}
+              className="rounded-full"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+
             <Link to="/cart" className="relative">
               <span className="sr-only">Cart</span>
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

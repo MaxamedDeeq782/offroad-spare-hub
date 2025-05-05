@@ -31,6 +31,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('theme', theme);
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
+    
+    // Also update the data-theme attribute for components that rely on it
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

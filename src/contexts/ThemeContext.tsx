@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -16,12 +16,18 @@ const ThemeContext = createContext<ThemeContextType>({
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
+  const [theme, setTheme] = useState<Theme>('light');
+  
+  useEffect(() => {
+    // Get saved theme from localStorage on initial load
     const savedTheme = localStorage.getItem('theme');
-    return (savedTheme as Theme) || 'light';
-  });
+    if (savedTheme === 'dark' || savedTheme === 'light') {
+      setTheme(savedTheme);
+    }
+  }, []);
 
   useEffect(() => {
+    // Update localStorage and document classes when theme changes
     localStorage.setItem('theme', theme);
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);

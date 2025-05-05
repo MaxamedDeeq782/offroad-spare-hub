@@ -12,6 +12,7 @@ import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AccountPage from './pages/AccountPage';
+import AccountDetailsPage from './pages/AccountDetailsPage';
 import OrdersPage from './pages/OrdersPage';
 import AdminPage from './pages/AdminPage';
 import NotFound from './pages/NotFound';
@@ -40,6 +41,7 @@ function App() {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/account" element={<AccountPage />} />
+                  <Route path="/account/details" element={<AccountDetailsPage />} />
                   <Route path="/orders" element={<OrdersPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="/vehicle/:vehicleId" element={<VehiclePage />} />

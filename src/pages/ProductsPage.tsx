@@ -1,66 +1,77 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { products, Product } from '../models/Product';
 import { useCart } from '../contexts/CartContext';
 import { Button } from '../components/ui/button';
 import { ShoppingCart } from 'lucide-react';
+import { 
+  Table, 
+  TableHeader, 
+  TableBody, 
+  TableHead, 
+  TableRow, 
+  TableCell 
+} from '../components/ui/table';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import { supabase } from '../integrations/supabase/client';
+
+interface DbProduct {
+  id: number;
+  name: string;
+  price: number;
+  image_url: string;
+  brand_id: number | null;
+}
 
 const ProductsPage: React.FC = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { addToCart } = useCart();
+  const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Extract unique categories and vehicles for filters
-  const categories = Array.from(new Set(products.map(product => product.category)));
+  // Extract unique vehicles for filters
   const vehicles = Array.from(
     new Set(products.flatMap(product => product.vehicleCompatibility))
   );
 
-  // Group products by vehicle for filtering
-  const productsByVehicle = new Map<string, Product[]>();
-  
-  vehicles.forEach(vehicle => {
-    productsByVehicle.set(
-      vehicle,
-      products.filter(product => product.vehicleCompatibility.includes(vehicle))
-    );
-  });
+  // Fetch products from Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*');
+        
+        if (error) {
+          console.error('Error fetching products:', error);
+        } else {
+          setDbProducts(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Filter products based on selected filters and search term
-  const filteredProducts = (() => {
-    let result: Product[] = [];
-    
-    // If a vehicle is selected, only show one product for the selected vehicle
-    if (selectedVehicle) {
-      const vehicleProducts = productsByVehicle.get(selectedVehicle) || [];
-      result = vehicleProducts.length > 0 ? [vehicleProducts[0]] : [];
-    } else {
-      // If no vehicle is selected, show one product per vehicle
-      vehicles.forEach(vehicle => {
-        const vehicleProducts = productsByVehicle.get(vehicle) || [];
-        if (vehicleProducts.length > 0) {
-          result.push(vehicleProducts[0]);
-        }
-      });
+  const filteredProducts = products.filter(product => {
+    if (selectedVehicle && !product.vehicleCompatibility.includes(selectedVehicle)) {
+      return false;
     }
     
-    // Apply category filter if selected
-    if (selectedCategory) {
-      result = result.filter(product => product.category === selectedCategory);
+    if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
     }
     
-    // Apply search term if provided
-    if (searchTerm) {
-      result = result.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    return result;
-  })();
+    return true;
+  });
 
   const handleAddToCart = (product: Product) => {
     addToCart(product, 1);
@@ -73,112 +84,163 @@ const ProductsPage: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filters */}
         <div className="lg:w-1/4">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Filters</h2>
-            
-            <div className="mb-6">
-              <label className="block font-medium mb-2">Search</label>
-              <input 
-                type="text" 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search products..."
-                className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-            </div>
-            
-            <div className="mb-6">
-              <label className="block font-medium mb-2">Vehicle</label>
-              <select 
-                value={selectedVehicle}
-                onChange={(e) => setSelectedVehicle(e.target.value)}
-                className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-              >
-                <option value="">All Vehicles</option>
-                {vehicles.map((vehicle) => (
-                  <option key={vehicle} value={vehicle}>
-                    {vehicle}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block font-medium mb-2">Category</label>
-              <select 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            {(selectedVehicle || selectedCategory || searchTerm) && (
-              <button
-                onClick={() => {
-                  setSelectedVehicle('');
-                  setSelectedCategory('');
-                  setSearchTerm('');
-                }}
-                className="mt-4 text-primary hover:text-primary-dark"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <label className="block font-medium mb-2">Search</label>
+                <input 
+                  type="text" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
+                />
+              </div>
+              
+              <div className="mb-6">
+                <label className="block font-medium mb-2">Vehicle</label>
+                <select 
+                  value={selectedVehicle}
+                  onChange={(e) => setSelectedVehicle(e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
+                >
+                  <option value="">All Vehicles</option>
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle} value={vehicle}>
+                      {vehicle}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              {(selectedVehicle || searchTerm) && (
+                <button
+                  onClick={() => {
+                    setSelectedVehicle('');
+                    setSearchTerm('');
+                  }}
+                  className="mt-4 text-primary hover:text-primary-dark"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </CardContent>
+          </Card>
         </div>
         
-        {/* Product Grid */}
+        {/* Product Table */}
         <div className="lg:w-3/4">
-          {filteredProducts.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow text-center">
-              <p className="text-lg mb-4">No products found matching your criteria</p>
-              <button 
-                onClick={() => {
-                  setSelectedVehicle('');
-                  setSelectedCategory('');
-                  setSearchTerm('');
-                }}
-                className="btn btn-primary"
-              >
-                Clear Filters
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <div key={product.id} className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                  <Link to={`/product/${product.id}`} className="block">
-                    <div className="h-48 bg-gray-200 dark:bg-gray-700 relative">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-lg font-medium">Product Image</span>
-                      </div>
-                    </div>
-                  </Link>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{product.description.substring(0, 100)}...</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xl font-bold">${product.price.toFixed(2)}</span>
-                      <Button 
-                        onClick={() => handleAddToCart(product)} 
-                        className="bg-primary hover:bg-primary-dark text-white"
-                      >
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        Add to Cart
-                      </Button>
-                    </div>
-                  </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Products from Database</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">
+                  <p>Loading products...</p>
                 </div>
-              ))}
-            </div>
-          )}
+              ) : dbProducts.length === 0 ? (
+                <div className="text-center py-8">
+                  <p>No products found in database</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product Name</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dbProducts.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            onClick={() => {
+                              const mockModelProduct: Product = {
+                                id: product.id.toString(),
+                                name: product.name,
+                                description: "Product from database",
+                                price: product.price,
+                                imageUrl: product.image_url || "/placeholder.svg",
+                                category: "Unknown",
+                                vehicleCompatibility: [],
+                                stock: 10
+                              };
+                              handleAddToCart(mockModelProduct);
+                            }} 
+                            size="sm"
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-1" />
+                            Add to Cart
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Products from Model</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredProducts.length === 0 ? (
+                <div className="text-center py-8">
+                  <p>No products found matching your criteria</p>
+                  <button 
+                    onClick={() => {
+                      setSelectedVehicle('');
+                      setSearchTerm('');
+                    }}
+                    className="mt-4 btn btn-primary"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product Name</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProducts.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-medium">
+                          <Link to={`/product/${product.id}`} className="hover:underline">
+                            {product.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            onClick={() => handleAddToCart(product)}
+                            size="sm"
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-1" />
+                            Add to Cart
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

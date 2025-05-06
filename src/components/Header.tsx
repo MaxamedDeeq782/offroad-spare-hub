@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Moon, Sun, LogOut } from 'lucide-react';
@@ -22,6 +21,17 @@ const Header: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  // Helper function to get user initial for avatar
+  const getUserInitial = () => {
+    if (!user) return '?';
+    
+    if (user.user_metadata?.name) {
+      return user.user_metadata.name.charAt(0);
+    }
+    
+    return user.email?.charAt(0) || '?';
   };
 
   return (
@@ -68,7 +78,7 @@ const Header: React.FC = () => {
                   <Button variant="ghost" size="icon" className="relative rounded-full">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-primary text-primary-foreground font-extrabold">
-                        {user.user_metadata.name ? user.user_metadata.name.charAt(0) : user.email?.charAt(0)}
+                        {getUserInitial()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>

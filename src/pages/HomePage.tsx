@@ -1,28 +1,33 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
-  // Available vehicle makes
+  // Available vehicle makes with their specific part mappings
   const vehicles = [
     {
       name: 'Toyota Hilux',
       slug: 'toyota-hilux',
-      image: '/images/toyota-hilux.jpg'
+      image: '/images/toyota-hilux.jpg',
+      partId: 'Toyota Hilux Gearbox 5-Speed Manual'
     },
     {
       name: 'Toyota Land Cruiser',
       slug: 'toyota-land-cruiser',
-      image: '/images/toyota-land-cruiser.jpg'
+      image: '/images/toyota-land-cruiser.jpg',
+      partId: 'Tie Rod End Kit for Toyota Land Cruiser FJ80 FzJ80 91-97 Lexus LX450'
     },
     {
       name: 'Nissan Patrol',
       slug: 'nissan-patrol',
-      image: '/images/nissan-patrol.jpg'
+      image: '/images/nissan-patrol.jpg',
+      partId: 'Fit Nissan Patrol Y62 & Armada 5.6L 8 Cyl AT 2010 - 2023 aluminum radiator'
     },
     {
       name: 'Mitsubishi L200',
       slug: 'mitsubishi-l200',
-      image: '/images/mitsubishi-l200.jpg'
+      image: '/images/mitsubishi-l200.jpg',
+      partId: 'Exhaust Pipe Kit Full System for MITSUBISHI L200 2.5L Diesel'
     }
   ];
 
@@ -54,7 +59,7 @@ const HomePage: React.FC = () => {
             {vehicles.map((vehicle) => (
               <Link 
                 key={vehicle.slug} 
-                to={`/products?vehicle=${encodeURIComponent(vehicle.name)}`}
+                to={`/products?vehicle=${encodeURIComponent(vehicle.name)}&partId=${encodeURIComponent(vehicle.partId)}`}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="h-48 bg-gray-200 relative">

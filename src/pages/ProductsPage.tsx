@@ -26,6 +26,7 @@ interface DbProduct {
 
 const ProductsPage: React.FC = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
+  const [selectedPartId, setSelectedPartId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { addToCart } = useCart();
   const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
@@ -37,12 +38,19 @@ const ProductsPage: React.FC = () => {
     new Set(products.flatMap(product => product.vehicleCompatibility))
   );
 
-  // Check if a vehicle was selected from the homepage
+  // Check if a vehicle and specific part was selected from the homepage
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const vehicleParam = queryParams.get('vehicle');
+    const partIdParam = queryParams.get('partId');
+    
     if (vehicleParam) {
       setSelectedVehicle(vehicleParam);
+    }
+    
+    if (partIdParam) {
+      setSelectedPartId(partIdParam);
+      setSearchTerm(partIdParam); // Also set the search term to the part ID for filtering
     }
   }, [location.search]);
 
@@ -71,11 +79,17 @@ const ProductsPage: React.FC = () => {
   }, []);
 
   // Helper function to determine if a product belongs to a specific vehicle
-  const productBelongsToVehicle = (product: Product, vehicle: string): boolean => {
+  const productBelongsToVehicle = (product: Product, vehicle: string, partId: string): boolean => {
+    // If a specific part ID is provided, check if the product name matches exactly
+    if (partId && product.name !== partId) {
+      return false;
+    }
+    
     // If no vehicle is selected or the product's compatibility includes the selected vehicle
     if (!vehicle || product.vehicleCompatibility.includes(vehicle)) {
       return true;
     }
+    
     return false;
   };
 
@@ -99,22 +113,34 @@ const ProductsPage: React.FC = () => {
     return '';
   };
 
-  // Filter products based on selected filters and search term
+  // Filter products based on selected filters and search term or specific part
   const filteredProducts = products.filter(product => {
-    // First, check if the product belongs to the selected vehicle
-    if (!productBelongsToVehicle(product, selectedVehicle)) {
+    // First, check if the product belongs to the selected vehicle and matches the part ID if specified
+    if (!productBelongsToVehicle(product, selectedVehicle, selectedPartId)) {
       return false;
     }
     
-    // Then check if the product matches the search term
-    if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+    // If no specific part ID is selected but search term exists, filter by search term
+    if (!selectedPartId && searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     
     return true;
   });
 
-  // Filter database products based on selected vehicle and search term
+  // Map specific part IDs to their corresponding vehicles
+  const getSpecificPartForVehicle = (vehicle: string): string => {
+    const partMap: Record<string, string> = {
+      'Toyota Hilux': 'Toyota Hilux Gearbox 5-Speed Manual',
+      'Toyota Land Cruiser': 'Tie Rod End Kit for Toyota Land Cruiser FJ80 FzJ80 91-97 Lexus LX450',
+      'Nissan Patrol': 'Fit Nissan Patrol Y62 & Armada 5.6L 8 Cyl AT 2010 - 2023 aluminum radiator',
+      'Mitsubishi L200': 'Exhaust Pipe Kit Full System for MITSUBISHI L200 2.5L Diesel'
+    };
+    
+    return partMap[vehicle] || '';
+  };
+
+  // Filter database products based on selected vehicle and specific part or search term
   const filteredDbProducts = dbProducts.filter(product => {
     const productVehicle = getVehicleFromProductName(product.name);
     
@@ -123,8 +149,13 @@ const ProductsPage: React.FC = () => {
       return false;
     }
     
-    // Check if the product matches the search term
-    if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+    // If a specific part ID is selected, check if the product name matches exactly
+    if (selectedPartId && product.name !== selectedPartId) {
+      return false;
+    }
+    
+    // If no specific part ID is selected but search term exists, filter by search term
+    if (!selectedPartId && searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     
@@ -154,7 +185,13 @@ const ProductsPage: React.FC = () => {
                 <input 
                   type="text" 
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    // Clear selected part ID when search term is manually changed
+                    if (selectedPartId && e.target.value !== selectedPartId) {
+                      setSelectedPartId('');
+                    }
+                  }}
                   placeholder="Search products..."
                   className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
                 />
@@ -164,7 +201,20 @@ const ProductsPage: React.FC = () => {
                 <label className="block font-medium mb-2">Vehicle</label>
                 <select 
                   value={selectedVehicle}
-                  onChange={(e) => setSelectedVehicle(e.target.value)}
+                  onChange={(e) => {
+                    const newVehicle = e.target.value;
+                    setSelectedVehicle(newVehicle);
+                    
+                    // If a vehicle is selected, automatically set the part ID for that vehicle
+                    if (newVehicle) {
+                      const specificPart = getSpecificPartForVehicle(newVehicle);
+                      setSelectedPartId(specificPart);
+                      setSearchTerm(specificPart);
+                    } else {
+                      setSelectedPartId('');
+                      setSearchTerm('');
+                    }
+                  }}
                   className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
                 >
                   <option value="">All Vehicles</option>
@@ -176,10 +226,11 @@ const ProductsPage: React.FC = () => {
                 </select>
               </div>
               
-              {(selectedVehicle || searchTerm) && (
+              {(selectedVehicle || searchTerm || selectedPartId) && (
                 <button
                   onClick={() => {
                     setSelectedVehicle('');
+                    setSelectedPartId('');
                     setSearchTerm('');
                   }}
                   className="mt-4 text-primary hover:text-primary-dark"
@@ -270,6 +321,7 @@ const ProductsPage: React.FC = () => {
                   <button 
                     onClick={() => {
                       setSelectedVehicle('');
+                      setSelectedPartId('');
                       setSearchTerm('');
                     }}
                     className="mt-4 btn btn-primary"

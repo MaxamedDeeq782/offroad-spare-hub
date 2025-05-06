@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -55,7 +54,7 @@ const HomePage: React.FC = () => {
             {vehicles.map((vehicle) => (
               <Link 
                 key={vehicle.slug} 
-                to={`/vehicle/${vehicle.slug}`}
+                to={`/products?vehicle=${encodeURIComponent(vehicle.name)}`}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="h-48 bg-gray-200 relative">
@@ -73,7 +72,7 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Why Choose Us */}
+      {/* Why Choose Us Section */}
       <div className="py-16 bg-gray-100">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-12 text-center">Why Choose OffroadSpareHub</h2>

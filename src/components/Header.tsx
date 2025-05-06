@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Moon, Sun } from 'lucide-react';
+import { User, Moon, Sun, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -9,7 +9,7 @@ import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 
 const Header: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { cart } = useCart();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,6 +18,10 @@ const Header: React.FC = () => {
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -59,19 +63,28 @@ const Header: React.FC = () => {
             </Link>
 
             {user ? (
-              <Link to="/account/details">
-                <Button variant="ghost" size="icon" className="relative rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary text-primary-foreground font-extrabold">
-                      {user.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+              <div className="flex items-center space-x-2">
+                <Link to="/account/details">
+                  <Button variant="ghost" size="icon" className="relative rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground font-extrabold">
+                        {user.user_metadata.name ? user.user_metadata.name.charAt(0) : user.email?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
+                  <LogOut className="h-5 w-5" />
                 </Button>
-              </Link>
+              </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link to="/login" className="btn btn-secondary py-1 px-3 font-bold">Login</Link>
-                <Link to="/register" className="btn btn-primary py-1 px-3 font-bold">Register</Link>
+                <Link to="/login">
+                  <Button variant="outline" size="sm">Login</Button>
+                </Link>
+                <Link to="/register">
+                  <Button size="sm">Register</Button>
+                </Link>
               </div>
             )}
 
@@ -88,6 +101,17 @@ const Header: React.FC = () => {
           <div className="md:hidden mt-4">
             <Link to="/" className="block hover:text-primary py-2 font-bold">Home</Link>
             <Link to="/products" className="block hover:text-primary py-2 font-bold">Products</Link>
+            {!user && (
+              <>
+                <Link to="/login" className="block hover:text-primary py-2 font-bold">Login</Link>
+                <Link to="/register" className="block hover:text-primary py-2 font-bold">Register</Link>
+              </>
+            )}
+            {user && (
+              <button onClick={handleLogout} className="block hover:text-primary py-2 font-bold w-full text-left">
+                Logout
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -2,6 +2,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Button } from '../components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Alert, AlertDescription } from '../components/ui/alert';
 
 const RegisterPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -10,6 +15,7 @@ const RegisterPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -37,12 +43,14 @@ const RegisterPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const success = await register(email, password, name);
+      const { success, error: registerError } = await register(email, password, name);
       
       if (success) {
-        navigate('/');
+        setSuccessMessage('Registration successful! Please check your email to confirm your account.');
+        // For better user experience, we don't immediately redirect
+        // navigate('/login');
       } else {
-        setError('Email already exists');
+        setError(registerError || 'Registration failed');
       }
     } catch (err) {
       setError('An error occurred during registration');
@@ -54,94 +62,92 @@ const RegisterPage: React.FC = () => {
 
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create a new account</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/login" className="font-medium text-primary hover:text-primary-dark">
-              sign in to your existing account
-            </Link>
-          </p>
-        </div>
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+        </CardHeader>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <span className="block sm:inline">{error}</span>
-            </div>
-          )}
-          
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="name" className="sr-only">Full name</label>
-              <input
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            {successMessage && (
+              <Alert className="bg-green-50 text-green-800 border-green-200">
+                <AlertDescription>{successMessage}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="space-y-1">
+              <Label htmlFor="name">Full name</Label>
+              <Input
                 id="name"
-                name="name"
                 type="text"
-                autoComplete="name"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                placeholder="Full name"
+                required
               />
             </div>
-            <div>
-              <label htmlFor="email-address" className="sr-only">Email address</label>
-              <input
-                id="email-address"
-                name="email"
+            
+            <div className="space-y-1">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
                 type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email address"
+                required
               />
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
+            
+            <div className="space-y-1">
+              <Label htmlFor="password">Password</Label>
+              <Input
                 id="password"
-                name="password"
                 type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password (min 6 characters)"
+                required
               />
             </div>
-            <div>
-              <label htmlFor="confirm-password" className="sr-only">Confirm password</label>
-              <input
+            
+            <div className="space-y-1">
+              <Label htmlFor="confirm-password">Confirm password</Label>
+              <Input
                 id="confirm-password"
-                name="confirm-password"
                 type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Confirm password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+                required
               />
             </div>
-          </div>
+          </CardContent>
 
-          <div>
-            <button
+          <CardFooter className="flex flex-col gap-4">
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              disabled={isLoading || !!successMessage}
+              className="w-full"
             >
               {isLoading ? 'Creating account...' : 'Create account'}
-            </button>
-          </div>
+            </Button>
+            
+            <p className="text-center text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link to="/login" className="font-medium text-primary hover:text-primary-dark">
+                Sign in
+              </Link>
+            </p>
+          </CardFooter>
         </form>
-      </div>
+      </Card>
     </div>
   );
 };

@@ -45,7 +45,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             onChange={(e) => handleVehicleChange(e.target.value)}
             className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
           >
-            <option value="">All Vehicles</option>
+            {/* Removed "All Vehicles" option */}
             {availableBrands.map((vehicle) => (
               <option key={vehicle} value={vehicle}>
                 {vehicle}

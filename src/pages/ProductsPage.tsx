@@ -18,13 +18,13 @@ const ProductsPage: React.FC = () => {
     handleSearchChange
   } = useProductFilters();
 
-  const hasActiveFilters = !!(selectedVehicle || searchTerm || selectedPartId);
+  const hasActiveFilters = !!(searchTerm || selectedPartId);
   const availableBrands = getAvailableBrands();
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">
-        {selectedVehicle ? `${selectedVehicle} Parts` : 'All Products'}
+        {selectedVehicle ? `${selectedVehicle} Parts` : 'Vehicle Parts'}
       </h1>
       
       <div className="flex flex-col lg:flex-row gap-8">

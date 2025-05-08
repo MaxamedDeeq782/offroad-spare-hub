@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../integrations/supabase/client';
@@ -59,6 +58,16 @@ export const useProductFilters = () => {
     fetchProducts();
   }, []);
 
+  // Set default vehicle selection when products are loaded
+  useEffect(() => {
+    if (!loading && dbProducts.length > 0 && !selectedVehicle) {
+      const brands = getAvailableBrands();
+      if (brands.length > 0) {
+        setSelectedVehicle(brands[0]);
+      }
+    }
+  }, [loading, dbProducts]);
+
   // Helper function to determine vehicle from product name for database products
   const getVehicleFromProductName = (productName: string): string => {
     const vehicleKeywords = {
@@ -109,13 +118,13 @@ export const useProductFilters = () => {
   const filteredDbProducts = dbProducts.filter(product => {
     const productVehicle = getVehicleFromProductName(product.name);
     
-    // If a vehicle is selected, check if the product belongs to that vehicle
+    // Filter by selected vehicle (now required)
     if (selectedVehicle && productVehicle !== selectedVehicle) {
       return false;
     }
     
-    // If no vehicle is selected (All Vehicles), only show products that belong to a known brand/vehicle
-    if (!selectedVehicle && !productVehicle) {
+    // Only display products that have a recognized vehicle type
+    if (!productVehicle) {
       return false;
     }
     
@@ -133,7 +142,9 @@ export const useProductFilters = () => {
   });
 
   const clearFilters = () => {
-    setSelectedVehicle('');
+    // Instead of clearing vehicle to empty string, set it to the first available brand
+    const brands = getAvailableBrands();
+    setSelectedVehicle(brands.length > 0 ? brands[0] : '');
     setSelectedPartId('');
     setSearchTerm('');
   };

@@ -60,6 +60,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
       return "/lovable-uploads/24d8adc5-ed35-48c1-8cc9-e09314fa4597.png";
     }
     
+    // Check if the product is the Toyota Hilux Gearbox
+    if (product.name.includes("Toyota Hilux Gearbox 5-Speed Manual")) {
+      return "/lovable-uploads/8141ace2-fd8d-4f8e-bace-f155332b298f.png";
+    }
+    
     // Return the default image URL or placeholder if not available
     return product.image_url || "/placeholder.svg";
   };

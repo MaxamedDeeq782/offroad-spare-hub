@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
@@ -22,6 +21,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import './App.css';
+import SimulatedStripeCheckoutPage from './pages/SimulatedStripeCheckoutPage';
 
 function App() {
   return (
@@ -47,6 +47,7 @@ function App() {
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="/admin/add-product" element={<AddProductPage />} />
                   <Route path="/vehicle/:vehicleId" element={<VehiclePage />} />
+                  <Route path="/simulated-stripe-checkout" element={<SimulatedStripeCheckoutPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>

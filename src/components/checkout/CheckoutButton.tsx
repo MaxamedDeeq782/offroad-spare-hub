@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface CheckoutButtonProps {
   isSubmitting: boolean;
@@ -13,6 +14,7 @@ interface CheckoutButtonProps {
 
 const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMethod, userId }) => {
   const { cart } = useCart();
+  const navigate = useNavigate();
 
   const handleStripeCheckout = async () => {
     try {
@@ -45,22 +47,31 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
         
         // Redirect to Stripe Checkout
         window.location.href = data.url;
+      } else if (data?.dev_mode) {
+        // Show simulated checkout for development mode
+        simulateDevelopmentCheckout();
       } else {
         // For development mode, simulate checkout behavior
-        toast.success("Development mode active - redirecting to simulated checkout...");
-        setTimeout(() => {
-          window.location.href = `/order-confirmation?session_id=fallback_session_${Date.now()}`;
-        }, 1500);
+        toast.success("Development mode active - showing simulated checkout");
+        simulateDevelopmentCheckout();
       }
     } catch (error) {
       console.error("Error creating checkout:", error);
       toast.error("Failed to create checkout session. Using development mode for demonstration.");
       
       // In case of error, fall back to dev mode behavior for demo purposes
-      setTimeout(() => {
-        window.location.href = `/order-confirmation?session_id=fallback_session_${Date.now()}`;
-      }, 1500);
+      simulateDevelopmentCheckout();
     }
+  };
+
+  const simulateDevelopmentCheckout = () => {
+    // Simulate the Stripe checkout by redirecting to a simulated payment page
+    navigate('/simulated-stripe-checkout');
+    
+    // After a short delay, redirect to the order confirmation page
+    setTimeout(() => {
+      navigate(`/order-confirmation?session_id=fallback_session_${Date.now()}`);
+    }, 3000);
   };
 
   const handleClick = () => {

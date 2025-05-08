@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
@@ -128,23 +129,9 @@ const CartPage: React.FC = () => {
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
             
             <div className="space-y-3">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
                 <span>${getCartTotal().toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>Calculated at checkout</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span>Calculated at checkout</span>
-              </div>
-              <div className="border-t pt-3 mt-3">
-                <div className="flex justify-between font-semibold">
-                  <span>Total</span>
-                  <span>${getCartTotal().toFixed(2)}</span>
-                </div>
               </div>
             </div>
             

@@ -260,23 +260,9 @@ const CheckoutPage: React.FC = () => {
             </div>
             
             <div className="space-y-3">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
                 <span>${getCartTotal().toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>$10.00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span>${(getCartTotal() * 0.1).toFixed(2)}</span>
-              </div>
-              <div className="border-t pt-3 mt-3 border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between font-semibold">
-                  <span>Total</span>
-                  <span>${(getCartTotal() + 10 + getCartTotal() * 0.1).toFixed(2)}</span>
-                </div>
               </div>
             </div>
           </div>

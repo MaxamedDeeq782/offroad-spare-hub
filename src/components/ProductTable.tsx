@@ -11,6 +11,7 @@ import {
 import { Button } from './ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import Image from './Image';
 
 interface DbProduct {
   id: number;
@@ -50,6 +51,17 @@ const ProductTable: React.FC<ProductTableProps> = ({
     addToCart(mockModelProduct, 1);
   };
 
+  // Function to get the appropriate image URL for a product
+  const getProductImage = (product: DbProduct): string => {
+    // Check if the product is the Tie Rod End Kit for Toyota Land Cruiser
+    if (product.name.includes("Tie Rod End Kit for Toyota Land Cruiser")) {
+      return "/lovable-uploads/24d8adc5-ed35-48c1-8cc9-e09314fa4597.png";
+    }
+    
+    // Return the default image URL or placeholder if not available
+    return product.image_url || "/placeholder.svg";
+  };
+
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -70,6 +82,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>Image</TableHead>
           <TableHead>Product Name</TableHead>
           <TableHead className="text-right">Price</TableHead>
           <TableHead className="text-right">Action</TableHead>
@@ -80,6 +93,15 @@ const ProductTable: React.FC<ProductTableProps> = ({
           const vehicleType = getVehicleFromProductName(product.name);
           return (
             <TableRow key={product.id}>
+              <TableCell>
+                <div className="w-16 h-16 relative">
+                  <img 
+                    src={getProductImage(product)} 
+                    alt={product.name}
+                    className="object-cover w-full h-full rounded"
+                  />
+                </div>
+              </TableCell>
               <TableCell className="font-medium">
                 {product.name}
                 {vehicleType && (

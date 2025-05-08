@@ -31,7 +31,7 @@ serve(async (req) => {
     if (!stripeKey) {
       console.error("STRIPE_SECRET_KEY is not set in environment");
       
-      // For development, return a mock response
+      // For development, return a mock response with dev_mode flag
       return new Response(
         JSON.stringify({ 
           url: `${req.headers.get("origin")}/order-confirmation?session_id=mock_${Date.now()}`,
@@ -98,6 +98,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error creating checkout session:", error);
     
+    // In development mode or if error occurs, provide a fallback URL
     return new Response(
       JSON.stringify({ 
         error: error.message,

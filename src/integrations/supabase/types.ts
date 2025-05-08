@@ -24,6 +24,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          product_id: string
+          quantity: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          image_url?: string | null
+          name: string
+          price: number
+          product_id: string
+          quantity?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          product_id?: string
+          quantity?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string

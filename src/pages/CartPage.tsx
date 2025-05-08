@@ -164,9 +164,16 @@ const CartPage: React.FC = () => {
             <button 
               onClick={handleCheckout}
               className="w-full btn btn-primary mt-6 py-3"
+              disabled={!user}
             >
               Proceed to Checkout
             </button>
+            
+            {!user && (
+              <p className="text-sm text-red-500 mt-2">
+                Please log in to proceed to checkout
+              </p>
+            )}
           </div>
         </div>
       </div>

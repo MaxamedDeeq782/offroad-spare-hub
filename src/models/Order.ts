@@ -18,6 +18,9 @@ export interface Order {
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
+  // Add optional fields for guest checkout
+  guestEmail?: string;
+  guestName?: string;
 }
 
 // Load sample data for development if database returns no orders
@@ -60,6 +63,8 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
       status,
       created_at,
       updated_at,
+      guest_email,
+      guest_name,
       order_items(product_id, quantity, price)
     `).order('created_at', { ascending: false });
     
@@ -87,7 +92,9 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
         total: parseFloat(order.total),
         status: order.status as OrderStatus,
         createdAt: new Date(order.created_at),
-        updatedAt: new Date(order.updated_at)
+        updatedAt: new Date(order.updated_at),
+        guestEmail: order.guest_email,
+        guestName: order.guest_name
       }));
 
       ordersCache = transformedOrders;
@@ -108,9 +115,11 @@ export const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedA
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert({
-        user_id: order.userId,
+        user_id: order.userId || '00000000-0000-0000-0000-000000000000', // Use a default UUID for guest users
         total: order.total,
-        status: order.status
+        status: order.status,
+        guest_email: order.guestEmail,
+        guest_name: order.guestName
       })
       .select()
       .single();
@@ -147,7 +156,9 @@ export const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedA
       total: parseFloat(orderData.total),
       status: orderData.status as OrderStatus,
       createdAt: new Date(orderData.created_at),
-      updatedAt: new Date(orderData.updated_at)
+      updatedAt: new Date(orderData.updated_at),
+      guestEmail: orderData.guest_email,
+      guestName: orderData.guest_name
     };
 
     // Update cache

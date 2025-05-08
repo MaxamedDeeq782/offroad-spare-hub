@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -66,10 +67,22 @@ const AdminPage: React.FC = () => {
     return product ? product.name : 'Unknown Product';
   };
 
-  // Function to get user name by ID
-  const getUserName = (userId: string): string => {
-    const user = users.find(u => u.id === userId);
-    return user ? user.name : userId.substring(0, 8) + '...';
+  // Function to get customer name - handles both registered users and guests
+  const getCustomerName = (order: Order): string => {
+    if (order.guestName) {
+      return `${order.guestName} (Guest)`;
+    }
+    const user = users.find(u => u.id === order.userId);
+    return user ? user.name : order.userId.substring(0, 8) + '...';
+  };
+
+  // Function to get customer email - handles both registered users and guests
+  const getCustomerEmail = (order: Order): string => {
+    if (order.guestEmail) {
+      return order.guestEmail;
+    }
+    const user = users.find(u => u.id === order.userId);
+    return user ? user.email : 'Unknown';
   };
 
   // Format date to readable string
@@ -201,7 +214,10 @@ const AdminPage: React.FC = () => {
                     </div>
                     <div>
                       <div className="text-sm text-gray-500">Customer</div>
-                      <div className="font-medium">{getUserName(order.userId)}</div>
+                      <div className="font-medium">{getCustomerName(order)}</div>
+                      {order.guestEmail && (
+                        <div className="text-sm text-gray-500">{order.guestEmail}</div>
+                      )}
                     </div>
                     <div>
                       <div className="text-sm text-gray-500">Date</div>

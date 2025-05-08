@@ -33,12 +33,9 @@ const CheckoutPage: React.FC = () => {
     return <Navigate to="/cart" />;
   }
 
-  // Redirect if not logged in
-  if (!user) {
-    toast.error('Please login to continue with checkout');
-    return <Navigate to="/login" state={{ redirectTo: '/checkout' }} />;
-  }
-
+  // No longer redirecting if not logged in
+  // This allows guest checkout
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -60,16 +57,22 @@ const CheckoutPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Prepare guest checkout information if not logged in
+      const fullName = `${formData.firstName} ${formData.lastName}`;
+      
       // Create a new order
       const orderData = {
-        userId: user.id,
+        userId: user?.id || '', // Empty string for guest users
         items: cart.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
           price: item.price
         })),
         total: getCartTotal(),
-        status: 'pending' as const
+        status: 'pending' as const,
+        // Add guest info if not logged in
+        guestName: !user ? fullName : undefined,
+        guestEmail: !user ? formData.email : undefined
       };
       
       // Add order to Supabase

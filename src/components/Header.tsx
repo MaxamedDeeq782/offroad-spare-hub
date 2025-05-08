@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Moon, Sun, LogOut, Settings } from 'lucide-react';
+import { User, Moon, Sun, LogOut, Cog } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -60,9 +60,9 @@ const Header: React.FC = () => {
             {isUserAdmin() && (
               <Link 
                 to="/admin" 
-                className="ml-6 bg-primary text-white px-3 py-1 rounded-md flex items-center shadow-sm hover:bg-primary/80 font-bold"
+                className="ml-6 bg-green-600 text-white px-3 py-1 rounded-md flex items-center shadow-sm hover:bg-green-700 font-bold"
               >
-                <Settings size={16} className="mr-1" />
+                <Cog size={16} className="mr-1" />
                 <span>Admin</span>
               </Link>
             )}
@@ -137,9 +137,9 @@ const Header: React.FC = () => {
             {isUserAdmin() && (
               <Link 
                 to="/admin" 
-                className="block bg-primary text-white px-4 py-2 rounded-md flex items-center w-fit my-2 hover:bg-primary/80 font-bold"
+                className="block bg-green-600 text-white px-4 py-2 rounded-md flex items-center w-fit my-2 hover:bg-green-700 font-bold"
               >
-                <Settings size={18} className="mr-2" />
+                <Cog size={18} className="mr-2" />
                 <span>Admin</span>
               </Link>
             )}

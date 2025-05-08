@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { User, LogOut, Moon, Sun, Package } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,16 +16,30 @@ import {
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Order, OrderStatus } from '../models/Order';
+import { Order, OrderStatus, fetchOrders } from '../models/Order';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Loader2 } from 'lucide-react';
 
-interface AccountDrawerProps {
-  userOrders: Order[];
-}
-
-const AccountDrawer: React.FC<AccountDrawerProps> = ({ userOrders }) => {
+const AccountDrawer: React.FC = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      if (user) {
+        setIsLoading(true);
+        const orders = await fetchOrders(user.id);
+        setUserOrders(orders);
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      loadOrders();
+    }
+  }, [user]);
 
   if (!user) return null;
 
@@ -129,7 +143,12 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ userOrders }) => {
           </TabsList>
           
           <TabsContent value="orders" className="px-4 overflow-auto max-h-[50vh]">
-            {userOrders.length === 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <span className="ml-2">Loading orders...</span>
+              </div>
+            ) : userOrders.length === 0 ? (
               <div className="text-center py-8">
                 <p className="font-bold mb-4">You haven't placed any orders yet</p>
                 <DrawerClose asChild>
@@ -151,7 +170,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ userOrders }) => {
                 <TableBody>
                   {userOrders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-bold">{order.id}</TableCell>
+                      <TableCell className="font-bold">{order.id.substring(0, 8)}...</TableCell>
                       <TableCell className="font-bold">{formatDate(order.createdAt)}</TableCell>
                       <TableCell>
                         <span className={`inline-block px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(order.status)}`}>

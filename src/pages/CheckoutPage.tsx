@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import { addOrder, orders } from '../models/Order';
+import { addOrder } from '../models/Order';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 const CheckoutPage: React.FC = () => {
   const { user } = useAuth();
@@ -28,6 +29,12 @@ const CheckoutPage: React.FC = () => {
     return <Navigate to="/cart" />;
   }
 
+  // Redirect if not logged in
+  if (!user) {
+    toast.error('Please login to continue with checkout');
+    return <Navigate to="/login" state={{ redirectTo: '/checkout' }} />;
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -36,7 +43,7 @@ const CheckoutPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic form validation
@@ -48,34 +55,37 @@ const CheckoutPage: React.FC = () => {
     
     setIsSubmitting(true);
     
-    // Simulate order submission with a delay
-    setTimeout(() => {
+    try {
       // Create a new order
-      const newOrder = {
-        id: `o${orders.length + 1}`,
-        userId: user?.id || `guest-${Date.now()}`, // Use timestamp for guest users
+      const orderData = {
+        userId: user.id,
         items: cart.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
           price: item.price
         })),
         total: getCartTotal(),
-        status: 'pending' as const,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        status: 'pending' as const
       };
       
-      // Add to orders array and save to localStorage
-      addOrder(newOrder);
+      // Add order to Supabase
+      const newOrder = await addOrder(orderData);
       
-      // Clear cart
-      clearCart();
-      
-      // Navigate to order confirmation
-      navigate('/order-confirmation', { state: { orderId: newOrder.id } });
-      
+      if (newOrder) {
+        // Clear cart
+        clearCart();
+        
+        // Navigate to order confirmation
+        navigate('/order-confirmation', { state: { orderId: newOrder.id } });
+      } else {
+        toast.error("Failed to create order. Please try again.");
+      }
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error("An error occurred while processing your order");
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (

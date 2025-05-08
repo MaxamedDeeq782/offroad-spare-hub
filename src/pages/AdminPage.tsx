@@ -1,26 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Order, orders, updateOrderStatus, OrderStatus } from '../models/Order';
+import { Order, OrderStatus, fetchOrders, updateOrderStatus } from '../models/Order';
 import { products } from '../models/Product';
 import { users } from '../models/User';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Alert, AlertDescription } from '../components/ui/alert';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const AdminPage: React.FC = () => {
-  const { adminSecretKeyAuth } = useAuth();
+  const { adminSecretKeyAuth, user } = useAuth();
   const [secretKey, setSecretKey] = useState('');
   const [error, setError] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'users'>('orders');
-  const [allOrders, setAllOrders] = useState<Order[]>(orders);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user?.user_metadata?.isAdmin) {
+      setIsAuthenticated(true);
+    }
+  }, [user]);
 
   // Refresh orders when component mounts
   useEffect(() => {
-    setAllOrders(orders);
-  }, []);
+    const loadOrders = async () => {
+      if (isAuthenticated) {
+        setIsLoading(true);
+        const orders = await fetchOrders();
+        setAllOrders(orders);
+        setIsLoading(false);
+      }
+    };
+
+    loadOrders();
+  }, [isAuthenticated]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +47,17 @@ const AdminPage: React.FC = () => {
     if (adminSecretKeyAuth(secretKey)) {
       setIsAuthenticated(true);
       setError('');
+      loadOrders();
     } else {
       setError('Invalid secret key');
     }
+  };
+
+  const loadOrders = async () => {
+    setIsLoading(true);
+    const orders = await fetchOrders();
+    setAllOrders(orders);
+    setIsLoading(false);
   };
 
   // Function to get product details by ID
@@ -42,7 +69,7 @@ const AdminPage: React.FC = () => {
   // Function to get user name by ID
   const getUserName = (userId: string): string => {
     const user = users.find(u => u.id === userId);
-    return user ? user.name : 'Unknown User';
+    return user ? user.name : userId.substring(0, 8) + '...';
   };
 
   // Format date to readable string
@@ -67,9 +94,20 @@ const AdminPage: React.FC = () => {
   };
 
   // Update order status
-  const handleUpdateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    updateOrderStatus(orderId, newStatus);
-    setAllOrders([...orders]); // Update local state with the updated orders array
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
+    const success = await updateOrderStatus(orderId, newStatus);
+    
+    if (success) {
+      toast.success(`Order status updated to ${newStatus}`);
+      // Update local state
+      setAllOrders(prev => 
+        prev.map(order => 
+          order.id === orderId 
+            ? { ...order, status: newStatus, updatedAt: new Date() } 
+            : order
+        )
+      );
+    }
   };
 
   // If not authenticated, show the secret key form
@@ -143,64 +181,75 @@ const AdminPage: React.FC = () => {
         <div className="space-y-6">
           <h2 className="text-2xl font-semibold mb-4">Manage Orders</h2>
           
-          {allOrders.map((order) => (
-            <div key={order.id} className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="p-6 border-b">
-                <div className="flex flex-wrap justify-between items-center">
-                  <div>
-                    <div className="text-sm text-gray-500">Order ID</div>
-                    <div className="font-medium">{order.id}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Customer</div>
-                    <div className="font-medium">{getUserName(order.userId)}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Date</div>
-                    <div className="font-medium">{formatDate(order.createdAt)}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Total Amount</div>
-                    <div className="font-medium">${order.total.toFixed(2)}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Status</div>
-                    <select 
-                      value={order.status}
-                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as OrderStatus)}
-                      className="border rounded px-2 py-1 text-sm"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="canceled">Canceled</option>
-                      <option value="delivered">Delivered</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-6">
-                <h3 className="font-semibold text-lg mb-3">Order Items</h3>
-                <div className="space-y-3">
-                  {order.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="h-12 w-12 bg-gray-200 rounded mr-4 flex-shrink-0">
-                          {/* Replace with actual image once available */}
-                          <div className="h-full w-full flex items-center justify-center text-xs">Item</div>
-                        </div>
-                        <div>
-                          <div className="font-medium">{getProductName(item.productId)}</div>
-                          <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
-                        </div>
-                      </div>
-                      <div className="font-medium">${(item.price * item.quantity).toFixed(2)}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="ml-2 text-lg">Loading orders...</span>
             </div>
-          ))}
+          ) : allOrders.length === 0 ? (
+            <div className="bg-white p-8 rounded-lg shadow text-center">
+              <p className="text-xl mb-6">No orders found</p>
+            </div>
+          ) : (
+            allOrders.map((order) => (
+              <div key={order.id} className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="p-6 border-b">
+                  <div className="flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                      <div className="text-sm text-gray-500">Order ID</div>
+                      <div className="font-medium">{order.id}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500">Customer</div>
+                      <div className="font-medium">{getUserName(order.userId)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500">Date</div>
+                      <div className="font-medium">{formatDate(order.createdAt)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500">Total Amount</div>
+                      <div className="font-medium">${order.total.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500">Status</div>
+                      <select 
+                        value={order.status}
+                        onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as OrderStatus)}
+                        className="border rounded px-2 py-1 text-sm"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="canceled">Canceled</option>
+                        <option value="delivered">Delivered</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <h3 className="font-semibold text-lg mb-3">Order Items</h3>
+                  <div className="space-y-3">
+                    {order.items.map((item, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="h-12 w-12 bg-gray-200 rounded mr-4 flex-shrink-0">
+                            {/* Replace with actual image once available */}
+                            <div className="h-full w-full flex items-center justify-center text-xs">Item</div>
+                          </div>
+                          <div>
+                            <div className="font-medium">{getProductName(item.productId)}</div>
+                            <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
+                          </div>
+                        </div>
+                        <div className="font-medium">${(item.price * item.quantity).toFixed(2)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
       

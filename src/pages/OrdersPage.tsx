@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Order, orders } from '../models/Order';
+import { Order, fetchOrders } from '../models/Order';
 import { products } from '../models/Product';
+import { Loader2 } from 'lucide-react';
 
 const OrdersPage: React.FC = () => {
   const { user } = useAuth();
   const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Redirect if not logged in
   if (!user) {
@@ -15,10 +17,17 @@ const OrdersPage: React.FC = () => {
   }
 
   useEffect(() => {
-    // Filter orders for current user
-    const filteredOrders = orders.filter(order => order.userId === user.id);
-    setUserOrders(filteredOrders);
-  }, [user, orders]); // Also re-run if orders change
+    const loadOrders = async () => {
+      setIsLoading(true);
+      if (user) {
+        const orders = await fetchOrders(user.id);
+        setUserOrders(orders);
+      }
+      setIsLoading(false);
+    };
+
+    loadOrders();
+  }, [user]); 
 
   // Function to get product details by ID
   const getProductName = (productId: string): string => {
@@ -56,8 +65,13 @@ const OrdersPage: React.FC = () => {
         </Link>
       </div>
 
-      {userOrders.length === 0 ? (
-        <div className="bg-white p-8 rounded-lg shadow text-center">
+      {isLoading ? (
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="ml-2 text-lg">Loading orders...</span>
+        </div>
+      ) : userOrders.length === 0 ? (
+        <div className="bg-white p-8 rounded-lg shadow text-center dark:bg-gray-800">
           <p className="text-xl mb-6">You haven't placed any orders yet</p>
           <Link to="/products" className="btn btn-primary px-6 py-2">
             Shop Now
@@ -66,23 +80,23 @@ const OrdersPage: React.FC = () => {
       ) : (
         <div className="space-y-6">
           {userOrders.map((order) => (
-            <div key={order.id} className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="p-6 border-b">
-                <div className="flex flex-wrap justify-between items-center">
+            <div key={order.id} className="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
+              <div className="p-6 border-b dark:border-gray-700">
+                <div className="flex flex-wrap justify-between items-center gap-4">
                   <div>
-                    <div className="text-sm text-gray-500">Order ID</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Order ID</div>
                     <div className="font-medium">{order.id}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">Date</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Date</div>
                     <div className="font-medium">{formatDate(order.createdAt)}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">Total Amount</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Total Amount</div>
                     <div className="font-medium">${order.total.toFixed(2)}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">Status</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Status</div>
                     <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(order.status)}`}>
                       {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                     </span>
@@ -96,13 +110,13 @@ const OrdersPage: React.FC = () => {
                   {order.items.map((item, index) => (
                     <div key={index} className="flex justify-between items-center">
                       <div className="flex items-center">
-                        <div className="h-12 w-12 bg-gray-200 rounded mr-4 flex-shrink-0">
+                        <div className="h-12 w-12 bg-gray-200 rounded mr-4 flex-shrink-0 dark:bg-gray-700">
                           {/* Replace with actual image once available */}
                           <div className="h-full w-full flex items-center justify-center text-xs">Item</div>
                         </div>
                         <div>
                           <div className="font-medium">{getProductName(item.productId)}</div>
-                          <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">Qty: {item.quantity}</div>
                         </div>
                       </div>
                       <div className="font-medium">${(item.price * item.quantity).toFixed(2)}</div>

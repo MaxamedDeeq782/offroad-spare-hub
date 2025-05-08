@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
@@ -9,9 +9,6 @@ import ShippingForm from '../components/checkout/ShippingForm';
 import PaymentMethodForm from '../components/checkout/PaymentMethodForm';
 import OrderSummary from '../components/checkout/OrderSummary';
 import CheckoutButton from '../components/checkout/CheckoutButton';
-
-// You should get this from an environment variable in a real application
-const PAYPAL_CLIENT_ID = "YOUR_PAYPAL_CLIENT_ID_HERE";
 
 const CheckoutPage: React.FC = () => {
   const { user } = useAuth();
@@ -32,20 +29,12 @@ const CheckoutPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   
-  // Update the PayPal total amount element whenever the cart changes
-  useEffect(() => {
-    const amountElement = document.getElementById("paypal-total-amount");
-    if (amountElement) {
-      amountElement.setAttribute("data-amount", getCartTotal().toFixed(2));
-    }
-  }, [cart, getCartTotal]);
-
   // Redirect if cart is empty
   if (cart.length === 0) {
     return <Navigate to="/cart" />;
   }
 
-  // Redirect if not logged in - new requirement
+  // Redirect if not logged in
   if (!user) {
     toast.error("You need to login or create an account to checkout");
     return <Navigate to="/login" state={{ from: "/checkout" }} />;
@@ -58,27 +47,6 @@ const CheckoutPage: React.FC = () => {
       [name]: value
     }));
   };
-
-  // Process the PayPal payment after approval
-  const handlePayPalApprove = useCallback(async (paypalData: any) => {
-    setPaymentProcessing(true);
-    toast.info("Processing your PayPal payment...");
-    
-    try {
-      console.log("PayPal transaction approved:", paypalData);
-      
-      // Here you would typically validate the payment with your backend
-      // For now, we'll just simulate a successful payment
-      toast.success("Payment confirmed via PayPal");
-      
-      // After payment is confirmed, create the order
-      await createOrder();
-    } catch (error) {
-      console.error("Error processing PayPal payment:", error);
-      toast.error("Failed to process payment. Please try again.");
-      setPaymentProcessing(false);
-    }
-  }, []);
 
   // Create an order in your database
   const createOrder = async () => {
@@ -133,13 +101,8 @@ const CheckoutPage: React.FC = () => {
         // Credit card payment processing would go here
         toast.success("Credit card payment processed successfully");
         await createOrder();
-      } else {
-        // For PayPal, the payment is processed when the PayPal button is clicked
-        // The order is created in the handlePayPalApprove callback
-        // So we don't need to do anything here for PayPal
-        setIsSubmitting(false);
-        toast.info("Please complete your payment using the PayPal button");
       }
+      // For Stripe, the checkout is handled by the CheckoutButton
     } catch (error) {
       console.error('Error during checkout:', error);
       toast.error("An error occurred while processing your order");
@@ -162,21 +125,15 @@ const CheckoutPage: React.FC = () => {
             
             <PaymentMethodForm 
               paymentMethod={formData.paymentMethod} 
-              handleChange={handleChange} 
-              onPayPalApprove={handlePayPalApprove}
-              clientId={PAYPAL_CLIENT_ID}
+              handleChange={handleChange}
             />
             
             <div className="mt-8">
-              {formData.paymentMethod === 'credit_card' && (
-                <CheckoutButton isSubmitting={isSubmitting || paymentProcessing} />
-              )}
-              
-              {formData.paymentMethod === 'paypal' && (
-                <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                  <p>Please use the PayPal button above to complete your purchase securely.</p>
-                </div>
-              )}
+              <CheckoutButton 
+                isSubmitting={isSubmitting || paymentProcessing} 
+                paymentMethod={formData.paymentMethod}
+                userId={user.id}
+              />
             </div>
           </form>
         </div>

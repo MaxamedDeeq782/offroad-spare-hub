@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useScript } from "../../hooks/useScript";
@@ -7,80 +7,18 @@ import { useScript } from "../../hooks/useScript";
 interface PaymentMethodFormProps {
   paymentMethod: string;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  onPayPalApprove?: (data: any) => void;
-  clientId?: string;
 }
-
-const PAYPAL_SCRIPT_URL = "https://www.paypal.com/sdk/js";
 
 const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ 
   paymentMethod, 
-  handleChange, 
-  onPayPalApprove,
-  clientId = "test" // Use your actual client ID in production
+  handleChange
 }) => {
-  const { status: paypalStatus } = useScript(
-    `${PAYPAL_SCRIPT_URL}?client-id=${clientId}&currency=USD`
-  );
-
-  useEffect(() => {
-    // Initialize PayPal buttons when the script is loaded and payment method is PayPal
-    if (paypalStatus === "ready" && paymentMethod === "paypal" && window.paypal) {
-      try {
-        // Clear the container first
-        const container = document.getElementById("paypal-button-container");
-        if (container) container.innerHTML = "";
-        
-        // @ts-ignore - PayPal is loaded via script
-        window.paypal.Buttons({
-          style: {
-            layout: 'vertical',
-            color: 'blue',
-            shape: 'rect',
-            label: 'paypal'
-          },
-          createOrder: (data: any, actions: any) => {
-            // This will be called when the button is clicked
-            return actions.order.create({
-              purchase_units: [{
-                amount: {
-                  currency_code: "USD",
-                  // The value should be passed from the parent component
-                  // This is just a placeholder
-                  value: document.getElementById("paypal-total-amount")?.getAttribute("data-amount") || "0.00"
-                }
-              }]
-            });
-          },
-          onApprove: (data: any, actions: any) => {
-            // This is called when the customer approves the payment
-            return actions.order.capture().then(function(details: any) {
-              if (onPayPalApprove) {
-                onPayPalApprove({
-                  orderID: data.orderID,
-                  payerID: data.payerID,
-                  details
-                });
-              }
-            });
-          },
-          onError: (err: any) => {
-            console.error("PayPal error:", err);
-            // You could add error handling UI here
-          }
-        }).render("#paypal-button-container");
-      } catch (error) {
-        console.error("Error rendering PayPal buttons:", error);
-      }
-    }
-  }, [paypalStatus, paymentMethod, onPayPalApprove, clientId]);
-
   return (
     <div className="bg-white p-6 rounded-lg shadow mt-6 dark:bg-gray-800">
       <h2 className="text-xl font-semibold mb-6">Payment Method</h2>
       
-      <div className="mb-6">
-        <div className="flex items-center mb-4">
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2 rounded-md border p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
           <input
             type="radio"
             id="credit_card"
@@ -88,54 +26,38 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
             value="credit_card"
             checked={paymentMethod === 'credit_card'}
             onChange={handleChange}
-            className="mr-2"
+            className="h-4 w-4 text-primary"
           />
-          <label htmlFor="credit_card" className="flex items-center dark:text-gray-300">
-            Credit Card
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 ml-2 text-gray-600">
-              <path d="M4 4C2.89543 4 2 4.89543 2 6V18C2 19.1046 2.89543 20 4 20H20C21.1046 20 22 19.1046 22 18V6C22 4.89543 21.1046 4 20 4H4ZM4 6H20V10H4V6ZM4 12H6V14H4V12ZM8 12H10V14H8V12ZM4 16H12V18H4V16Z"></path>
-            </svg>
-          </label>
+          <Label htmlFor="credit_card" className="flex flex-1 cursor-pointer items-center justify-between dark:text-gray-300">
+            <div className="flex items-center gap-2">
+              Credit Card
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 ml-2 text-gray-600">
+                <path d="M4 4C2.89543 4 2 4.89543 2 6V18C2 19.1046 2.89543 20 4 20H20C21.1046 20 22 19.1046 22 18V6C22 4.89543 21.1046 4 20 4H4ZM4 6H20V10H4V6ZM4 12H6V14H4V12ZM8 12H10V14H8V12ZM4 16H12V18H4V16Z"></path>
+              </svg>
+            </div>
+          </Label>
         </div>
         
-        <div className="flex items-center">
+        <div className="flex items-center space-x-2 rounded-md border p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
           <input
             type="radio"
-            id="paypal"
+            id="stripe"
             name="paymentMethod"
-            value="paypal"
-            checked={paymentMethod === 'paypal'}
+            value="stripe"
+            checked={paymentMethod === 'stripe'}
             onChange={handleChange}
-            className="mr-2"
+            className="h-4 w-4 text-primary"
           />
-          <label htmlFor="paypal" className="flex items-center dark:text-gray-300">
-            PayPal
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0070ba" className="w-6 h-6 ml-2">
-              <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm12.144-14.7c-.003 2.068-1.28 5.717-5.685 5.717h-2.19c-.524 0-.97.382-1.05.9L9.158 21.337H4.55a.641.641 0 0 1-.633-.74L7.025.902C7.108.382 7.555 0 8.08 0h7.46c2.57 0 4.148.543 5.26 1.81.962 1.148 1.006 2.92.42 4.827z"></path>
-            </svg>
-          </label>
+          <Label htmlFor="stripe" className="flex flex-1 cursor-pointer items-center justify-between dark:text-gray-300">
+            <div className="flex items-center gap-2">
+              Stripe
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#6772E5">
+                <path d="M13.479 9.883c-1.626-.604-2.512-.931-2.512-1.618 0-.646.646-1.033 1.701-1.033 2.12 0 4.32.913 5.87 1.756V4.908c-1.23-.763-3.041-1.255-5.870-1.255-2.076 0-3.809.522-4.962 1.469-1.211.989-1.837 2.394-1.837 4.051 0 3.047 1.899 4.316 4.962 5.376 2.384.799 2.982 1.374 2.982 2.24 0 .869-.76 1.374-2.036 1.374-1.758 0-4.259-.904-6.103-2.119v4.125c1.555.97 3.93 1.618 6.103 1.618 2.15 0 3.96-.523 5.15-1.506 1.282-1.052 1.95-2.618 1.95-4.441 0-3.116-1.899-4.317-5.397-5.376l-.001-.001z"/>
+              </svg>
+            </div>
+          </Label>
         </div>
       </div>
-
-      {paymentMethod === 'paypal' && (
-        <div className="mt-4">
-          <div 
-            id="paypal-total-amount" 
-            data-amount="0.00"
-            className="hidden"
-          ></div>
-          <div 
-            id="paypal-button-container" 
-            className="mt-4"
-          >
-            {paypalStatus === "loading" && (
-              <div className="text-center py-4">
-                <p>Loading PayPal buttons...</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

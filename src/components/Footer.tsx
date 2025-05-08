@@ -46,6 +46,16 @@ const Footer: React.FC = () => {
           )}
         </div>
       </div>
+      
+      {/* Fixed AD button */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <Link 
+          to="/admin"
+          className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xl w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-2 border-red-400"
+        >
+          AD
+        </Link>
+      </div>
     </footer>
   );
 };

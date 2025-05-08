@@ -22,12 +22,13 @@ const OrderConfirmationPage: React.FC = () => {
       if (!sessionId || orderId) return;
       
       try {
-        // Query orders table for the matching stripe_session_id
+        // Simplified query to avoid TypeScript depth issues
         const { data, error } = await supabase
           .from('orders')
           .select('id')
           .eq('stripe_session_id', sessionId)
-          .maybeSingle() as any;
+          .limit(1)
+          .single();
         
         if (error) {
           throw error;

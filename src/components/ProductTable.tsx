@@ -94,11 +94,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
           return (
             <TableRow key={product.id}>
               <TableCell>
-                <div className="w-16 h-16 relative">
-                  <img 
+                <div className="w-24 h-24 md:w-32 md:h-32 relative">
+                  <Image 
                     src={getProductImage(product)} 
                     alt={product.name}
-                    className="object-cover w-full h-full rounded"
+                    className="object-contain w-full h-full rounded"
                   />
                 </div>
               </TableCell>

@@ -18,8 +18,9 @@ const Image: React.FC<ImageProps> = ({ src, alt, className = '' }) => {
     <img
       src={error ? '/placeholder.svg' : src}
       alt={alt}
-      className={className}
+      className={`${className} transition-all duration-200`}
       onError={handleError}
+      loading="lazy"
     />
   );
 };

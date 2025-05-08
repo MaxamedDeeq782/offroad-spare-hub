@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Moon, Sun, LogOut } from 'lucide-react';
+import { User, Moon, Sun, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -61,6 +61,15 @@ const Header: React.FC = () => {
           <div className="hidden md:flex space-x-6">
             <Link to="/" className="hover:text-primary font-bold">Home</Link>
             <Link to="/products" className="hover:text-primary font-bold">Products</Link>
+            {isUserAdmin() && (
+              <Link 
+                to="/admin" 
+                className="hover:text-primary font-bold opacity-50 hover:opacity-100 transition-opacity"
+              >
+                <Settings size={16} className="inline mr-1" />
+                <span className="text-sm">Admin</span>
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center space-x-4">
@@ -124,6 +133,12 @@ const Header: React.FC = () => {
           <div className="md:hidden mt-4">
             <Link to="/" className="block hover:text-primary py-2 font-bold">Home</Link>
             <Link to="/products" className="block hover:text-primary py-2 font-bold">Products</Link>
+            {isUserAdmin() && (
+              <Link to="/admin" className="block hover:text-primary py-2 font-bold opacity-60 hover:opacity-100 transition-opacity">
+                <Settings size={16} className="inline mr-1" />
+                <span>Admin</span>
+              </Link>
+            )}
             {!user && (
               <>
                 <Link to="/login" className="block hover:text-primary py-2 font-bold">Login</Link>

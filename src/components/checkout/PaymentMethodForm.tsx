@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useScript } from "../../hooks/useScript";
 
 interface PaymentMethodFormProps {
   paymentMethod: string;

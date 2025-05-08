@@ -1,6 +1,8 @@
 
-import React from 'react';
-import { Link, useLocation, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, Navigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LocationState {
   orderId?: string;
@@ -9,10 +11,57 @@ interface LocationState {
 const OrderConfirmationPage: React.FC = () => {
   const location = useLocation();
   const state = location.state as LocationState;
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('session_id');
+  const [orderId, setOrderId] = useState<string | null>(state?.orderId || null);
+  const [loading, setLoading] = useState<boolean>(!!sessionId && !orderId);
   
-  // If no order ID is passed, redirect to homepage
-  if (!state || !state.orderId) {
+  useEffect(() => {
+    // If we have a session_id from Stripe but no orderId yet, fetch the order
+    const fetchOrderFromSession = async () => {
+      if (!sessionId || orderId) return;
+      
+      try {
+        // Query orders table for the matching stripe_session_id
+        const { data, error } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('stripe_session_id', sessionId)
+          .maybeSingle();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setOrderId(data.id);
+        } else {
+          toast.error("Could not find your order. Please contact support.");
+        }
+      } catch (error) {
+        console.error('Error fetching order:', error);
+        toast.error('Error retrieving order details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderFromSession();
+  }, [sessionId, orderId]);
+
+  // If no order ID is passed and we're not loading, redirect to homepage
+  if (!orderId && !loading) {
     return <Navigate to="/" />;
+  }
+  
+  // Show loading state while fetching order details
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-xl">Loading your order details...</p>
+      </div>
+    );
   }
 
   return (
@@ -27,10 +76,10 @@ const OrderConfirmationPage: React.FC = () => {
         <h1 className="text-3xl font-bold mb-4">Order Placed Successfully!</h1>
         
         <p className="text-xl mb-8">
-          Thank you for your order. Your order number is <span className="font-semibold">{state.orderId}</span>
+          Thank you for your order. Your order number is <span className="font-semibold">{orderId}</span>
         </p>
         
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 mb-8 dark:text-gray-400">
           We've sent a confirmation email with your order details. You can also view your order status
           in your account.
         </p>

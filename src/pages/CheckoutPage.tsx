@@ -29,6 +29,9 @@ const CheckoutPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   
+  // Field validation state
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  
   // Redirect if cart is empty
   if (cart.length === 0) {
     return <Navigate to="/cart" />;
@@ -46,6 +49,33 @@ const CheckoutPage: React.FC = () => {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error when field is changed
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  // Validate form fields
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    // Required fields
+    if (!formData.firstName) errors.firstName = "First name is required";
+    if (!formData.lastName) errors.lastName = "Last name is required";
+    if (!formData.email) errors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = "Email is invalid";
+    if (!formData.address) errors.address = "Address is required";
+    if (!formData.city) errors.city = "City is required";
+    if (!formData.state) errors.state = "State is required";
+    if (!formData.zipCode) errors.zipCode = "ZIP code is required";
+    else if (!/^\d{5}(-\d{4})?$/.test(formData.zipCode)) errors.zipCode = "ZIP code is invalid";
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   // Create an order in your database
@@ -63,15 +93,22 @@ const CheckoutPage: React.FC = () => {
         status: 'pending' as const
       };
       
+      console.log("Creating order with data:", orderData);
+      
       // Add order to Supabase
       const newOrder = await addOrder(orderData);
       
       if (newOrder) {
+        console.log("Order created successfully:", newOrder);
+        
         // Clear cart
         clearCart();
         
-        // Navigate to order confirmation
-        navigate('/order-confirmation', { state: { orderId: newOrder.id } });
+        // Navigate to order confirmation for credit card payment
+        // For Stripe, this will be called after returning from Stripe
+        if (formData.paymentMethod === 'credit_card') {
+          navigate('/order-confirmation', { state: { orderId: newOrder.id } });
+        }
       } else {
         toast.error("Failed to create order. Please try again.");
       }
@@ -87,10 +124,9 @@ const CheckoutPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic form validation
-    if (!formData.firstName || !formData.lastName || !formData.email || 
-        !formData.address || !formData.city || !formData.state || !formData.zipCode) {
-      toast.error("Please fill in all required fields");
+    // Validate form
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields correctly");
       return;
     }
     
@@ -99,6 +135,7 @@ const CheckoutPage: React.FC = () => {
     try {
       if (formData.paymentMethod === 'credit_card') {
         // Credit card payment processing would go here
+        setPaymentProcessing(true);
         toast.success("Credit card payment processed successfully");
         await createOrder();
       }
@@ -121,6 +158,7 @@ const CheckoutPage: React.FC = () => {
               formData={formData} 
               handleChange={handleChange} 
               isSubmitting={isSubmitting}
+              fieldErrors={fieldErrors}
             />
             
             <PaymentMethodForm 
@@ -133,6 +171,8 @@ const CheckoutPage: React.FC = () => {
                 isSubmitting={isSubmitting || paymentProcessing} 
                 paymentMethod={formData.paymentMethod}
                 userId={user.id}
+                formData={formData}
+                createOrder={createOrder}
               />
             </div>
           </form>

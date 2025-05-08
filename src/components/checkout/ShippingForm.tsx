@@ -16,9 +16,15 @@ interface ShippingFormProps {
   formData: FormData;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   isSubmitting: boolean;
+  fieldErrors: Record<string, string>;
 }
 
-const ShippingForm: React.FC<ShippingFormProps> = ({ formData, handleChange, isSubmitting }) => {
+const ShippingForm: React.FC<ShippingFormProps> = ({ 
+  formData, 
+  handleChange, 
+  isSubmitting,
+  fieldErrors
+}) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow dark:bg-gray-800">
       <h2 className="text-xl font-semibold mb-6">Shipping Information</h2>
@@ -34,9 +40,14 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ formData, handleChange, isS
             name="firstName"
             value={formData.firstName}
             onChange={handleChange}
-            className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+              fieldErrors.firstName ? 'border-red-500' : ''
+            }`}
             required
           />
+          {fieldErrors.firstName && (
+            <p className="mt-1 text-sm text-red-500">{fieldErrors.firstName}</p>
+          )}
         </div>
         
         <div>
@@ -49,9 +60,14 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ formData, handleChange, isS
             name="lastName"
             value={formData.lastName}
             onChange={handleChange}
-            className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+              fieldErrors.lastName ? 'border-red-500' : ''
+            }`}
             required
           />
+          {fieldErrors.lastName && (
+            <p className="mt-1 text-sm text-red-500">{fieldErrors.lastName}</p>
+          )}
         </div>
       </div>
       
@@ -65,9 +81,14 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ formData, handleChange, isS
           name="email"
           value={formData.email}
           onChange={handleChange}
-          className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+            fieldErrors.email ? 'border-red-500' : ''
+          }`}
           required
         />
+        {fieldErrors.email && (
+          <p className="mt-1 text-sm text-red-500">{fieldErrors.email}</p>
+        )}
       </div>
       
       <div className="mb-6">
@@ -80,9 +101,14 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ formData, handleChange, isS
           name="address"
           value={formData.address}
           onChange={handleChange}
-          className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+            fieldErrors.address ? 'border-red-500' : ''
+          }`}
           required
         />
+        {fieldErrors.address && (
+          <p className="mt-1 text-sm text-red-500">{fieldErrors.address}</p>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -96,9 +122,14 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ formData, handleChange, isS
             name="city"
             value={formData.city}
             onChange={handleChange}
-            className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+              fieldErrors.city ? 'border-red-500' : ''
+            }`}
             required
           />
+          {fieldErrors.city && (
+            <p className="mt-1 text-sm text-red-500">{fieldErrors.city}</p>
+          )}
         </div>
         
         <div>
@@ -111,9 +142,14 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ formData, handleChange, isS
             name="state"
             value={formData.state}
             onChange={handleChange}
-            className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+              fieldErrors.state ? 'border-red-500' : ''
+            }`}
             required
           />
+          {fieldErrors.state && (
+            <p className="mt-1 text-sm text-red-500">{fieldErrors.state}</p>
+          )}
         </div>
         
         <div>
@@ -126,9 +162,14 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ formData, handleChange, isS
             name="zipCode"
             value={formData.zipCode}
             onChange={handleChange}
-            className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+              fieldErrors.zipCode ? 'border-red-500' : ''
+            }`}
             required
           />
+          {fieldErrors.zipCode && (
+            <p className="mt-1 text-sm text-red-500">{fieldErrors.zipCode}</p>
+          )}
         </div>
       </div>
     </div>

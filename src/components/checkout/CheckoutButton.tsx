@@ -10,9 +10,17 @@ interface CheckoutButtonProps {
   isSubmitting: boolean;
   paymentMethod: string;
   userId?: string;
+  formData: any;
+  createOrder: () => Promise<void>;
 }
 
-const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMethod, userId }) => {
+const CheckoutButton: React.FC<CheckoutButtonProps> = ({ 
+  isSubmitting, 
+  paymentMethod, 
+  userId,
+  formData,
+  createOrder 
+}) => {
   const { cart } = useCart();
   const navigate = useNavigate();
 
@@ -29,9 +37,30 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
         imageUrl: item.imageUrl,
       }));
       
+      // Validate form fields before proceeding with Stripe checkout
+      if (!formData.firstName || !formData.lastName || !formData.email || 
+          !formData.address || !formData.city || !formData.state || !formData.zipCode) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+      
       // Call the Supabase Edge Function to create a Stripe checkout session
       const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
-        body: { cartItems, userId }
+        body: { 
+          cartItems, 
+          userId,
+          customerInfo: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            address: {
+              line1: formData.address,
+              city: formData.city,
+              state: formData.state,
+              postal_code: formData.zipCode,
+              country: 'US'
+            }
+          }
+        }
       });
       
       if (error) {
@@ -45,6 +74,9 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
           toast.info("Using Stripe test mode - use test card 4242 4242 4242 4242");
         }
         
+        // Create local order before redirecting
+        await createOrder();
+        
         // Redirect to Stripe Checkout
         window.location.href = data.url;
       } else {
@@ -56,9 +88,9 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
     }
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (paymentMethod === 'stripe') {
-      handleStripeCheckout();
+      await handleStripeCheckout();
     }
     // For credit_card, the form submission will handle it
   };

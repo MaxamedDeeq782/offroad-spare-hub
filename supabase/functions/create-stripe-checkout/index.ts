@@ -1,102 +1,122 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@12.18.0?target=deno";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@12.18.0";
 
+// Define CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests
+// Handle CORS preflight requests
+const handleCors = (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders, status: 204 });
-  }
-
-  try {
-    // Get the request body
-    const { cartItems, userId } = await req.json();
-    
-    if (!cartItems || cartItems.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No items in cart" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-
-    // Get the Stripe key from environment - works with both test and live keys
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    
-    if (!stripeKey) {
-      console.error("STRIPE_SECRET_KEY is not set in environment");
-      return new Response(
-        JSON.stringify({ error: "Stripe is not configured" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
-    }
-
-    // Check if this is a test key (starts with sk_test)
-    const isTestMode = stripeKey.startsWith('sk_test');
-    console.log(`Using Stripe in ${isTestMode ? 'TEST' : 'LIVE'} mode`);
-
-    // Initialize Stripe with the secret key
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2023-10-16",
+    return new Response(null, {
+      headers: corsHeaders,
+      status: 204,
     });
+  }
+  return null;
+};
 
-    // Create a Stripe Checkout Session
+// Main function
+serve(async (req) => {
+  try {
+    // Handle CORS
+    const corsResponse = handleCors(req);
+    if (corsResponse) return corsResponse;
+    
+    // Get Stripe secret key from environment variables
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) {
+      throw new Error("STRIPE_SECRET_KEY is not set");
+    }
+    
+    // Check if we're in test mode
+    const isTestMode = stripeSecretKey.startsWith("sk_test_");
+    console.log(`Using Stripe in ${isTestMode ? 'TEST' : 'LIVE'} mode`);
+    
+    // Get the request body
+    const { cartItems, userId, customerInfo } = await req.json();
+    
+    // Validate request body
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      throw new Error("Invalid cart items");
+    }
+    
+    // Initialize Stripe
+    const stripe = new Stripe(stripeSecretKey);
+    
+    // Create line items for Stripe
+    const lineItems = cartItems.map((item) => ({
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: item.name,
+          description: `Quantity: ${item.quantity}`,
+          // Only include images if they are absolute URLs
+          images: item.imageUrl && item.imageUrl.startsWith('http') ? [item.imageUrl] : undefined,
+        },
+        unit_amount: Math.round(item.price * 100), // Convert to cents
+      },
+      quantity: item.quantity,
+    }));
+    
+    // Create the checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: cartItems.map((item: any) => ({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: item.name,
-            images: item.imageUrl ? [item.imageUrl] : [],
-          },
-          unit_amount: Math.round(item.price * 100), // convert to cents
-        },
-        quantity: item.quantity,
-      })),
+      line_items: lineItems,
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/checkout`,
+      success_url: `${new URL(req.url).origin}/order-confirmation`,
+      cancel_url: `${new URL(req.url).origin}/checkout`,
+      client_reference_id: userId,
+      customer_email: customerInfo?.email,
+      shipping_address_collection: {
+        allowed_countries: ['US', 'CA', 'GB'],
+      },
+      // Pre-fill customer information if provided
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: {
+              amount: 0,
+              currency: 'usd',
+            },
+            display_name: 'Free shipping',
+            delivery_estimate: {
+              minimum: {
+                unit: 'business_day',
+                value: 5,
+              },
+              maximum: {
+                unit: 'business_day',
+                value: 7,
+              },
+            },
+          },
+        }
+      ],
     });
-
-    // If userId is provided, initialize Supabase client and create a pending order
-    if (userId) {
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL") || "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
-      );
-
-      // Create a pending order in the database
-      await supabaseAdmin.from("orders").insert({
-        user_id: userId,
-        stripe_session_id: session.id,
-        total: cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0),
-        status: "pending"
-      });
-    }
-
-    // Return the Stripe session ID and URL to the client
-    return new Response(
-      JSON.stringify({ 
-        sessionId: session.id, 
-        url: session.url,
-        isTestMode: isTestMode
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-    );
+    
+    return new Response(JSON.stringify({ 
+      url: session.url, 
+      isTestMode 
+    }), {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+      status: 200,
+    });
   } catch (error) {
     console.error("Error creating checkout session:", error);
-    
-    return new Response(
-      JSON.stringify({ 
-        error: error.message
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+      status: 400,
+    });
   }
 });

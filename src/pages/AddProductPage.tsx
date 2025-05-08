@@ -30,8 +30,21 @@ const AddProductPage: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Check admin status whenever user changes
+  useEffect(() => {
+    // Check if the user is admin from metadata
+    if (user?.user_metadata?.isAdmin) {
+      setIsAdmin(true);
+    } else {
+      // If not in user metadata, check session storage as fallback
+      const adminAuth = sessionStorage.getItem('adminAuth');
+      setIsAdmin(adminAuth === 'true');
+    }
+  }, [user]);
 
   // Fetch brands on component mount
   useEffect(() => {
@@ -166,8 +179,8 @@ const AddProductPage: React.FC = () => {
     }
   };
 
-  // Improved security check: verify both authentication and admin status
-  if (!user || !user.user_metadata?.isAdmin) {
+  // If not admin, show access denied
+  if (!isAdmin) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <h1 className="text-2xl font-bold mb-4">Access Denied</h1>

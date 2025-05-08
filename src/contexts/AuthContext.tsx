@@ -10,7 +10,7 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<{ success: boolean; error: string | null }>;
   logout: () => Promise<void>;
   isLoading: boolean;
-  adminSecretKeyAuth: (secretKey: string) => boolean;
+  adminSecretKeyAuth: (secretKey: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => ({ success: false, error: 'Auth context not initialized' }),
   logout: async () => {},
   isLoading: true,
-  adminSecretKeyAuth: () => false
+  adminSecretKeyAuth: async () => false
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -98,10 +98,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
   
-  // Validate admin secret key
-  const adminSecretKeyAuth = (secretKey: string): boolean => {
+  // Improved admin secret key auth that updates user metadata
+  const adminSecretKeyAuth = async (secretKey: string): Promise<boolean> => {
     // Compare with the hardcoded secret key
-    return secretKey === 'maxamed782';
+    if (secretKey === 'maxamed782') {
+      // If user is authenticated, update their metadata to set isAdmin flag
+      if (user && session) {
+        try {
+          const { data, error } = await supabase.auth.updateUser({
+            data: { isAdmin: true }
+          });
+          
+          if (error) {
+            console.error('Error updating user metadata:', error);
+            return true; // Still return true to grant temporary access
+          }
+          
+          // Update local user state with admin flag
+          setUser(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              user_metadata: { ...prev.user_metadata, isAdmin: true }
+            };
+          });
+          
+          console.log('User metadata updated with admin privileges');
+        } catch (err) {
+          console.error('Unexpected error updating user metadata:', err);
+        }
+      }
+      return true;
+    }
+    return false;
   };
 
   return (

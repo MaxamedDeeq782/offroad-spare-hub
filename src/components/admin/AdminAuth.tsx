@@ -6,22 +6,33 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AdminAuthProps {
-  adminSecretKeyAuth: (key: string) => boolean;
+  adminSecretKeyAuth: (key: string) => Promise<boolean>;
   onSuccessfulAuth: () => void;
 }
 
 const AdminAuth: React.FC<AdminAuthProps> = ({ adminSecretKeyAuth, onSuccessfulAuth }) => {
   const [secretKey, setSecretKey] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    if (adminSecretKeyAuth(secretKey)) {
-      setError('');
-      onSuccessfulAuth();
-    } else {
-      setError('Invalid secret key');
+    try {
+      const isValid = await adminSecretKeyAuth(secretKey);
+      
+      if (isValid) {
+        setError('');
+        onSuccessfulAuth();
+      } else {
+        setError('Invalid secret key');
+      }
+    } catch (err) {
+      console.error('Error during admin authentication:', err);
+      setError('Authentication error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -53,8 +64,9 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ adminSecretKeyAuth, onSuccessfulA
             <Button
               type="submit"
               className="w-full"
+              disabled={isLoading}
             >
-              Access Admin Panel
+              {isLoading ? 'Authenticating...' : 'Access Admin Panel'}
             </Button>
           </CardContent>
         </form>

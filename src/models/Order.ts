@@ -115,7 +115,7 @@ export const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedA
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert({
-        user_id: order.userId || '00000000-0000-0000-0000-000000000000', // Use a default UUID for guest users
+        user_id: order.userId || null, // Fix: Changed from number to string or null
         total: order.total,
         status: order.status,
         guest_email: order.guestEmail,
@@ -151,7 +151,7 @@ export const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedA
     // Create the complete order object
     const newOrder: Order = {
       id: orderData.id,
-      userId: orderData.user_id,
+      userId: orderData.user_id || "", // Fix: Ensure userId is a string
       items: order.items,
       total: parseFloat(orderData.total),
       status: orderData.status as OrderStatus,

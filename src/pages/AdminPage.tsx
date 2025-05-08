@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AdminAuth from '../components/admin/AdminAuth';
 import AdminTabs from '../components/admin/AdminTabs';
+import { Button } from '../components/ui/button';
+import { Plus } from 'lucide-react';
 
 const AdminPage: React.FC = () => {
   const { adminSecretKeyAuth, user } = useAuth();
@@ -28,7 +30,18 @@ const AdminPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        {activeTab === 'products' && (
+          <Link to="/admin/add-product">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Product
+            </Button>
+          </Link>
+        )}
+      </div>
+      
       <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );

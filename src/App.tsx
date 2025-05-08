@@ -15,6 +15,7 @@ import AccountPage from './pages/AccountPage';
 import AccountDetailsPage from './pages/AccountDetailsPage';
 import OrdersPage from './pages/OrdersPage';
 import AdminPage from './pages/AdminPage';
+import AddProductPage from './pages/AddProductPage';
 import NotFound from './pages/NotFound';
 import VehiclePage from './pages/VehiclePage';
 import { AuthProvider } from './contexts/AuthContext';
@@ -44,6 +45,7 @@ function App() {
                   <Route path="/account/details" element={<AccountDetailsPage />} />
                   <Route path="/orders" element={<OrdersPage />} />
                   <Route path="/admin" element={<AdminPage />} />
+                  <Route path="/admin/add-product" element={<AddProductPage />} />
                   <Route path="/vehicle/:vehicleId" element={<VehiclePage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

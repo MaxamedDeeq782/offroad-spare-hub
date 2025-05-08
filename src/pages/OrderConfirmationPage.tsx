@@ -33,7 +33,7 @@ const OrderConfirmationPage: React.FC = () => {
           return;
         }
         
-        // Simplified query to avoid TypeScript depth issues
+        // Query to find the order with this session ID
         const { data, error } = await supabase
           .from('orders')
           .select('id')

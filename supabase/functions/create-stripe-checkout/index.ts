@@ -25,8 +25,9 @@ serve(async (req) => {
       );
     }
 
-    // Get the Stripe key from environment or use a placeholder for development
+    // Get the Stripe key from environment - works with both test and live keys
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    
     if (!stripeKey) {
       console.error("STRIPE_SECRET_KEY is not set in environment");
       
@@ -34,11 +35,16 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           url: `${req.headers.get("origin")}/order-confirmation?session_id=mock_${Date.now()}`,
-          dev_mode: true
+          dev_mode: true,
+          isTestMode: true
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
+
+    // Check if this is a test key (starts with sk_test)
+    const isTestMode = stripeKey.startsWith('sk_test');
+    console.log(`Using Stripe in ${isTestMode ? 'TEST' : 'LIVE'} mode`);
 
     // Initialize Stripe with the secret key
     const stripe = new Stripe(stripeKey, {
@@ -80,9 +86,13 @@ serve(async (req) => {
       });
     }
 
-    // Return the Stripe session ID to the client
+    // Return the Stripe session ID and URL to the client
     return new Response(
-      JSON.stringify({ sessionId: session.id, url: session.url }),
+      JSON.stringify({ 
+        sessionId: session.id, 
+        url: session.url,
+        isTestMode: isTestMode
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {

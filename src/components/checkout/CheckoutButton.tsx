@@ -16,21 +16,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
 
   const handleStripeCheckout = async () => {
     try {
-      toast.info("Preparing your checkout...");
-      
-      // For development mode only: simulate a successful checkout
-      // This allows testing the flow without an actual Stripe account
-      if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('localhost')) {
-        // Simulate a delay to mimic API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Simulate success
-        toast.success("Development mode: Simulating successful checkout");
-        
-        // Redirect to order confirmation with a dummy session ID
-        window.location.href = `/order-confirmation?session_id=dev_session_${Date.now()}`;
-        return;
-      }
+      toast.info("Preparing your Stripe checkout...");
       
       // Transform cart items for the stripe checkout
       const cartItems = cart.map(item => ({
@@ -52,6 +38,11 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
       }
       
       if (data?.url) {
+        // If it's a test URL, show a message
+        if (data.isTestMode) {
+          toast.info("Using Stripe test mode - use test card 4242 4242 4242 4242");
+        }
+        
         // Redirect to Stripe Checkout
         window.location.href = data.url;
       } else {
@@ -79,7 +70,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
     ? 'Processing...' 
     : paymentMethod === 'credit_card' 
       ? 'Complete Order' 
-      : 'Pay with Stripe';
+      : 'Pay with Stripe (Test Mode)';
 
   return (
     <Button

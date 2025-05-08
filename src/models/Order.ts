@@ -83,7 +83,7 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
       // Transform the Supabase data into our Order interface format
       const transformedOrders: Order[] = data.map(order => ({
         id: order.id,
-        userId: order.user_id,
+        userId: order.user_id || "",
         items: order.order_items.map((item: any) => ({
           productId: item.product_id,
           quantity: item.quantity,
@@ -115,7 +115,7 @@ export const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedA
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert({
-        user_id: order.userId || null, // Fix: Changed from number to string or null
+        user_id: order.userId || null, // Fix: Changed to handle null for guest users
         total: order.total,
         status: order.status,
         guest_email: order.guestEmail,
@@ -151,7 +151,7 @@ export const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedA
     // Create the complete order object
     const newOrder: Order = {
       id: orderData.id,
-      userId: orderData.user_id || "", // Fix: Ensure userId is a string
+      userId: orderData.user_id || "", // Fix: Ensure userId is always a string
       items: order.items,
       total: parseFloat(orderData.total),
       status: orderData.status as OrderStatus,

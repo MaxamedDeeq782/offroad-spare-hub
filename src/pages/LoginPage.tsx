@@ -113,12 +113,19 @@ const LoginPage: React.FC = () => {
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
             
-            <p className="text-center text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-medium text-primary hover:text-primary-dark">
-                Create an account
-              </Link>
-            </p>
+            <div className="text-center space-y-2">
+              <p className="text-center text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link to="/register" className="font-medium text-primary hover:text-primary-dark">
+                  Create an account
+                </Link>
+              </p>
+              <p className="text-center text-sm text-gray-600">
+                <Link to="/admin" className="font-medium text-primary hover:text-primary-dark">
+                  Admin Access
+                </Link>
+              </p>
+            </div>
           </CardFooter>
         </form>
       </Card>

@@ -1,24 +1,33 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Order, orders, OrderStatus } from '../models/Order';
 import { products } from '../models/Product';
 import { users } from '../models/User';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Alert, AlertDescription } from '../components/ui/alert';
 
 const AdminPage: React.FC = () => {
-  const { user } = useAuth();
+  const { adminSecretKeyAuth } = useAuth();
+  const [secretKey, setSecretKey] = useState('');
+  const [error, setError] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'users'>('orders');
   const [allOrders, setAllOrders] = useState<Order[]>(orders);
 
-  // Helper function to check if user is admin
-  const isUserAdmin = () => {
-    return user?.user_metadata?.isAdmin === true;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (adminSecretKeyAuth(secretKey)) {
+      setIsAuthenticated(true);
+      setError('');
+    } else {
+      setError('Invalid secret key');
+    }
   };
-
-  // Redirect if not logged in or not an admin
-  if (!user || !isUserAdmin()) {
-    return <Navigate to="/login" />;
-  }
 
   // Function to get product details by ID
   const getProductName = (productId: string): string => {
@@ -62,6 +71,46 @@ const AdminPage: React.FC = () => {
     );
     setAllOrders(updatedOrders);
   };
+
+  // If not authenticated, show the secret key form
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Admin Access</CardTitle>
+          </CardHeader>
+          
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              
+              <div className="space-y-1">
+                <Input
+                  type="password"
+                  value={secretKey}
+                  onChange={(e) => setSecretKey(e.target.value)}
+                  placeholder="Enter secret key"
+                  required
+                />
+              </div>
+              
+              <Button
+                type="submit"
+                className="w-full"
+              >
+                Access Admin Panel
+              </Button>
+            </CardContent>
+          </form>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

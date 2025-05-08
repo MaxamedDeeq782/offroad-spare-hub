@@ -10,6 +10,7 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<{ success: boolean; error: string | null }>;
   logout: () => Promise<void>;
   isLoading: boolean;
+  adminSecretKeyAuth: (secretKey: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,7 +19,8 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => ({ success: false, error: 'Auth context not initialized' }),
   register: async () => ({ success: false, error: 'Auth context not initialized' }),
   logout: async () => {},
-  isLoading: true
+  isLoading: true,
+  adminSecretKeyAuth: () => false
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -95,9 +97,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async (): Promise<void> => {
     await supabase.auth.signOut();
   };
+  
+  // New function to validate admin secret key
+  const adminSecretKeyAuth = (secretKey: string): boolean => {
+    // Compare with the hardcoded secret key
+    return secretKey === 'maxamed782';
+  };
 
   return (
-    <AuthContext.Provider value={{ user, session, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, session, login, register, logout, isLoading, adminSecretKeyAuth }}>
       {children}
     </AuthContext.Provider>
   );

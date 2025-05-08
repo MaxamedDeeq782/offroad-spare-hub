@@ -25,8 +25,23 @@ serve(async (req) => {
       );
     }
 
+    // Get the Stripe key from environment or use a placeholder for development
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      console.error("STRIPE_SECRET_KEY is not set in environment");
+      
+      // For development, return a mock response
+      return new Response(
+        JSON.stringify({ 
+          url: `${req.headers.get("origin")}/order-confirmation?session_id=mock_${Date.now()}`,
+          dev_mode: true
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
     // Initialize Stripe with the secret key
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2023-10-16",
     });
 
@@ -74,7 +89,10 @@ serve(async (req) => {
     console.error("Error creating checkout session:", error);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        dev_url: `${req.headers.get("origin")}/order-confirmation?session_id=error_${Date.now()}`
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }

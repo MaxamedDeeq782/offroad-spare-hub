@@ -1,16 +1,22 @@
 
 import React from 'react';
 import { Phone, Mail, ShieldCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Footer: React.FC = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const currentYear = new Date().getFullYear();
   
   // Helper to check if user is admin
   const isUserAdmin = () => {
     return user?.user_metadata?.isAdmin === true;
+  };
+
+  // Check if we are currently on the admin page or a subpage of admin
+  const isAdminPage = () => {
+    return location.pathname.startsWith('/admin');
   };
 
   return (
@@ -47,15 +53,17 @@ const Footer: React.FC = () => {
         </div>
       </div>
       
-      {/* Fixed AD button */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <Link 
-          to="/admin"
-          className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xl w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-2 border-red-400"
-        >
-          AD
-        </Link>
-      </div>
+      {/* Fixed AD button - only show if not on admin page */}
+      {!isAdminPage() && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <Link 
+            to="/admin"
+            className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xl w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-2 border-red-400"
+          >
+            AD
+          </Link>
+        </div>
+      )}
     </footer>
   );
 };

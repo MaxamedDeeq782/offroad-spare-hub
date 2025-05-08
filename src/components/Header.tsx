@@ -51,25 +51,26 @@ const Header: React.FC = () => {
     <header className="bg-white shadow-md dark:bg-gray-900 dark:text-white transition-colors duration-200">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
             <Link to="/" className="text-2xl font-bold">
               <span style={{ color: 'var(--color-primary)' }}>Offroad</span>
               <span style={{ color: 'var(--color-secondary)' }}>SpareHub</span>
             </Link>
+            
+            {isUserAdmin() && (
+              <Link 
+                to="/admin" 
+                className="ml-6 bg-primary text-white px-3 py-1 rounded-md flex items-center shadow-sm hover:bg-primary/80 font-bold"
+              >
+                <Settings size={16} className="mr-1" />
+                <span>Admin</span>
+              </Link>
+            )}
           </div>
           
           <div className="hidden md:flex space-x-6">
             <Link to="/" className="hover:text-primary font-bold">Home</Link>
             <Link to="/products" className="hover:text-primary font-bold">Products</Link>
-            {isUserAdmin() && (
-              <Link 
-                to="/admin" 
-                className="hover:bg-primary/80 font-bold bg-primary text-white px-4 py-1.5 rounded-md flex items-center shadow-sm"
-              >
-                <Settings size={18} className="mr-2" />
-                <span>Admin</span>
-              </Link>
-            )}
           </div>
 
           <div className="flex items-center space-x-4">
@@ -136,7 +137,7 @@ const Header: React.FC = () => {
             {isUserAdmin() && (
               <Link 
                 to="/admin" 
-                className="block hover:bg-primary/80 font-bold bg-primary text-white px-4 py-2 rounded-md flex items-center w-fit my-2"
+                className="block bg-primary text-white px-4 py-2 rounded-md flex items-center w-fit my-2 hover:bg-primary/80 font-bold"
               >
                 <Settings size={18} className="mr-2" />
                 <span>Admin</span>

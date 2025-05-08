@@ -1,12 +1,80 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { useScript } from "../../hooks/useScript";
 
 interface PaymentMethodFormProps {
   paymentMethod: string;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  onPayPalApprove?: (data: any) => void;
+  clientId?: string;
 }
 
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ paymentMethod, handleChange }) => {
+const PAYPAL_SCRIPT_URL = "https://www.paypal.com/sdk/js";
+
+const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ 
+  paymentMethod, 
+  handleChange, 
+  onPayPalApprove,
+  clientId = "test" // Use your actual client ID in production
+}) => {
+  const { status: paypalStatus } = useScript(
+    `${PAYPAL_SCRIPT_URL}?client-id=${clientId}&currency=USD`
+  );
+
+  useEffect(() => {
+    // Initialize PayPal buttons when the script is loaded and payment method is PayPal
+    if (paypalStatus === "ready" && paymentMethod === "paypal" && window.paypal) {
+      try {
+        // Clear the container first
+        const container = document.getElementById("paypal-button-container");
+        if (container) container.innerHTML = "";
+        
+        // @ts-ignore - PayPal is loaded via script
+        window.paypal.Buttons({
+          style: {
+            layout: 'vertical',
+            color: 'blue',
+            shape: 'rect',
+            label: 'paypal'
+          },
+          createOrder: (data: any, actions: any) => {
+            // This will be called when the button is clicked
+            return actions.order.create({
+              purchase_units: [{
+                amount: {
+                  currency_code: "USD",
+                  // The value should be passed from the parent component
+                  // This is just a placeholder
+                  value: document.getElementById("paypal-total-amount")?.getAttribute("data-amount") || "0.00"
+                }
+              }]
+            });
+          },
+          onApprove: (data: any, actions: any) => {
+            // This is called when the customer approves the payment
+            return actions.order.capture().then(function(details: any) {
+              if (onPayPalApprove) {
+                onPayPalApprove({
+                  orderID: data.orderID,
+                  payerID: data.payerID,
+                  details
+                });
+              }
+            });
+          },
+          onError: (err: any) => {
+            console.error("PayPal error:", err);
+            // You could add error handling UI here
+          }
+        }).render("#paypal-button-container");
+      } catch (error) {
+        console.error("Error rendering PayPal buttons:", error);
+      }
+    }
+  }, [paypalStatus, paymentMethod, onPayPalApprove, clientId]);
+
   return (
     <div className="bg-white p-6 rounded-lg shadow mt-6 dark:bg-gray-800">
       <h2 className="text-xl font-semibold mb-6">Payment Method</h2>
@@ -48,6 +116,26 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ paymentMethod, ha
           </label>
         </div>
       </div>
+
+      {paymentMethod === 'paypal' && (
+        <div className="mt-4">
+          <div 
+            id="paypal-total-amount" 
+            data-amount="0.00"
+            className="hidden"
+          ></div>
+          <div 
+            id="paypal-button-container" 
+            className="mt-4"
+          >
+            {paypalStatus === "loading" && (
+              <div className="text-center py-4">
+                <p>Loading PayPal buttons...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

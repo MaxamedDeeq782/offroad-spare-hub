@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
@@ -9,6 +9,9 @@ import ShippingForm from '../components/checkout/ShippingForm';
 import PaymentMethodForm from '../components/checkout/PaymentMethodForm';
 import OrderSummary from '../components/checkout/OrderSummary';
 import CheckoutButton from '../components/checkout/CheckoutButton';
+
+// You should get this from an environment variable in a real application
+const PAYPAL_CLIENT_ID = "YOUR_PAYPAL_CLIENT_ID_HERE";
 
 const CheckoutPage: React.FC = () => {
   const { user } = useAuth();
@@ -28,6 +31,14 @@ const CheckoutPage: React.FC = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  
+  // Update the PayPal total amount element whenever the cart changes
+  useEffect(() => {
+    const amountElement = document.getElementById("paypal-total-amount");
+    if (amountElement) {
+      amountElement.setAttribute("data-amount", getCartTotal().toFixed(2));
+    }
+  }, [cart, getCartTotal]);
 
   // Redirect if cart is empty
   if (cart.length === 0) {
@@ -48,57 +59,31 @@ const CheckoutPage: React.FC = () => {
     }));
   };
 
-  // Function to simulate PayPal payment process
-  const processPayPalPayment = async () => {
+  // Process the PayPal payment after approval
+  const handlePayPalApprove = useCallback(async (paypalData: any) => {
     setPaymentProcessing(true);
+    toast.info("Processing your PayPal payment...");
     
     try {
-      // This would be replaced with actual PayPal SDK integration
-      toast.info("Redirecting to PayPal...");
+      console.log("PayPal transaction approved:", paypalData);
       
-      // Simulate a delay for the PayPal process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Here you would typically validate the payment with your backend
+      // For now, we'll just simulate a successful payment
+      toast.success("Payment confirmed via PayPal");
       
-      // Simulate success
-      toast.success("Payment received via PayPal");
-      return true;
+      // After payment is confirmed, create the order
+      await createOrder();
     } catch (error) {
-      console.error("PayPal payment error:", error);
-      toast.error("PayPal payment failed. Please try again.");
-      return false;
-    } finally {
+      console.error("Error processing PayPal payment:", error);
+      toast.error("Failed to process payment. Please try again.");
       setPaymentProcessing(false);
     }
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Basic form validation
-    if (!formData.firstName || !formData.lastName || !formData.email || 
-        !formData.address || !formData.city || !formData.state || !formData.zipCode) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
+  // Create an order in your database
+  const createOrder = async () => {
     try {
-      // Process payment based on selected method
-      let paymentSuccessful = true;
-      
-      if (formData.paymentMethod === 'paypal') {
-        paymentSuccessful = await processPayPalPayment();
-        if (!paymentSuccessful) {
-          setIsSubmitting(false);
-          return;
-        }
-      } else {
-        // Credit card payment processing would go here
-        toast.success("Credit card payment processed successfully");
-      }
-      
-      // Create a new order - now we always have user.id
+      // Create a new order 
       const orderData = {
         userId: user.id,
         items: cart.map(item => ({
@@ -126,6 +111,38 @@ const CheckoutPage: React.FC = () => {
       console.error('Error creating order:', error);
       toast.error("An error occurred while processing your order");
     } finally {
+      setPaymentProcessing(false);
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic form validation
+    if (!formData.firstName || !formData.lastName || !formData.email || 
+        !formData.address || !formData.city || !formData.state || !formData.zipCode) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      if (formData.paymentMethod === 'credit_card') {
+        // Credit card payment processing would go here
+        toast.success("Credit card payment processed successfully");
+        await createOrder();
+      } else {
+        // For PayPal, the payment is processed when the PayPal button is clicked
+        // The order is created in the handlePayPalApprove callback
+        // So we don't need to do anything here for PayPal
+        setIsSubmitting(false);
+        toast.info("Please complete your payment using the PayPal button");
+      }
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      toast.error("An error occurred while processing your order");
       setIsSubmitting(false);
     }
   };
@@ -146,14 +163,18 @@ const CheckoutPage: React.FC = () => {
             <PaymentMethodForm 
               paymentMethod={formData.paymentMethod} 
               handleChange={handleChange} 
+              onPayPalApprove={handlePayPalApprove}
+              clientId={PAYPAL_CLIENT_ID}
             />
             
             <div className="mt-8">
-              <CheckoutButton isSubmitting={isSubmitting || paymentProcessing} />
+              {formData.paymentMethod === 'credit_card' && (
+                <CheckoutButton isSubmitting={isSubmitting || paymentProcessing} />
+              )}
               
               {formData.paymentMethod === 'paypal' && (
                 <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                  <p>By clicking "Complete Order", you'll be redirected to PayPal to complete your purchase securely.</p>
+                  <p>Please use the PayPal button above to complete your purchase securely.</p>
                 </div>
               )}
             </div>

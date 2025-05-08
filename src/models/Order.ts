@@ -82,7 +82,7 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
         items: order.order_items.map((item: any) => ({
           productId: item.product_id,
           quantity: item.quantity,
-          price: item.price
+          price: parseFloat(item.price)
         })),
         total: parseFloat(order.total),
         status: order.status as OrderStatus,
@@ -145,7 +145,7 @@ export const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedA
       userId: orderData.user_id,
       items: order.items,
       total: parseFloat(orderData.total),
-      status: orderData.status,
+      status: orderData.status as OrderStatus,
       createdAt: new Date(orderData.created_at),
       updatedAt: new Date(orderData.updated_at)
     };

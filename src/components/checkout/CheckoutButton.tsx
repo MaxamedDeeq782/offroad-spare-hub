@@ -20,6 +20,13 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
     try {
       toast.info("Preparing your Stripe checkout...");
       
+      // For development, use the simulated checkout page
+      navigate('/simulated-stripe-checkout');
+      
+      // This code is disabled for now until a valid Stripe key is configured
+      // In production, uncomment this and remove the navigate call above
+      
+      /*
       // Transform cart items for the stripe checkout
       const cartItems = cart.map(item => ({
         productId: item.productId,
@@ -50,6 +57,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
       } else {
         toast.error("No checkout URL received from Stripe");
       }
+      */
     } catch (error) {
       console.error("Error creating checkout:", error);
       toast.error("Failed to create checkout session. Please try again later.");

@@ -18,6 +18,7 @@ import AdminPage from './pages/AdminPage';
 import AddProductPage from './pages/AddProductPage';
 import NotFound from './pages/NotFound';
 import VehiclePage from './pages/VehiclePage';
+import SimulatedStripeCheckoutPage from './pages/SimulatedStripeCheckoutPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -47,6 +48,7 @@ function App() {
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="/admin/add-product" element={<AddProductPage />} />
                   <Route path="/vehicle/:vehicleId" element={<VehiclePage />} />
+                  <Route path="/simulated-stripe-checkout" element={<SimulatedStripeCheckoutPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>

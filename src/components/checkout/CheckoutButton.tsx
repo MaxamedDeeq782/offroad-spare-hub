@@ -47,31 +47,13 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
         
         // Redirect to Stripe Checkout
         window.location.href = data.url;
-      } else if (data?.dev_mode) {
-        // Show simulated checkout for development mode
-        simulateDevelopmentCheckout();
       } else {
-        // For development mode, simulate checkout behavior
-        toast.success("Development mode active - showing simulated checkout");
-        simulateDevelopmentCheckout();
+        toast.error("No checkout URL received from Stripe");
       }
     } catch (error) {
       console.error("Error creating checkout:", error);
-      toast.error("Failed to create checkout session. Using development mode for demonstration.");
-      
-      // In case of error, fall back to dev mode behavior for demo purposes
-      simulateDevelopmentCheckout();
+      toast.error("Failed to create checkout session. Please try again later.");
     }
-  };
-
-  const simulateDevelopmentCheckout = () => {
-    // Simulate the Stripe checkout by redirecting to a simulated payment page
-    navigate('/simulated-stripe-checkout');
-    
-    // After a short delay, redirect to the order confirmation page
-    setTimeout(() => {
-      navigate(`/order-confirmation?session_id=fallback_session_${Date.now()}`);
-    }, 3000);
   };
 
   const handleClick = () => {
@@ -85,7 +67,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({ isSubmitting, paymentMe
     ? 'Processing...' 
     : paymentMethod === 'credit_card' 
       ? 'Complete Order' 
-      : 'Pay with Stripe (Test Mode)';
+      : 'Pay with Stripe';
 
   return (
     <Button

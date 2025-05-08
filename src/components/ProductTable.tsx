@@ -65,6 +65,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
       return "/lovable-uploads/8141ace2-fd8d-4f8e-bace-f155332b298f.png";
     }
     
+    // Check if the product is the Nissan Patrol Radiator
+    if (product.name.includes("Fit Nissan Patrol Y62 & Armada 5.6L")) {
+      return "/lovable-uploads/00d7891c-ee78-4e3a-a14c-e516197e30dd.png";
+    }
+    
     // Return the default image URL or placeholder if not available
     return product.image_url || "/placeholder.svg";
   };

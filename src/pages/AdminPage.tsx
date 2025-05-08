@@ -8,7 +8,7 @@ import AdminTabs from '../components/admin/AdminTabs';
 const AdminPage: React.FC = () => {
   const { adminSecretKeyAuth, user } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'users'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'users'>('products');
 
   // Check if user is admin
   useEffect(() => {

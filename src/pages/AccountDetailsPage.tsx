@@ -20,10 +20,25 @@ const AccountDetailsPage: React.FC = () => {
     return <Navigate to="/login" />;
   }
 
+  // Helper functions to access user data safely
+  const getUserName = () => {
+    return user.user_metadata?.name || user.email?.split('@')[0] || '';
+  };
+
+  const getUserInitial = () => {
+    const name = user.user_metadata?.name || user.email || '';
+    return name.charAt(0);
+  };
+
+  const isUserAdmin = () => {
+    return user.user_metadata?.isAdmin === true;
+  };
+
   useEffect(() => {
     if (user) {
       // Filter orders for current user
-      const filteredOrders = allOrders.filter(order => order.userId === user.id);
+      const userId = user.id;
+      const filteredOrders = allOrders.filter(order => order.userId === userId);
       setUserOrders(filteredOrders);
     }
   }, [user]);
@@ -55,11 +70,11 @@ const AccountDetailsPage: React.FC = () => {
         <div className="flex items-center gap-6 mb-6">
           <Avatar className="h-20 w-20">
             <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-extrabold">
-              {user.name.charAt(0)}
+              {getUserInitial()}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h2 className="text-2xl font-extrabold text-foreground">{user.name}</h2>
+            <h2 className="text-2xl font-extrabold text-foreground">{getUserName()}</h2>
             <p className="text-lg font-bold">{user.email}</p>
             <div className="flex items-center mt-2">
               <span className="mr-2 font-bold">Theme:</span>
@@ -75,7 +90,7 @@ const AccountDetailsPage: React.FC = () => {
           </div>
         </div>
         
-        {user.isAdmin && (
+        {isUserAdmin() && (
           <div className="mb-4">
             <Link to="/admin">
               <Button variant="outline" className="font-bold">Admin Dashboard</Button>
@@ -144,7 +159,7 @@ const AccountDetailsPage: React.FC = () => {
               
               <div className="grid gap-2">
                 <h3 className="font-extrabold text-lg">Account Type</h3>
-                <p className="font-bold text-base">{user.isAdmin ? 'Administrator' : 'Customer'}</p>
+                <p className="font-bold text-base">{isUserAdmin() ? 'Administrator' : 'Customer'}</p>
               </div>
               
               <div className="pt-4">

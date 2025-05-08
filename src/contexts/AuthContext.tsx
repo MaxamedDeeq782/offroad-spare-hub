@@ -75,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             name,
+            isAdmin: email === 'admin@offroadspares.com', // Set admin for specific email
           },
         },
       });

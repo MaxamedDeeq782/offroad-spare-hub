@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,8 +10,13 @@ const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'users'>('orders');
   const [allOrders, setAllOrders] = useState<Order[]>(orders);
 
+  // Helper function to check if user is admin
+  const isUserAdmin = () => {
+    return user?.user_metadata?.isAdmin === true;
+  };
+
   // Redirect if not logged in or not an admin
-  if (!user || !user.isAdmin) {
+  if (!user || !isUserAdmin()) {
     return <Navigate to="/login" />;
   }
 

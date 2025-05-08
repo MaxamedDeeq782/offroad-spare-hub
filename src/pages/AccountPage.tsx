@@ -6,6 +6,21 @@ import { useAuth } from '../contexts/AuthContext';
 const AccountPage: React.FC = () => {
   const { user, logout } = useAuth();
 
+  // Helper functions to access user data safely
+  const getUserName = () => {
+    return user?.user_metadata?.name || user?.email?.split('@')[0] || '';
+  };
+
+  const getUserInitial = () => {
+    if (!user) return '';
+    const name = user.user_metadata?.name || user.email || '';
+    return name.charAt(0);
+  };
+
+  const isUserAdmin = () => {
+    return user?.user_metadata?.isAdmin === true;
+  };
+
   // Redirect if not logged in
   if (!user) {
     return <Navigate to="/login" />;
@@ -19,10 +34,10 @@ const AccountPage: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div className="flex items-center mb-6">
             <div className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold mr-4">
-              {user.name.charAt(0)}
+              {getUserInitial()}
             </div>
             <div>
-              <h2 className="text-xl font-extrabold">{user.name}</h2>
+              <h2 className="text-xl font-extrabold">{getUserName()}</h2>
               <p className="text-gray-600 dark:text-gray-300 font-bold">{user.email}</p>
             </div>
           </div>
@@ -31,7 +46,7 @@ const AccountPage: React.FC = () => {
             Account Details
           </Link>
           
-          {user.isAdmin && (
+          {isUserAdmin() && (
             <Link to="/admin" className="block w-full btn btn-secondary py-2 mb-4 font-bold text-center">
               Admin Dashboard
             </Link>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Moon, Sun, LogOut } from 'lucide-react';
@@ -27,11 +28,23 @@ const Header: React.FC = () => {
   const getUserInitial = () => {
     if (!user) return '?';
     
+    // Use user_metadata.name from Supabase user object if available
     if (user.user_metadata?.name) {
       return user.user_metadata.name.charAt(0);
     }
     
     return user.email?.charAt(0) || '?';
+  };
+
+  // Helper function to get user name
+  const getUserName = () => {
+    if (!user) return '';
+    return user.user_metadata?.name || user.email?.split('@')[0] || '';
+  };
+
+  // Helper to check if user is admin
+  const isUserAdmin = () => {
+    return user?.user_metadata?.isAdmin === true;
   };
 
   return (

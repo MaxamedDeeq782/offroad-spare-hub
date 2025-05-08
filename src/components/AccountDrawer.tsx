@@ -29,6 +29,20 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ userOrders }) => {
 
   if (!user) return null;
 
+  // Helper functions to access user data safely
+  const getUserName = () => {
+    return user.user_metadata?.name || user.email?.split('@')[0] || '';
+  };
+
+  const getUserInitial = () => {
+    const name = user.user_metadata?.name || user.email || '';
+    return name.charAt(0);
+  };
+
+  const isUserAdmin = () => {
+    return user.user_metadata?.isAdmin === true;
+  };
+
   const formatDate = (date: Date): string => {
     return new Date(date).toLocaleDateString();
   };
@@ -54,7 +68,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ userOrders }) => {
         <Button variant="ghost" size="icon" className="relative rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-primary text-primary-foreground font-extrabold">
-              {user.name.charAt(0)}
+              {getUserInitial()}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -68,12 +82,12 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ userOrders }) => {
           <div className="flex items-center gap-4 mb-6">
             <Avatar className="h-16 w-16">
               <AvatarFallback className="bg-primary text-primary-foreground text-xl font-extrabold">
-                {user.name.charAt(0)}
+                {getUserInitial()}
               </AvatarFallback>
             </Avatar>
             <div>
               <h3 className="font-extrabold text-lg text-foreground">
-                {user.name}
+                {getUserName()}
               </h3>
               <p className="font-bold">
                 {user.email}
@@ -94,7 +108,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ userOrders }) => {
               </Button>
             </div>
             
-            {user.isAdmin && (
+            {isUserAdmin() && (
               <Link to="/admin">
                 <Button variant="outline" size="sm" className="font-bold">Admin Dashboard</Button>
               </Link>
@@ -168,7 +182,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ userOrders }) => {
               
               <div className="grid gap-1">
                 <h3 className="font-extrabold">Account Type</h3>
-                <p className="font-bold">{user.isAdmin ? 'Administrator' : 'Customer'}</p>
+                <p className="font-bold">{isUserAdmin() ? 'Administrator' : 'Customer'}</p>
               </div>
               
               <div className="pt-4">

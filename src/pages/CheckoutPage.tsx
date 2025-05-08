@@ -27,6 +27,7 @@ const CheckoutPage: React.FC = () => {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   // Redirect if cart is empty
   if (cart.length === 0) {
@@ -47,6 +48,29 @@ const CheckoutPage: React.FC = () => {
     }));
   };
 
+  // Function to simulate PayPal payment process
+  const processPayPalPayment = async () => {
+    setPaymentProcessing(true);
+    
+    try {
+      // This would be replaced with actual PayPal SDK integration
+      toast.info("Redirecting to PayPal...");
+      
+      // Simulate a delay for the PayPal process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Simulate success
+      toast.success("Payment received via PayPal");
+      return true;
+    } catch (error) {
+      console.error("PayPal payment error:", error);
+      toast.error("PayPal payment failed. Please try again.");
+      return false;
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -60,6 +84,20 @@ const CheckoutPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Process payment based on selected method
+      let paymentSuccessful = true;
+      
+      if (formData.paymentMethod === 'paypal') {
+        paymentSuccessful = await processPayPalPayment();
+        if (!paymentSuccessful) {
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        // Credit card payment processing would go here
+        toast.success("Credit card payment processed successfully");
+      }
+      
       // Create a new order - now we always have user.id
       const orderData = {
         userId: user.id,
@@ -111,7 +149,13 @@ const CheckoutPage: React.FC = () => {
             />
             
             <div className="mt-8">
-              <CheckoutButton isSubmitting={isSubmitting} />
+              <CheckoutButton isSubmitting={isSubmitting || paymentProcessing} />
+              
+              {formData.paymentMethod === 'paypal' && (
+                <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                  <p>By clicking "Complete Order", you'll be redirected to PayPal to complete your purchase securely.</p>
+                </div>
+              )}
             </div>
           </form>
         </div>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Moon, Sun, LogOut, Cog, ShieldCheck } from 'lucide-react';
+import { User, Moon, Sun, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -61,17 +61,6 @@ const Header: React.FC = () => {
           <div className="hidden md:flex space-x-6">
             <Link to="/" className="hover:text-primary font-bold">Home</Link>
             <Link to="/products" className="hover:text-primary font-bold">Products</Link>
-            
-            {/* Admin button in desktop nav */}
-            {isUserAdmin() && (
-              <Link 
-                to="/admin" 
-                className="bg-red-600 text-white px-4 py-1 rounded-md flex items-center shadow-md hover:bg-red-700 font-extrabold border-2 border-red-400 animate-pulse"
-              >
-                <ShieldCheck size={20} className="mr-2" />
-                <span>ADMIN</span>
-              </Link>
-            )}
           </div>
 
           <div className="flex items-center space-x-4">
@@ -84,19 +73,6 @@ const Header: React.FC = () => {
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             
-            {/* Highly visible admin button in mobile/tablet view */}
-            <div className="md:hidden">
-              {isUserAdmin() && (
-                <Link 
-                  to="/admin" 
-                  className="bg-red-600 text-white px-3 py-1 rounded-md flex items-center shadow-md hover:bg-red-700 font-extrabold border-2 border-red-400 animate-pulse mr-2"
-                >
-                  <ShieldCheck size={18} className="mr-1" />
-                  <span>ADMIN</span>
-                </Link>
-              )}
-            </div>
-
             <Link to="/cart" className="relative">
               <span className="sr-only">Cart</span>
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -148,18 +124,6 @@ const Header: React.FC = () => {
           <div className="md:hidden mt-4">
             <Link to="/" className="block hover:text-primary py-2 font-bold">Home</Link>
             <Link to="/products" className="block hover:text-primary py-2 font-bold">Products</Link>
-            
-            <div className="flex items-center py-2">
-              {isUserAdmin() && (
-                <Link 
-                  to="/admin" 
-                  className="bg-red-600 text-white px-4 py-2 rounded-md flex items-center shadow-md hover:bg-red-700 font-extrabold border-2 border-red-400 animate-pulse my-2 w-full justify-center"
-                >
-                  <ShieldCheck size={20} className="mr-2" />
-                  <span className="text-lg">ADMIN DASHBOARD</span>
-                </Link>
-              )}
-            </div>
             
             <div className="flex items-center py-2">  
               <Link to="/cart" className="relative block">

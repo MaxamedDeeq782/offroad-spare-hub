@@ -17,7 +17,7 @@ const RegisterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   
-  const { register, user } = useAuth();
+  const { register, user, isDevelopmentMode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -57,7 +57,11 @@ const RegisterPage: React.FC = () => {
       const { success, error: registerError } = await register(email, password, name);
       
       if (success) {
-        setSuccessMessage('Registration successful! Please check your email to confirm your account.');
+        if (isDevelopmentMode) {
+          // In dev mode, we'll redirect immediately
+        } else {
+          setSuccessMessage('Registration successful! Please check your email to confirm your account.');
+        }
         // Will be redirected by the useEffect above if auto-signin happens
       } else {
         setError(registerError || 'Registration failed');
@@ -79,6 +83,13 @@ const RegisterPage: React.FC = () => {
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               You need to create an account to complete your purchase
             </p>
+          )}
+          {isDevelopmentMode && (
+            <Alert className="mt-2 bg-yellow-50 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+              <AlertDescription>
+                Development mode is active. Any registration details will work.
+              </AlertDescription>
+            </Alert>
           )}
         </CardHeader>
         

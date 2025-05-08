@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../compone
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Alert, AlertDescription } from '../components/ui/alert';
+import { Switch } from '../components/ui/switch';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -14,7 +15,7 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login, user } = useAuth();
+  const { login, user, isDevelopmentMode, setDevelopmentMode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -117,6 +118,28 @@ const LoginPage: React.FC = () => {
                   Forgot your password?
                 </a>
               </div>
+            </div>
+            
+            {/* Development Mode Toggle */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="dev-mode" className="text-sm font-medium">
+                  Development Mode
+                  <p className="text-xs text-muted-foreground">Enable to bypass real authentication</p>
+                </Label>
+                <Switch
+                  id="dev-mode"
+                  checked={isDevelopmentMode}
+                  onCheckedChange={setDevelopmentMode}
+                />
+              </div>
+              {isDevelopmentMode && (
+                <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900 rounded text-xs">
+                  <p>In development mode:</p>
+                  <p>- Any email/password will work</p>
+                  <p>- Use admin@offroadspares.com to login as admin</p>
+                </div>
+              )}
             </div>
           </CardContent>
 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -37,6 +36,36 @@ const ProductTable: React.FC<ProductTableProps> = ({
 }) => {
   const { addToCart } = useCart();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Filter out one of the Mitsubishi L200 products if multiple exist
+  const filteredProducts = products.reduce((acc: DbProduct[], current) => {
+    // Check if this is a Mitsubishi L200 product
+    const isMitsubishiL200 = current.name.toLowerCase().includes('mitsubishi l200');
+    
+    // If it's not a Mitsubishi L200 product, keep it
+    if (!isMitsubishiL200) {
+      return [...acc, current];
+    }
+    
+    // If it's the Exhaust Pipe Kit, keep it
+    if (current.name.toLowerCase().includes('exhaust pipe')) {
+      return [...acc, current];
+    }
+    
+    // If we already have a Mitsubishi L200 product in our filtered list 
+    // that's not the Exhaust Pipe Kit, skip this one
+    const hasOtherMitsubishiL200Product = acc.some(
+      product => 
+        product.name.toLowerCase().includes('mitsubishi l200') && 
+        !product.name.toLowerCase().includes('exhaust pipe')
+    );
+    
+    if (hasOtherMitsubishiL200Product) {
+      return acc;
+    }
+    
+    return [...acc, current];
+  }, []);
 
   const handleAddToCart = (product: DbProduct) => {
     const mockModelProduct = {
@@ -70,6 +99,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
       return "/lovable-uploads/00d7891c-ee78-4e3a-a14c-e516197e30dd.png";
     }
     
+    // Check if the product is the Mitsubishi L200 Exhaust Pipe Kit
+    if (product.name.includes("Exhaust Pipe Kit") && product.name.includes("MITSUBISHI L200")) {
+      return "/lovable-uploads/6bd92b92-92f2-45e4-99fa-75c2ee81ee77.png";
+    }
+    
     // Return the default image URL or placeholder if not available
     return product.image_url || "/placeholder.svg";
   };
@@ -82,7 +116,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
     );
   }
 
-  if (products.length === 0) {
+  if (filteredProducts.length === 0) {
     return (
       <div className="text-center py-8">
         <p>No products found for {selectedVehicle || "selected filters"}</p>
@@ -102,7 +136,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => {
+          {filteredProducts.map((product) => {
             const vehicleType = getVehicleFromProductName(product.name);
             const imageUrl = getProductImage(product);
             

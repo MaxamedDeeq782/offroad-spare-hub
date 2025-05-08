@@ -59,6 +59,8 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          guest_email: string | null
+          guest_name: string | null
           id: string
           status: string
           total: number
@@ -67,6 +69,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          guest_email?: string | null
+          guest_name?: string | null
           id?: string
           status: string
           total: number
@@ -75,6 +79,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          guest_email?: string | null
+          guest_name?: string | null
           id?: string
           status?: string
           total?: number

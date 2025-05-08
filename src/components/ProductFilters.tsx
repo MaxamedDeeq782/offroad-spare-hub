@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 interface ProductFiltersProps {
   selectedVehicle: string;
   searchTerm: string;
+  availableBrands: string[];
   handleVehicleChange: (vehicle: string) => void;
   handleSearchChange: (term: string) => void;
   hasActiveFilters: boolean;
@@ -14,13 +15,12 @@ interface ProductFiltersProps {
 const ProductFilters: React.FC<ProductFiltersProps> = ({
   selectedVehicle,
   searchTerm,
+  availableBrands,
   handleVehicleChange,
   handleSearchChange,
   hasActiveFilters,
   clearFilters
 }) => {
-  const vehicles = ['Toyota Hilux', 'Toyota Land Cruiser', 'Nissan Patrol', 'Mitsubishi L200'];
-
   return (
     <Card>
       <CardHeader>
@@ -46,7 +46,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             className="w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
           >
             <option value="">All Vehicles</option>
-            {vehicles.map((vehicle) => (
+            {availableBrands.map((vehicle) => (
               <option key={vehicle} value={vehicle}>
                 {vehicle}
               </option>

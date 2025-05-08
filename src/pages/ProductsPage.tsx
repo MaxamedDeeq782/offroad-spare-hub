@@ -12,12 +12,14 @@ const ProductsPage: React.FC = () => {
     loading,
     filteredDbProducts,
     getVehicleFromProductName,
+    getAvailableBrands,
     clearFilters,
     handleVehicleChange,
     handleSearchChange
   } = useProductFilters();
 
   const hasActiveFilters = !!(selectedVehicle || searchTerm || selectedPartId);
+  const availableBrands = getAvailableBrands();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -31,6 +33,7 @@ const ProductsPage: React.FC = () => {
           <ProductFilters
             selectedVehicle={selectedVehicle}
             searchTerm={searchTerm}
+            availableBrands={availableBrands}
             handleVehicleChange={handleVehicleChange}
             handleSearchChange={handleSearchChange}
             hasActiveFilters={hasActiveFilters}

@@ -91,12 +91,31 @@ export const useProductFilters = () => {
     return partMap[vehicle] || '';
   };
 
+  // Get available brands with products
+  const getAvailableBrands = (): string[] => {
+    const brands = new Set<string>();
+    
+    dbProducts.forEach(product => {
+      const vehicleType = getVehicleFromProductName(product.name);
+      if (vehicleType) {
+        brands.add(vehicleType);
+      }
+    });
+    
+    return Array.from(brands);
+  };
+
   // Filter database products based on selected vehicle and specific part or search term
   const filteredDbProducts = dbProducts.filter(product => {
     const productVehicle = getVehicleFromProductName(product.name);
     
-    // Check if the product belongs to the selected vehicle
+    // If a vehicle is selected, check if the product belongs to that vehicle
     if (selectedVehicle && productVehicle !== selectedVehicle) {
+      return false;
+    }
+    
+    // If no vehicle is selected (All Vehicles), only show products that belong to a known brand/vehicle
+    if (!selectedVehicle && !productVehicle) {
       return false;
     }
     
@@ -148,6 +167,7 @@ export const useProductFilters = () => {
     loading,
     filteredDbProducts,
     getVehicleFromProductName,
+    getAvailableBrands,
     clearFilters,
     handleVehicleChange,
     handleSearchChange

@@ -1,10 +1,11 @@
 
 import { supabase } from '../integrations/supabase/client';
-import { toast } from 'sonner';
 
-export type OrderStatus = "pending" | "approved" | "canceled" | "delivered";
+export type OrderStatus = 'pending' | 'approved' | 'shipped' | 'delivered' | 'canceled';
 
 export interface OrderItem {
+  id?: string;
+  orderId: string;
   productId: string;
   quantity: number;
   price: number;
@@ -12,194 +13,164 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
-  userId: string;
-  items: OrderItem[];
+  userId: string; // This is now always required and can't be blank
   total: number;
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
-  // Add optional fields for guest checkout
-  guestEmail?: string;
-  guestName?: string;
+  items?: OrderItem[];
 }
 
-// Load sample data for development if database returns no orders
-const sampleOrders: Order[] = [
-  {
-    id: "o1",
-    userId: "u2",
-    items: [
-      { productId: "p1", quantity: 1, price: 29.99 },
-      { productId: "p2", quantity: 2, price: 49.99 }
-    ],
-    total: 129.97,
-    status: "approved",
-    createdAt: new Date("2023-05-10"),
-    updatedAt: new Date("2023-05-11")
-  },
-  {
-    id: "o2",
-    userId: "u2",
-    items: [
-      { productId: "p4", quantity: 1, price: 89.99 }
-    ],
-    total: 89.99,
-    status: "pending",
-    createdAt: new Date("2023-05-15"),
-    updatedAt: new Date("2023-05-15")
-  }
-];
+export interface OrderInput {
+  userId: string;
+  items: {
+    productId: string;
+    quantity: number;
+    price: number;
+  }[];
+  total: number;
+  status: OrderStatus;
+}
 
-// In-memory cache for orders
-let ordersCache: Order[] = [];
-
-// Fetch orders from Supabase
-export const fetchOrders = async (userId?: string): Promise<Order[]> => {
-  try {
-    let query = supabase.from('orders').select(`
-      id,
-      user_id,
-      total,
-      status,
-      created_at,
-      updated_at,
-      guest_email,
-      guest_name,
-      order_items(product_id, quantity, price)
-    `).order('created_at', { ascending: false });
-    
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching orders:', error);
-      return sampleOrders; // Return sample data if there's an error
-    }
-
-    if (data && data.length > 0) {
-      // Transform the Supabase data into our Order interface format
-      const transformedOrders: Order[] = data.map(order => ({
-        id: order.id,
-        userId: order.user_id || "",
-        items: order.order_items.map((item: any) => ({
-          productId: item.product_id,
-          quantity: item.quantity,
-          price: parseFloat(item.price)
-        })),
-        total: parseFloat(order.total),
-        status: order.status as OrderStatus,
-        createdAt: new Date(order.created_at),
-        updatedAt: new Date(order.updated_at),
-        guestEmail: order.guest_email,
-        guestName: order.guest_name
-      }));
-
-      ordersCache = transformedOrders;
-      return transformedOrders;
-    }
-
-    return sampleOrders; // Return sample data if no orders exist
-  } catch (error) {
-    console.error('Unexpected error fetching orders:', error);
-    return sampleOrders; // Return sample data on error
-  }
-};
-
-// Add a new order to Supabase
-export const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order | null> => {
+// Add an order to the database
+export const addOrder = async (orderInput: OrderInput): Promise<Order | null> => {
   try {
     // Insert the order
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert({
-        user_id: order.userId || null, // Fix: Changed to handle null for guest users
-        total: order.total,
-        status: order.status,
-        guest_email: order.guestEmail,
-        guest_name: order.guestName
+        user_id: orderInput.userId,
+        total: orderInput.total,
+        status: orderInput.status,
       })
       .select()
       .single();
 
     if (orderError || !orderData) {
       console.error('Error creating order:', orderError);
-      toast.error('Failed to create order');
       return null;
     }
 
-    // Insert the order items
-    const orderItems = order.items.map(item => ({
-      order_id: orderData.id,
+    const orderId = orderData.id;
+
+    // Insert all order items
+    const orderItemsToInsert = orderInput.items.map(item => ({
+      order_id: orderId,
       product_id: item.productId,
       quantity: item.quantity,
-      price: item.price
+      price: item.price,
     }));
 
     const { error: itemsError } = await supabase
       .from('order_items')
-      .insert(orderItems);
+      .insert(orderItemsToInsert);
 
     if (itemsError) {
-      console.error('Error adding order items:', itemsError);
-      toast.error('Failed to add items to order');
+      console.error('Error creating order items:', itemsError);
       return null;
     }
 
-    // Create the complete order object
-    const newOrder: Order = {
-      id: orderData.id,
-      userId: orderData.user_id || "", // Fix: Ensure userId is always a string
-      items: order.items,
-      total: parseFloat(orderData.total),
-      status: orderData.status as OrderStatus,
+    // Return the created order
+    return {
+      id: orderId,
+      userId: orderInput.userId,
+      total: orderInput.total,
+      status: orderInput.status,
       createdAt: new Date(orderData.created_at),
       updatedAt: new Date(orderData.updated_at),
-      guestEmail: orderData.guest_email,
-      guestName: orderData.guest_name
+      items: orderInput.items.map((item, index) => ({
+        id: index.toString(), // Temporary ID for newly created items
+        orderId: orderId,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+      })),
     };
-
-    // Update cache
-    ordersCache = [newOrder, ...ordersCache];
-    
-    return newOrder;
   } catch (error) {
-    console.error('Unexpected error adding order:', error);
-    toast.error('An unexpected error occurred');
+    console.error('Unexpected error creating order:', error);
     return null;
   }
 };
 
-// Update order status in Supabase
+// Fetch all orders
+export const fetchOrders = async (userId?: string): Promise<Order[]> => {
+  try {
+    let query = supabase.from('orders').select('*');
+    
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    
+    const { data: ordersData, error: ordersError } = await query.order('created_at', { ascending: false });
+    
+    if (ordersError) {
+      console.error('Error fetching orders:', ordersError);
+      return [];
+    }
+    
+    const orders: Order[] = await Promise.all(
+      ordersData.map(async (order) => {
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('order_items')
+          .select('*')
+          .eq('order_id', order.id);
+        
+        if (itemsError) {
+          console.error(`Error fetching items for order ${order.id}:`, itemsError);
+          return {
+            id: order.id,
+            userId: order.user_id,
+            total: order.total,
+            status: order.status,
+            createdAt: new Date(order.created_at),
+            updatedAt: new Date(order.updated_at),
+            items: [],
+          };
+        }
+        
+        const items: OrderItem[] = itemsData.map((item) => ({
+          id: item.id,
+          orderId: item.order_id,
+          productId: item.product_id,
+          quantity: item.quantity,
+          price: item.price,
+        }));
+        
+        return {
+          id: order.id,
+          userId: order.user_id,
+          total: order.total,
+          status: order.status,
+          createdAt: new Date(order.created_at),
+          updatedAt: new Date(order.updated_at),
+          items,
+        };
+      })
+    );
+    
+    return orders;
+  } catch (error) {
+    console.error('Unexpected error fetching orders:', error);
+    return [];
+  }
+};
+
+// Update an order's status
 export const updateOrderStatus = async (orderId: string, status: OrderStatus): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('orders')
-      .update({ 
-        status, 
-        updated_at: new Date().toISOString() 
-      })
+      .update({ status })
       .eq('id', orderId);
-
+    
     if (error) {
       console.error('Error updating order status:', error);
-      toast.error('Failed to update order status');
       return false;
     }
-
-    // Update cache
-    ordersCache = ordersCache.map(order => 
-      order.id === orderId 
-        ? { ...order, status, updatedAt: new Date() } 
-        : order
-    );
     
     return true;
   } catch (error) {
     console.error('Unexpected error updating order status:', error);
-    toast.error('An unexpected error occurred');
     return false;
   }
 };

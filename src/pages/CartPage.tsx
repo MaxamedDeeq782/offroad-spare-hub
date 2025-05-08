@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
 
 const CartPage: React.FC = () => {
   const { cart, updateQuantity, removeFromCart, clearCart, getCartTotal } = useCart();
@@ -10,8 +10,12 @@ const CartPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCheckout = () => {
-    // Proceed directly to checkout without requiring login
-    navigate('/checkout');
+    if (!user) {
+      toast.error("Please login or create an account to checkout");
+      navigate('/login', { state: { from: '/checkout' } });
+    } else {
+      navigate('/checkout');
+    }
   };
 
   if (cart.length === 0) {
@@ -34,28 +38,28 @@ const CartPage: React.FC = () => {
       
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-2/3">
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     Product
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     Price
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     Quantity
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     Subtotal
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
                 {cart.map((item) => (
                   <tr key={item.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -113,7 +117,7 @@ const CartPage: React.FC = () => {
           <div className="mt-6 flex justify-between items-center">
             <button 
               onClick={() => clearCart()}
-              className="text-red-600 hover:text-red-900"
+              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
             >
               Clear Cart
             </button>
@@ -125,7 +129,7 @@ const CartPage: React.FC = () => {
         </div>
         
         <div className="lg:w-1/3">
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-white p-6 rounded-lg shadow dark:bg-gray-800">
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
             
             <div className="space-y-3">
@@ -139,7 +143,7 @@ const CartPage: React.FC = () => {
               onClick={handleCheckout}
               className="w-full btn btn-primary mt-6 py-3"
             >
-              Proceed to Checkout
+              {user ? 'Proceed to Checkout' : 'Login to Checkout'}
             </button>
           </div>
         </div>

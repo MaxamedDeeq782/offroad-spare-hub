@@ -28,13 +28,16 @@ const CheckoutPage: React.FC = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Only redirect if cart is empty
+  // Redirect if cart is empty
   if (cart.length === 0) {
     return <Navigate to="/cart" />;
   }
 
-  // No longer redirecting if not logged in
-  // This allows guest checkout
+  // Redirect if not logged in - new requirement
+  if (!user) {
+    toast.error("You need to login or create an account to checkout");
+    return <Navigate to="/login" state={{ from: "/checkout" }} />;
+  }
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -57,22 +60,16 @@ const CheckoutPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Prepare guest checkout information if not logged in
-      const fullName = `${formData.firstName} ${formData.lastName}`;
-      
-      // Create a new order
+      // Create a new order - now we always have user.id
       const orderData = {
-        userId: user?.id || '', // Empty string for guest users
+        userId: user.id,
         items: cart.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
           price: item.price
         })),
         total: getCartTotal(),
-        status: 'pending' as const,
-        // Add guest info if not logged in
-        guestName: !user ? fullName : undefined,
-        guestEmail: !user ? formData.email : undefined
+        status: 'pending' as const
       };
       
       // Add order to Supabase

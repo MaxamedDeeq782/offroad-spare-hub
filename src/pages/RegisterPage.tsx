@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/card';
@@ -17,8 +17,19 @@ const RegisterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   
-  const { register } = useAuth();
+  const { register, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the redirect path from location state or default to home
+  const from = location.state?.from || '/';
+
+  // If user is already logged in, redirect them
+  useEffect(() => {
+    if (user) {
+      navigate(from);
+    }
+  }, [user, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,8 +58,7 @@ const RegisterPage: React.FC = () => {
       
       if (success) {
         setSuccessMessage('Registration successful! Please check your email to confirm your account.');
-        // For better user experience, we don't immediately redirect
-        // navigate('/login');
+        // Will be redirected by the useEffect above if auto-signin happens
       } else {
         setError(registerError || 'Registration failed');
       }
@@ -65,6 +75,11 @@ const RegisterPage: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+          {from === '/checkout' && (
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              You need to create an account to complete your purchase
+            </p>
+          )}
         </CardHeader>
         
         <form onSubmit={handleSubmit}>
@@ -76,7 +91,7 @@ const RegisterPage: React.FC = () => {
             )}
             
             {successMessage && (
-              <Alert className="bg-green-50 text-green-800 border-green-200">
+              <Alert className="bg-green-50 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-300 dark:border-green-800">
                 <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}
@@ -139,9 +154,9 @@ const RegisterPage: React.FC = () => {
               {isLoading ? 'Creating account...' : 'Create account'}
             </Button>
             
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-primary hover:text-primary-dark">
+              <Link to="/login" state={{ from }} className="font-medium text-primary hover:text-primary-dark">
                 Sign in
               </Link>
             </p>

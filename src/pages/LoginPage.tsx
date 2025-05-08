@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/card';
@@ -14,8 +14,19 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the redirect path from location state or default to home
+  const from = location.state?.from || '/';
+
+  // If user is already logged in, redirect them
+  useEffect(() => {
+    if (user) {
+      navigate(from);
+    }
+  }, [user, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +43,7 @@ const LoginPage: React.FC = () => {
       const { success, error: loginError } = await login(email, password);
       
       if (success) {
-        navigate('/');
+        // Will be redirected by the useEffect above
       } else {
         setError(loginError || 'Invalid email or password');
       }
@@ -49,6 +60,11 @@ const LoginPage: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Sign in to your account</CardTitle>
+          {from === '/checkout' && (
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              You need to be logged in to complete your purchase
+            </p>
+          )}
         </CardHeader>
         
         <form onSubmit={handleSubmit}>
@@ -91,7 +107,7 @@ const LoginPage: React.FC = () => {
                   type="checkbox"
                   className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                   Remember me
                 </label>
               </div>
@@ -114,13 +130,13 @@ const LoginPage: React.FC = () => {
             </Button>
             
             <div className="text-center space-y-2">
-              <p className="text-center text-sm text-gray-600">
+              <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{' '}
-                <Link to="/register" className="font-medium text-primary hover:text-primary-dark">
+                <Link to="/register" state={{ from }} className="font-medium text-primary hover:text-primary-dark">
                   Create an account
                 </Link>
               </p>
-              <p className="text-center text-sm text-gray-600">
+              <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                 <Link to="/admin" className="font-medium text-primary hover:text-primary-dark">
                   Admin Access
                 </Link>

@@ -64,10 +64,10 @@ const Header: React.FC = () => {
             {isUserAdmin() && (
               <Link 
                 to="/admin" 
-                className="hover:text-primary font-bold opacity-50 hover:opacity-100 transition-opacity"
+                className="hover:text-primary font-bold bg-primary/10 px-3 py-1 rounded-md flex items-center"
               >
-                <Settings size={16} className="inline mr-1" />
-                <span className="text-sm">Admin</span>
+                <Settings size={18} className="mr-1" />
+                <span>Admin</span>
               </Link>
             )}
           </div>
@@ -134,8 +134,8 @@ const Header: React.FC = () => {
             <Link to="/" className="block hover:text-primary py-2 font-bold">Home</Link>
             <Link to="/products" className="block hover:text-primary py-2 font-bold">Products</Link>
             {isUserAdmin() && (
-              <Link to="/admin" className="block hover:text-primary py-2 font-bold opacity-60 hover:opacity-100 transition-opacity">
-                <Settings size={16} className="inline mr-1" />
+              <Link to="/admin" className="block hover:text-primary py-2 font-bold bg-primary/10 px-3 rounded-md flex items-center w-fit my-1">
+                <Settings size={18} className="mr-1" />
                 <span>Admin</span>
               </Link>
             )}

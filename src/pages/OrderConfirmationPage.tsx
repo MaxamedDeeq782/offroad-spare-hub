@@ -27,7 +27,7 @@ const OrderConfirmationPage: React.FC = () => {
           .from('orders')
           .select('id')
           .eq('stripe_session_id', sessionId)
-          .maybeSingle();
+          .single();
         
         if (error) {
           throw error;

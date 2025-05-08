@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { User, LogOut, Moon, Sun, Package } from 'lucide-react';
@@ -26,10 +25,15 @@ const AccountDetailsPage: React.FC = () => {
     const loadOrders = async () => {
       setIsLoading(true);
       if (user) {
-        const orders = await fetchOrders(user.id);
-        setUserOrders(orders);
+        try {
+          const orders = await fetchOrders(user.id);
+          setUserOrders(orders);
+        } catch (error) {
+          console.error("Error loading orders:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
     };
 
     loadOrders();

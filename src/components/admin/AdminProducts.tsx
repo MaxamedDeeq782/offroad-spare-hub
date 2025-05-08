@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { supabase } from '../../integrations/supabase/client';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface Brand {
   id: number;
@@ -57,7 +58,18 @@ const AdminProducts: React.FC = () => {
         console.error('Error fetching products:', error);
         toast.error('Failed to load products');
       } else {
-        setProducts(data || []);
+        // Filter products to only show the specific vehicle types
+        const filteredProducts = (data || []).filter(product => {
+          const productName = product.name.toLowerCase();
+          return (
+            productName.includes('toyota hilux') || 
+            productName.includes('land cruiser') ||
+            productName.includes('nissan patrol') ||
+            productName.includes('mitsubishi l200')
+          );
+        });
+        
+        setProducts(filteredProducts);
       }
     } catch (error) {
       console.error('Unexpected error fetching products:', error);
@@ -109,6 +121,21 @@ const AdminProducts: React.FC = () => {
         const fileExt = uploadedImage.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
         const filePath = `product-images/${fileName}`;
+        
+        // Create the storage bucket if it doesn't exist
+        const { error: bucketError } = await supabase.storage
+          .getBucket('products');
+          
+        if (bucketError && bucketError.message.includes('The resource was not found')) {
+          const { error: createBucketError } = await supabase.storage
+            .createBucket('products', { public: true });
+            
+          if (createBucketError) {
+            console.error('Error creating bucket:', createBucketError);
+            toast.error('Failed to create storage bucket');
+            return;
+          }
+        }
         
         const { error: uploadError } = await supabase.storage
           .from('products')
@@ -181,11 +208,21 @@ const AdminProducts: React.FC = () => {
                 <TableHead>Name</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Brand</TableHead>
+                <TableHead>Vehicle Type</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {products.map((product) => {
                 const brand = brands.find(b => b.id === product.brand_id);
+                
+                // Determine the vehicle type
+                let vehicleType = "";
+                const productName = product.name.toLowerCase();
+                if (productName.includes('toyota hilux')) vehicleType = "Toyota Hilux";
+                else if (productName.includes('land cruiser')) vehicleType = "Toyota Land Cruiser";
+                else if (productName.includes('nissan patrol')) vehicleType = "Nissan Patrol";
+                else if (productName.includes('mitsubishi l200')) vehicleType = "Mitsubishi L200";
+                
                 return (
                   <TableRow key={product.id}>
                     <TableCell>
@@ -204,13 +241,14 @@ const AdminProducts: React.FC = () => {
                     <TableCell>{product.name}</TableCell>
                     <TableCell>${product.price.toFixed(2)}</TableCell>
                     <TableCell>{brand?.name || 'No brand'}</TableCell>
+                    <TableCell>{vehicleType || 'Unknown'}</TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
         ) : (
-          <div className="text-center py-4">No products found. Add some products to get started.</div>
+          <div className="text-center py-4">No products found for the specified vehicle types.</div>
         )}
       </div>
       
@@ -264,17 +302,23 @@ const AdminProducts: React.FC = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Brand</FormLabel>
-                  <FormControl>
-                    <select 
-                      className="w-full p-2 border border-gray-300 rounded dark:bg-gray-800 dark:border-gray-600"
-                      {...field}
-                    >
-                      <option value="">Select a brand</option>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a brand" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
                       {brands.map(brand => (
-                        <option key={brand.id} value={brand.id}>{brand.name}</option>
+                        <SelectItem key={brand.id} value={brand.id.toString()}>
+                          {brand.name}
+                        </SelectItem>
                       ))}
-                    </select>
-                  </FormControl>
+                    </SelectContent>
+                  </Select>
                 </FormItem>
               )}
             />

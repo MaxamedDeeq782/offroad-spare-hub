@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
@@ -17,6 +18,20 @@ const CartPage: React.FC = () => {
       navigate('/checkout');
     }
   };
+
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">Shopping Cart</h1>
+        <div className="bg-white p-8 rounded-lg shadow text-center dark:bg-gray-800">
+          <p className="text-xl mb-6">Please log in to view your cart</p>
+          <Link to="/login" className="btn btn-primary px-6 py-2">
+            Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -65,8 +80,15 @@ const CartPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-16 w-16 bg-gray-200 rounded mr-4 flex-shrink-0">
-                          {/* Replace with actual image once available */}
-                          <div className="h-full w-full flex items-center justify-center text-xs">Product Image</div>
+                          {item.imageUrl ? (
+                            <img 
+                              src={item.imageUrl} 
+                              alt={item.name}
+                              className="h-full w-full object-cover rounded"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-xs">No Image</div>
+                          )}
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">{item.name}</div>
@@ -143,7 +165,7 @@ const CartPage: React.FC = () => {
               onClick={handleCheckout}
               className="w-full btn btn-primary mt-6 py-3"
             >
-              {user ? 'Proceed to Checkout' : 'Login to Checkout'}
+              Proceed to Checkout
             </button>
           </div>
         </div>

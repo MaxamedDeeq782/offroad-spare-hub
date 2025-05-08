@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Order, orders, OrderStatus } from '../models/Order';
+import { Order, orders, updateOrderStatus, OrderStatus } from '../models/Order';
 import { products } from '../models/Product';
 import { users } from '../models/User';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -17,6 +16,11 @@ const AdminPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'users'>('orders');
   const [allOrders, setAllOrders] = useState<Order[]>(orders);
+
+  // Refresh orders when component mounts
+  useEffect(() => {
+    setAllOrders(orders);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,13 +67,9 @@ const AdminPage: React.FC = () => {
   };
 
   // Update order status
-  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    const updatedOrders = allOrders.map(order => 
-      order.id === orderId 
-        ? { ...order, status: newStatus, updatedAt: new Date() } 
-        : order
-    );
-    setAllOrders(updatedOrders);
+  const handleUpdateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+    updateOrderStatus(orderId, newStatus);
+    setAllOrders([...orders]); // Update local state with the updated orders array
   };
 
   // If not authenticated, show the secret key form
@@ -167,7 +167,7 @@ const AdminPage: React.FC = () => {
                     <div className="text-sm text-gray-500">Status</div>
                     <select 
                       value={order.status}
-                      onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
+                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as OrderStatus)}
                       className="border rounded px-2 py-1 text-sm"
                     >
                       <option value="pending">Pending</option>

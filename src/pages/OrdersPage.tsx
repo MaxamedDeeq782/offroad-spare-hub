@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Order, orders as allOrders } from '../models/Order';
+import { Order, orders } from '../models/Order';
 import { products } from '../models/Product';
 
 const OrdersPage: React.FC = () => {
@@ -16,9 +16,9 @@ const OrdersPage: React.FC = () => {
 
   useEffect(() => {
     // Filter orders for current user
-    const filteredOrders = allOrders.filter(order => order.userId === user.id);
+    const filteredOrders = orders.filter(order => order.userId === user.id);
     setUserOrders(filteredOrders);
-  }, [user]);
+  }, [user, orders]); // Also re-run if orders change
 
   // Function to get product details by ID
   const getProductName = (productId: string): string => {

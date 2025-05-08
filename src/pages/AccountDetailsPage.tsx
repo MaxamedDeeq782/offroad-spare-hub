@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { User, LogOut, Moon, Sun, Package } from 'lucide-react';
@@ -7,7 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Order, OrderStatus, orders as allOrders } from '../models/Order';
+import { Order, OrderStatus, orders } from '../models/Order';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 
 const AccountDetailsPage: React.FC = () => {
@@ -20,7 +19,15 @@ const AccountDetailsPage: React.FC = () => {
     return <Navigate to="/login" />;
   }
 
-  // Helper functions to access user data safely
+  useEffect(() => {
+    if (user) {
+      // Filter orders for current user
+      const userId = user.id;
+      const filteredOrders = orders.filter(order => order.userId === userId);
+      setUserOrders(filteredOrders);
+    }
+  }, [user, orders]); // Also re-run if orders change
+
   const getUserName = () => {
     return user.user_metadata?.name || user.email?.split('@')[0] || '';
   };
@@ -33,15 +40,6 @@ const AccountDetailsPage: React.FC = () => {
   const isUserAdmin = () => {
     return user.user_metadata?.isAdmin === true;
   };
-
-  useEffect(() => {
-    if (user) {
-      // Filter orders for current user
-      const userId = user.id;
-      const filteredOrders = allOrders.filter(order => order.userId === userId);
-      setUserOrders(filteredOrders);
-    }
-  }, [user]);
 
   const formatDate = (date: Date): string => {
     return new Date(date).toLocaleDateString();

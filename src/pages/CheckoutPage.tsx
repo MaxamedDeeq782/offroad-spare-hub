@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import { orders } from '../models/Order';
+import { addOrder, orders } from '../models/Order';
 import { toast } from 'sonner';
 
 const CheckoutPage: React.FC = () => {
@@ -66,8 +65,8 @@ const CheckoutPage: React.FC = () => {
         updatedAt: new Date()
       };
       
-      // Add to orders array
-      orders.push(newOrder);
+      // Add to orders array and save to localStorage
+      addOrder(newOrder);
       
       // Clear cart
       clearCart();

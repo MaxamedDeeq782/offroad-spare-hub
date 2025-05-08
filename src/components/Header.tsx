@@ -64,9 +64,9 @@ const Header: React.FC = () => {
             {isUserAdmin() && (
               <Link 
                 to="/admin" 
-                className="hover:text-primary font-bold bg-primary/10 px-3 py-1 rounded-md flex items-center"
+                className="hover:bg-primary/80 font-bold bg-primary text-white px-4 py-1.5 rounded-md flex items-center shadow-sm"
               >
-                <Settings size={18} className="mr-1" />
+                <Settings size={18} className="mr-2" />
                 <span>Admin</span>
               </Link>
             )}
@@ -134,8 +134,11 @@ const Header: React.FC = () => {
             <Link to="/" className="block hover:text-primary py-2 font-bold">Home</Link>
             <Link to="/products" className="block hover:text-primary py-2 font-bold">Products</Link>
             {isUserAdmin() && (
-              <Link to="/admin" className="block hover:text-primary py-2 font-bold bg-primary/10 px-3 rounded-md flex items-center w-fit my-1">
-                <Settings size={18} className="mr-1" />
+              <Link 
+                to="/admin" 
+                className="block hover:bg-primary/80 font-bold bg-primary text-white px-4 py-2 rounded-md flex items-center w-fit my-2"
+              >
+                <Settings size={18} className="mr-2" />
                 <span>Admin</span>
               </Link>
             )}

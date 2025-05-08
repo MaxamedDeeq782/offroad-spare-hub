@@ -53,7 +53,7 @@ const AdminOrders: React.FC = () => {
             <OrderItem 
               key={order.id} 
               order={order} 
-              onOrderUpdate={handleOrderUpdate}
+              onStatusUpdate={handleOrderUpdate}
             />
           ))}
         </div>

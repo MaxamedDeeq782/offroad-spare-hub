@@ -56,16 +56,6 @@ const Header: React.FC = () => {
               <span style={{ color: 'var(--color-primary)' }}>Offroad</span>
               <span style={{ color: 'var(--color-secondary)' }}>SpareHub</span>
             </Link>
-            
-            {isUserAdmin() && (
-              <Link 
-                to="/admin" 
-                className="ml-6 bg-green-600 text-white px-3 py-1 rounded-md flex items-center shadow-sm hover:bg-green-700 font-bold"
-              >
-                <Cog size={16} className="mr-1" />
-                <span>Admin</span>
-              </Link>
-            )}
           </div>
           
           <div className="hidden md:flex space-x-6">
@@ -82,6 +72,16 @@ const Header: React.FC = () => {
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
+
+            {isUserAdmin() && (
+              <Link 
+                to="/admin" 
+                className="bg-green-600 text-white px-3 py-1 rounded-md flex items-center shadow-sm hover:bg-green-700 font-bold mx-2"
+              >
+                <Cog size={16} className="mr-1" />
+                <span>Admin</span>
+              </Link>
+            )}
 
             <Link to="/cart" className="relative">
               <span className="sr-only">Cart</span>
@@ -134,15 +134,31 @@ const Header: React.FC = () => {
           <div className="md:hidden mt-4">
             <Link to="/" className="block hover:text-primary py-2 font-bold">Home</Link>
             <Link to="/products" className="block hover:text-primary py-2 font-bold">Products</Link>
-            {isUserAdmin() && (
-              <Link 
-                to="/admin" 
-                className="block bg-green-600 text-white px-4 py-2 rounded-md flex items-center w-fit my-2 hover:bg-green-700 font-bold"
-              >
-                <Cog size={18} className="mr-2" />
-                <span>Admin</span>
+            
+            <div className="flex items-center py-2">
+              {isUserAdmin() && (
+                <Link 
+                  to="/admin" 
+                  className="bg-green-600 text-white px-3 py-1 rounded-md flex items-center shadow-sm hover:bg-green-700 font-bold mr-4"
+                >
+                  <Cog size={16} className="mr-1" />
+                  <span>Admin</span>
+                </Link>
+              )}
+              
+              <Link to="/cart" className="relative block">
+                <span className="sr-only">Cart</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {totalItems > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-primary text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                    {totalItems}
+                  </span>
+                )}
               </Link>
-            )}
+            </div>
+            
             {!user && (
               <>
                 <Link to="/login" className="block hover:text-primary py-2 font-bold">Login</Link>

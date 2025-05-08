@@ -5,9 +5,10 @@ interface ImageProps {
   src: string;
   alt: string;
   className?: string;
+  onClick?: () => void;
 }
 
-const Image: React.FC<ImageProps> = ({ src, alt, className = '' }) => {
+const Image: React.FC<ImageProps> = ({ src, alt, className = '', onClick }) => {
   const [error, setError] = useState(false);
 
   const handleError = () => {
@@ -21,6 +22,8 @@ const Image: React.FC<ImageProps> = ({ src, alt, className = '' }) => {
       className={`${className} transition-all duration-200`}
       onError={handleError}
       loading="lazy"
+      onClick={onClick}
+      style={onClick ? { cursor: 'pointer' } : undefined}
     />
   );
 };

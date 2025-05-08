@@ -37,30 +37,27 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const { addToCart } = useCart();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  // Filter out one of the Mitsubishi L200 products if multiple exist
+  // Filter out duplicate Mitsubishi L200 Exhaust Pipe Kit products
   const filteredProducts = products.reduce((acc: DbProduct[], current) => {
-    // Check if this is a Mitsubishi L200 product
-    const isMitsubishiL200 = current.name.toLowerCase().includes('mitsubishi l200');
+    // Check if this is a Mitsubishi L200 Exhaust Pipe Kit
+    const isMitsubishiL200ExhaustKit = 
+      current.name.toLowerCase().includes('mitsubishi l200') && 
+      current.name.toLowerCase().includes('exhaust pipe');
     
-    // If it's not a Mitsubishi L200 product, keep it
-    if (!isMitsubishiL200) {
+    // If it's not a Mitsubishi L200 Exhaust Pipe Kit, keep it
+    if (!isMitsubishiL200ExhaustKit) {
       return [...acc, current];
     }
     
-    // If it's the Exhaust Pipe Kit, keep it
-    if (current.name.toLowerCase().includes('exhaust pipe')) {
-      return [...acc, current];
-    }
-    
-    // If we already have a Mitsubishi L200 product in our filtered list 
-    // that's not the Exhaust Pipe Kit, skip this one
-    const hasOtherMitsubishiL200Product = acc.some(
+    // If we already have a Mitsubishi L200 Exhaust Pipe Kit in our filtered list
+    // skip additional ones
+    const hasExistingExhaustKit = acc.some(
       product => 
         product.name.toLowerCase().includes('mitsubishi l200') && 
-        !product.name.toLowerCase().includes('exhaust pipe')
+        product.name.toLowerCase().includes('exhaust pipe')
     );
     
-    if (hasOtherMitsubishiL200Product) {
+    if (hasExistingExhaustKit) {
       return acc;
     }
     

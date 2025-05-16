@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Product } from '../models/Product';
 import { supabase } from '../integrations/supabase/client';
@@ -39,10 +38,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cart, setCart] = useState<CartItem[]>([]);
   const { user } = useAuth();
 
-  // Load cart from Supabase on mount and when user changes
+  // Load cart from Supabase ONLY if user is logged in
   useEffect(() => {
     const fetchCart = async () => {
       try {
+        // Clear the cart state when the user changes
+        setCart([]);
+        
         if (user) {
           // Fetch cart items for logged-in user
           const { data, error } = await supabase
@@ -52,7 +54,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
           if (error) {
             console.error('Error fetching cart:', error);
-            toast.error('Failed to load your cart');
             return;
           }
           
@@ -67,9 +68,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }));
           
           setCart(cartItems);
-        } else {
-          // For guests, use an empty cart
-          setCart([]);
         }
       } catch (error) {
         console.error('Error loading cart:', error);

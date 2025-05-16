@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { products, Product } from '../models/Product';
 import { useCart } from '../contexts/CartContext';
+import { toast } from 'sonner';
 
 const ProductDetailPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -27,8 +28,8 @@ const ProductDetailPage: React.FC = () => {
   const handleAddToCart = () => {
     if (product) {
       addToCart(product, quantity);
-      // Show success message (in production, would use a toast notification)
-      alert(`${product.name} added to cart!`);
+      // Use toast notification instead of alert
+      toast.success(`${product.name} added to cart!`);
     }
   };
 

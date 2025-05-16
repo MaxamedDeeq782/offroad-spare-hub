@@ -18,6 +18,7 @@ import AdminPage from './pages/AdminPage';
 import AddProductPage from './pages/AddProductPage';
 import NotFound from './pages/NotFound';
 import VehiclePage from './pages/VehiclePage';
+import SimulatedStripeCheckoutPage from './pages/SimulatedStripeCheckoutPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -38,6 +39,7 @@ function App() {
                   <Route path="/products/:id" element={<ProductDetailPage />} />
                   <Route path="/cart" element={<CartPage />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/simulated-stripe-checkout" element={<SimulatedStripeCheckoutPage />} />
                   <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />

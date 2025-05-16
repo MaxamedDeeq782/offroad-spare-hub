@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
@@ -8,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { supabase } from '../integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { useIsMobile } from '../hooks/use-mobile';
 
 interface Brand {
   id: number;
@@ -33,6 +35,7 @@ const AddProductPage: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   // Check admin status whenever user changes
   useEffect(() => {
@@ -100,12 +103,24 @@ const AddProductPage: React.FC = () => {
       // Upload image if present
       let imageUrl = null;
       if (uploadedImage) {
+        console.log('Uploading image:', uploadedImage.name);
+        
         // Check if products bucket exists
-        const { data: bucketData } = await supabase.storage.listBuckets();
+        const { data: bucketData, error: bucketError } = await supabase.storage.listBuckets();
+        
+        if (bucketError) {
+          console.error('Error checking buckets:', bucketError);
+          toast.error('Error checking storage buckets');
+          setLoading(false);
+          return;
+        }
+        
         let bucketExists = bucketData?.some(bucket => bucket.name === 'products');
+        console.log('Bucket exists:', bucketExists);
         
         // Create bucket if it doesn't exist
         if (!bucketExists) {
+          console.log('Creating products bucket');
           const { error: createError } = await supabase.storage.createBucket('products', {
             public: true
           });
@@ -116,6 +131,7 @@ const AddProductPage: React.FC = () => {
             setLoading(false);
             return;
           }
+          console.log('Products bucket created successfully');
         }
         
         // Upload the file
@@ -123,6 +139,7 @@ const AddProductPage: React.FC = () => {
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
         const filePath = `product-images/${fileName}`;
         
+        console.log('Uploading file to path:', filePath);
         const { error: uploadError } = await supabase.storage
           .from('products')
           .upload(filePath, uploadedImage);
@@ -134,15 +151,25 @@ const AddProductPage: React.FC = () => {
           return;
         }
         
+        console.log('Image uploaded successfully');
+        
         // Get the public URL
         const { data: publicUrl } = supabase.storage
           .from('products')
           .getPublicUrl(filePath);
           
         imageUrl = publicUrl.publicUrl;
+        console.log('Image URL:', imageUrl);
       }
       
       // Insert into database
+      console.log('Inserting product into database:', {
+        name: fullProductName,
+        price: parseFloat(price),
+        brand_id: selectedBrand ? parseInt(selectedBrand) : null,
+        image_url: imageUrl
+      });
+      
       const { data, error } = await supabase
         .from('products')
         .insert({
@@ -158,6 +185,7 @@ const AddProductPage: React.FC = () => {
         toast.error('Failed to add product');
         console.error('Product creation error:', error);
       } else {
+        console.log('Product added successfully:', data);
         toast.success('Product added successfully!');
         
         // Reset form
@@ -197,7 +225,7 @@ const AddProductPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card>
+      <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">Add New Product</CardTitle>
         </CardHeader>
@@ -223,7 +251,7 @@ const AddProductPage: React.FC = () => {
                 <SelectTrigger id="vehicle-type">
                   <SelectValue placeholder="Select vehicle type" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position={isMobile ? "popper" : "item-aligned"}>
                   {VEHICLE_TYPES.map((vehicle) => (
                     <SelectItem key={vehicle} value={vehicle}>
                       {vehicle}
@@ -256,7 +284,7 @@ const AddProductPage: React.FC = () => {
                 <SelectTrigger id="brand">
                   <SelectValue placeholder="Select a brand" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position={isMobile ? "popper" : "item-aligned"}>
                   {brands.map((brand) => (
                     <SelectItem key={brand.id} value={brand.id.toString()}>
                       {brand.name}
@@ -286,16 +314,20 @@ const AddProductPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end flex-wrap gap-2">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => navigate('/admin')}
-                className="mr-2"
+                className={isMobile ? "w-full" : ""}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className={isMobile ? "w-full" : ""}
+              >
                 {loading ? 'Adding Product...' : 'Add Product'}
               </Button>
             </div>

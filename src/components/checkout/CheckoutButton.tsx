@@ -77,8 +77,13 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
         // Create local order before redirecting
         await createOrder();
         
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
+        // For development/testing environment, redirect to the simulated Stripe checkout
+        if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('lovableproject.com')) {
+          navigate('/simulated-stripe-checkout');
+        } else {
+          // In production, redirect to the actual Stripe checkout URL
+          window.location.href = data.url;
+        }
       } else {
         toast.error("No checkout URL received from Stripe");
       }

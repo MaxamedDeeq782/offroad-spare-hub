@@ -79,6 +79,12 @@ const OrderConfirmationPage: React.FC = () => {
       // Create the order in our database
       const userId = user?.id;
       
+      if (!userId) {
+        toast.error("User not authenticated. Cannot create order.");
+        setLoading(false);
+        return;
+      }
+
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -97,8 +103,7 @@ const OrderConfirmationPage: React.FC = () => {
         return;
       }
       
-      // Insert order items based on the cart items
-      // For paid orders, we don't have the cart items anymore, so we'll use the line items from Stripe
+      // Insert order items based on the line items from Stripe
       if (stripeData.line_items && stripeData.line_items.length > 0) {
         const orderItems = stripeData.line_items.map(item => ({
           order_id: orderData.id,

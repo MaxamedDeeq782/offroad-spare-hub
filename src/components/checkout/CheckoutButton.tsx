@@ -82,7 +82,8 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
           navigate('/simulated-stripe-checkout');
         } else {
           // In production, redirect to the actual Stripe checkout URL
-          window.location.href = data.url;
+          // Open Stripe checkout in a new tab instead of redirecting
+          window.open(data.url, '_blank');
         }
       } else {
         toast.error("No checkout URL received from Stripe");

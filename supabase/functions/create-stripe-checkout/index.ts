@@ -62,13 +62,20 @@ serve(async (req) => {
       quantity: item.quantity,
     }));
     
+    // Extract origin from request for success URL
+    const origin = new URL(req.url).origin;
+    const referer = req.headers.get('referer');
+    
+    // Use referer as base for success URL if available, otherwise fallback to origin
+    const baseUrl = referer ? new URL(referer).origin : origin;
+    
     // Create the checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${new URL(req.url).origin}/order-confirmation`,
-      cancel_url: `${new URL(req.url).origin}/checkout`,
+      success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/checkout`,
       client_reference_id: userId,
       customer_email: customerInfo?.email,
       shipping_address_collection: {

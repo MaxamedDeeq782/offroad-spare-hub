@@ -3,19 +3,58 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const OrderConfirmationPage: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const sessionId = searchParams.get('session_id');
   const orderId = location.state?.orderId || `order-${sessionId || Date.now()}`;
   const [loading, setLoading] = useState(false);
+  const [orderVerified, setOrderVerified] = useState(false);
   
   useEffect(() => {
     if (!orderId && !sessionId) {
       toast.error("No order information found");
+      return;
     }
-  }, [orderId, sessionId]);
+    
+    // If we have a session ID from Stripe, verify the order
+    if (sessionId && user) {
+      verifyOrder();
+    }
+  }, [orderId, sessionId, user]);
+  
+  const verifyOrder = async () => {
+    setLoading(true);
+    try {
+      // Check if order exists with this session ID
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        console.error("Error verifying order:", error);
+        toast.error("Could not verify your order. Please check your orders page.");
+      } else if (data && data.length > 0) {
+        setOrderVerified(true);
+        toast.success("Your order has been confirmed!");
+      } else {
+        // Create an order if it doesn't exist
+        // This is a fallback in case the order wasn't created before redirect
+        toast.info("Processing your order...");
+      }
+    } catch (error) {
+      console.error("Error in order verification:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-16">

@@ -23,7 +23,7 @@ const CheckoutPage: React.FC = () => {
     city: '',
     state: '',
     zipCode: '',
-    paymentMethod: 'credit_card'
+    paymentMethod: 'stripe' // Default to Stripe instead of credit_card
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +79,7 @@ const CheckoutPage: React.FC = () => {
   };
 
   // Create an order in your database
-  const createOrder = async () => {
+  const createOrder = async (stripeSessionId?: string) => {
     try {
       // Create a new order 
       const orderData = {
@@ -90,7 +90,8 @@ const CheckoutPage: React.FC = () => {
           price: item.price
         })),
         total: getCartTotal(),
-        status: 'pending' as const
+        status: 'pending' as const,
+        stripeSessionId
       };
       
       console.log("Creating order with data:", orderData);
@@ -104,11 +105,8 @@ const CheckoutPage: React.FC = () => {
         // Clear cart
         clearCart();
         
-        // Navigate to order confirmation for credit card payment
-        // For Stripe, this will be called after returning from Stripe
-        if (formData.paymentMethod === 'credit_card') {
-          navigate('/order-confirmation', { state: { orderId: newOrder.id } });
-        }
+        // Navigate to order confirmation
+        navigate('/order-confirmation', { state: { orderId: newOrder.id } });
       } else {
         toast.error("Failed to create order. Please try again.");
       }

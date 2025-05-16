@@ -18,6 +18,7 @@ export interface Order {
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
+  stripeSessionId?: string;
   items?: OrderItem[];
 }
 
@@ -30,6 +31,7 @@ export interface OrderInput {
   }[];
   total: number;
   status: OrderStatus;
+  stripeSessionId?: string;
 }
 
 // Add an order to the database
@@ -42,6 +44,7 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
         user_id: orderInput.userId,
         total: orderInput.total,
         status: orderInput.status,
+        stripe_session_id: orderInput.stripeSessionId
       })
       .select()
       .single();
@@ -76,6 +79,7 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       userId: orderInput.userId,
       total: orderInput.total,
       status: orderInput.status,
+      stripeSessionId: orderInput.stripeSessionId,
       createdAt: new Date(orderData.created_at),
       updatedAt: new Date(orderData.updated_at),
       items: orderInput.items.map((item, index) => ({
@@ -124,6 +128,7 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
             status: order.status as OrderStatus,
             createdAt: new Date(order.created_at),
             updatedAt: new Date(order.updated_at),
+            stripeSessionId: order.stripe_session_id,
             items: [],
           };
         }
@@ -143,6 +148,7 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
           status: order.status as OrderStatus,
           createdAt: new Date(order.created_at),
           updatedAt: new Date(order.updated_at),
+          stripeSessionId: order.stripe_session_id,
           items,
         };
       })

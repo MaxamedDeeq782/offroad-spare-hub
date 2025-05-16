@@ -104,11 +104,15 @@ serve(async (req) => {
           },
         }
       ],
+      metadata: {
+        userId: userId || 'guest',
+      }
     });
     
     return new Response(JSON.stringify({ 
       url: session.url, 
-      isTestMode 
+      isTestMode,
+      sessionId: session.id
     }), {
       headers: {
         ...corsHeaders,

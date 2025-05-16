@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useCart } from '@/contexts/CartContext';
@@ -74,17 +73,12 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
           toast.info("Using Stripe test mode - use test card 4242 4242 4242 4242");
         }
         
-        // Create local order before redirecting
-        await createOrder();
+        // Store the session ID for verification later
+        localStorage.setItem('stripe_session_id', data.sessionId);
         
-        // For development/testing environment, redirect to the simulated Stripe checkout
-        if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('lovableproject.com')) {
-          navigate('/simulated-stripe-checkout');
-        } else {
-          // In production, redirect to the actual Stripe checkout URL
-          // Open Stripe checkout in a new tab instead of redirecting
-          window.open(data.url, '_blank');
-        }
+        // For development/testing environment or lovable hosted preview, open in a new tab
+        // instead of redirecting to keep the app state
+        window.open(data.url, '_blank');
       } else {
         toast.error("No checkout URL received from Stripe");
       }

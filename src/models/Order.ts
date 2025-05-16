@@ -11,15 +11,27 @@ export interface OrderItem {
   price: number;
 }
 
+export interface ShippingInfo {
+  name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  email?: string;
+}
+
 export interface Order {
   id: string;
-  userId: string; // This is now always required and can't be blank
+  userId: string;
   total: number;
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
   stripeSessionId?: string;
   items?: OrderItem[];
+  shipping?: ShippingInfo;
+  guestName?: string;
+  guestEmail?: string;
 }
 
 export interface OrderInput {
@@ -32,6 +44,7 @@ export interface OrderInput {
   total: number;
   status: OrderStatus;
   stripeSessionId?: string;
+  shipping?: ShippingInfo;
 }
 
 // Add an order to the database
@@ -44,7 +57,13 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
         user_id: orderInput.userId,
         total: orderInput.total,
         status: orderInput.status,
-        stripe_session_id: orderInput.stripeSessionId
+        stripe_session_id: orderInput.stripeSessionId,
+        shipping_name: orderInput.shipping?.name,
+        shipping_address: orderInput.shipping?.address,
+        shipping_city: orderInput.shipping?.city,
+        shipping_state: orderInput.shipping?.state,
+        shipping_zip: orderInput.shipping?.zipCode,
+        shipping_email: orderInput.shipping?.email
       })
       .select()
       .single();
@@ -79,9 +98,19 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       userId: orderInput.userId,
       total: orderInput.total,
       status: orderInput.status,
-      stripeSessionId: orderInput.stripeSessionId,
+      stripeSessionId: orderData.stripe_session_id,
       createdAt: new Date(orderData.created_at),
       updatedAt: new Date(orderData.updated_at),
+      shipping: {
+        name: orderData.shipping_name,
+        address: orderData.shipping_address,
+        city: orderData.shipping_city,
+        state: orderData.shipping_state,
+        zipCode: orderData.shipping_zip,
+        email: orderData.shipping_email
+      },
+      guestName: orderData.guest_name,
+      guestEmail: orderData.guest_email,
       items: orderInput.items.map((item, index) => ({
         id: index.toString(), // Temporary ID for newly created items
         orderId: orderId,
@@ -129,6 +158,16 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
             createdAt: new Date(order.created_at),
             updatedAt: new Date(order.updated_at),
             stripeSessionId: order.stripe_session_id,
+            shipping: {
+              name: order.shipping_name,
+              address: order.shipping_address,
+              city: order.shipping_city,
+              state: order.shipping_state,
+              zipCode: order.shipping_zip,
+              email: order.shipping_email
+            },
+            guestName: order.guest_name,
+            guestEmail: order.guest_email,
             items: [],
           };
         }
@@ -149,6 +188,16 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
           createdAt: new Date(order.created_at),
           updatedAt: new Date(order.updated_at),
           stripeSessionId: order.stripe_session_id,
+          shipping: {
+            name: order.shipping_name,
+            address: order.shipping_address,
+            city: order.shipping_city,
+            state: order.shipping_state,
+            zipCode: order.shipping_zip,
+            email: order.shipping_email
+          },
+          guestName: order.guest_name,
+          guestEmail: order.guest_email,
           items,
         };
       })

@@ -45,7 +45,7 @@ serve(async (req) => {
     
     // Retrieve the session
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['line_items', 'line_items.data.price.product']
+      expand: ['line_items', 'line_items.data.price.product', 'customer_details']
     });
     
     if (!session) {
@@ -81,12 +81,24 @@ serve(async (req) => {
       };
     });
     
+    // Extract shipping information
+    const customerDetails = session.customer_details || {};
+    const shippingAddress = customerDetails.address || {};
+    
     // Return the session details
     return new Response(JSON.stringify({ 
       success: true,
       amount_total: session.amount_total,
       customer_email: session.customer_email,
       customer_details: session.customer_details,
+      shipping: {
+        name: customerDetails.name,
+        email: customerDetails.email,
+        address: shippingAddress.line1,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        zipCode: shippingAddress.postal_code
+      },
       line_items: processedLineItems,
       payment_status: session.payment_status,
       created: session.created

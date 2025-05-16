@@ -98,7 +98,14 @@ export type Database = {
           guest_email: string | null
           guest_name: string | null
           id: string
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_email: string | null
+          shipping_name: string | null
+          shipping_state: string | null
+          shipping_zip: string | null
           status: string
+          stripe_session_id: string | null
           total: number
           updated_at: string
           user_id: string
@@ -108,7 +115,14 @@ export type Database = {
           guest_email?: string | null
           guest_name?: string | null
           id?: string
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_email?: string | null
+          shipping_name?: string | null
+          shipping_state?: string | null
+          shipping_zip?: string | null
           status: string
+          stripe_session_id?: string | null
           total: number
           updated_at?: string
           user_id: string
@@ -118,7 +132,14 @@ export type Database = {
           guest_email?: string | null
           guest_name?: string | null
           id?: string
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_email?: string | null
+          shipping_name?: string | null
+          shipping_state?: string | null
+          shipping_zip?: string | null
           status?: string
+          stripe_session_id?: string | null
           total?: number
           updated_at?: string
           user_id?: string

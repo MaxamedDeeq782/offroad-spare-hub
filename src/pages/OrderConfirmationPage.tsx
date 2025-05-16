@@ -85,13 +85,22 @@ const OrderConfirmationPage: React.FC = () => {
         return;
       }
 
+      // Extract shipping information from Stripe data
+      const shippingInfo = stripeData.shipping || {};
+      
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: userId,
           total: stripeData.amount_total / 100, // Convert from cents to dollars
           status: 'pending',
-          stripe_session_id: sessionId
+          stripe_session_id: sessionId,
+          shipping_name: shippingInfo.name,
+          shipping_address: shippingInfo.address,
+          shipping_city: shippingInfo.city,
+          shipping_state: shippingInfo.state,
+          shipping_zip: shippingInfo.zipCode,
+          shipping_email: shippingInfo.email || stripeData.customer_email
         })
         .select()
         .single();

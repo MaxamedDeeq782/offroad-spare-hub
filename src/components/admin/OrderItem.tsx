@@ -4,6 +4,15 @@ import { Order, OrderStatus, updateOrderStatus } from '../../models/Order';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface OrderItemProps {
   order: Order;
@@ -12,6 +21,7 @@ interface OrderItemProps {
 
 const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   
   const handleStatusChange = async (newStatus: OrderStatus) => {
     setIsUpdating(true);
@@ -55,6 +65,16 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
     }
   };
+
+  // Check if shipping information exists
+  const hasShippingInfo = order.shipping && (
+    order.shipping.name || 
+    order.shipping.address || 
+    order.shipping.city || 
+    order.shipping.state || 
+    order.shipping.zipCode || 
+    order.shipping.email
+  );
   
   return (
     <Card className="mb-4">
@@ -76,45 +96,66 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
             <p className="font-medium mt-1">Total: ${order.total.toFixed(2)}</p>
           </div>
           
-          {!isUpdating && (
-            <div className="flex flex-wrap gap-2">
-              {order.status === 'pending' && (
+          <div className="flex flex-col gap-2">
+            {!isUpdating && (
+              <div className="flex flex-wrap gap-2">
+                {order.status === 'pending' && (
+                  <>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleStatusChange('approved')}
+                    >
+                      Approve
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="destructive"
+                      onClick={() => handleStatusChange('canceled')}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                )}
+                
+                {order.status === 'approved' && (
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleStatusChange('shipped')}
+                  >
+                    Mark Shipped
+                  </Button>
+                )}
+                
+                {order.status === 'shipped' && (
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleStatusChange('delivered')}
+                  >
+                    Mark Delivered
+                  </Button>
+                )}
+              </div>
+            )}
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-1"
+              onClick={() => setShowDetails(!showDetails)}
+            >
+              {showDetails ? (
                 <>
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleStatusChange('approved')}
-                  >
-                    Approve
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="destructive"
-                    onClick={() => handleStatusChange('canceled')}
-                  >
-                    Cancel
-                  </Button>
+                  <ChevronUp className="h-4 w-4" />
+                  Hide Details
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  Show Details
                 </>
               )}
-              
-              {order.status === 'approved' && (
-                <Button 
-                  size="sm" 
-                  onClick={() => handleStatusChange('shipped')}
-                >
-                  Mark Shipped
-                </Button>
-              )}
-              
-              {order.status === 'shipped' && (
-                <Button 
-                  size="sm" 
-                  onClick={() => handleStatusChange('delivered')}
-                >
-                  Mark Delivered
-                </Button>
-              )}
-            </div>
-          )}
+            </Button>
+          </div>
           
           {isUpdating && (
             <div className="flex items-center">
@@ -123,17 +164,58 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
           )}
         </div>
         
-        <div className="mt-4 border-t pt-4">
-          <h4 className="text-sm font-medium mb-2">Order Items:</h4>
-          <ul className="space-y-2">
-            {order.items && order.items.map((item, index) => (
-              <li key={item.id || index} className="text-sm flex justify-between">
-                <span>{item.productId} x{item.quantity}</span>
-                <span>${(item.price * item.quantity).toFixed(2)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {showDetails && (
+          <div className="mt-4 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Order Items */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">Order Items:</h4>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead className="text-right">Qty</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {order.items && order.items.map((item, index) => (
+                      <TableRow key={item.id || index}>
+                        <TableCell>{item.productId}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">${(item.price * item.quantity).toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* Shipping Information */}
+              {hasShippingInfo && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Shipping Information:</h4>
+                  <div className="bg-muted p-3 rounded-md space-y-1">
+                    {order.shipping?.name && (
+                      <p className="text-sm">Name: {order.shipping.name}</p>
+                    )}
+                    {order.shipping?.email && (
+                      <p className="text-sm">Email: {order.shipping.email}</p>
+                    )}
+                    {order.shipping?.address && (
+                      <p className="text-sm">Address: {order.shipping.address}</p>
+                    )}
+                    {(order.shipping?.city || order.shipping?.state || order.shipping?.zipCode) && (
+                      <p className="text-sm">
+                        {order.shipping.city}{order.shipping.city && order.shipping.state && ', '}
+                        {order.shipping.state} {order.shipping.zipCode}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

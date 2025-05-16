@@ -65,13 +65,29 @@ serve(async (req) => {
       });
     }
     
+    // Process line items to ensure product IDs are correctly formatted
+    const lineItems = session.line_items?.data || [];
+    const processedLineItems = lineItems.map(item => {
+      const product = typeof item.price.product === 'string' 
+        ? { id: item.price.product } 
+        : item.price.product;
+      
+      return {
+        ...item,
+        price: {
+          ...item.price,
+          product
+        }
+      };
+    });
+    
     // Return the session details
     return new Response(JSON.stringify({ 
       success: true,
       amount_total: session.amount_total,
       customer_email: session.customer_email,
       customer_details: session.customer_details,
-      line_items: session.line_items?.data || [],
+      line_items: processedLineItems,
       payment_status: session.payment_status,
       created: session.created
     }), {

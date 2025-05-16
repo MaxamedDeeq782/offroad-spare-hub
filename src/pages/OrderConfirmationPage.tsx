@@ -62,9 +62,12 @@ const OrderConfirmationPage: React.FC = () => {
       }
       
       // If order doesn't exist, fetch session from Stripe via edge function
-      const { data: stripeData, error: stripeError } = await supabase.functions.invoke("verify-stripe-session", {
+      const response = await supabase.functions.invoke("verify-stripe-session", {
         body: { sessionId }
       });
+      
+      const stripeData = response.data;
+      const stripeError = response.error;
 
       if (stripeError || !stripeData?.success) {
         console.error("Error verifying Stripe session:", stripeError || stripeData?.error);
@@ -99,7 +102,7 @@ const OrderConfirmationPage: React.FC = () => {
       if (stripeData.line_items && stripeData.line_items.length > 0) {
         const orderItems = stripeData.line_items.map(item => ({
           order_id: orderData.id,
-          product_id: item.price.product,
+          product_id: item.price.product.id,
           quantity: item.quantity,
           price: (item.amount_total / 100) / item.quantity // Convert from cents to dollars and get price per item
         }));

@@ -22,6 +22,7 @@ import SimulatedStripeCheckoutPage from './pages/SimulatedStripeCheckoutPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { Toaster } from './components/ui/sonner';
 import './App.css';
 
 function App() {
@@ -30,7 +31,7 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Router>
-            <div className="flex flex-col min-h-screen bg-white text-gray-900 transition-colors duration-200">
+            <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors duration-300 w-full">
               <Header />
               <div className="flex-grow">
                 <Routes>
@@ -53,6 +54,7 @@ function App() {
                 </Routes>
               </div>
               <Footer />
+              <Toaster />
             </div>
           </Router>
         </CartProvider>

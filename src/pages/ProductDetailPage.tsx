@@ -37,7 +37,7 @@ const ProductDetailPage: React.FC = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <div className="text-xl">Loading product details...</div>
+          <div className="text-xl text-foreground">Loading product details...</div>
         </div>
       </div>
     );
@@ -46,9 +46,9 @@ const ProductDetailPage: React.FC = () => {
   if (!product) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-white p-8 rounded-lg shadow text-center">
+        <div className="bg-card text-card-foreground p-8 rounded-lg shadow">
           <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
-          <p className="mb-6">The product you're looking for doesn't exist or has been removed.</p>
+          <p className="mb-6 text-muted-foreground">The product you're looking for doesn't exist or has been removed.</p>
           <Link to="/products" className="btn btn-primary px-6 py-2">
             Browse Products
           </Link>
@@ -60,7 +60,7 @@ const ProductDetailPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <Link to="/products" className="text-primary hover:text-primary-dark flex items-center">
+        <Link to="/products" className="text-primary hover:text-primary/80 flex items-center transition-colors">
           <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
@@ -68,36 +68,36 @@ const ProductDetailPage: React.FC = () => {
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-card text-card-foreground rounded-lg shadow overflow-hidden transition-colors duration-300">
         <div className="md:flex">
           <div className="md:w-1/2">
-            <div className="h-96 bg-gray-200 relative">
+            <div className="h-96 bg-muted relative">
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-medium">Product Image</span>
+                <span className="text-2xl font-medium text-muted-foreground">Product Image</span>
               </div>
             </div>
           </div>
           
           <div className="md:w-1/2 p-8">
-            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">{product.name}</h1>
             
             <div className="mb-4">
               <span className="text-2xl font-bold text-primary">${product.price.toFixed(2)}</span>
-              <span className={`ml-4 px-3 py-1 text-xs font-semibold rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              <span className={`ml-4 px-3 py-1 text-xs font-semibold rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
                 {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
               </span>
             </div>
             
             <div className="mb-6">
-              <h2 className="font-semibold mb-2">Description</h2>
-              <p className="text-gray-700">{product.description}</p>
+              <h2 className="font-semibold mb-2 text-foreground">Description</h2>
+              <p className="text-muted-foreground">{product.description}</p>
             </div>
             
             <div className="mb-6">
-              <h2 className="font-semibold mb-2">Compatible Vehicles</h2>
+              <h2 className="font-semibold mb-2 text-foreground">Compatible Vehicles</h2>
               <div className="flex flex-wrap gap-2">
                 {product.vehicleCompatibility.map((vehicle) => (
-                  <span key={vehicle} className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                  <span key={vehicle} className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-sm">
                     {vehicle}
                   </span>
                 ))}
@@ -105,19 +105,19 @@ const ProductDetailPage: React.FC = () => {
             </div>
             
             <div className="mb-6">
-              <h2 className="font-semibold mb-2">Quantity</h2>
+              <h2 className="font-semibold mb-2 text-foreground">Quantity</h2>
               <div className="flex items-center">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-l"
+                  className="px-3 py-1 bg-muted hover:bg-muted/80 text-foreground rounded-l transition-colors"
                   aria-label="Decrease quantity"
                 >
                   -
                 </button>
-                <span className="px-6 py-1 border-t border-b">{quantity}</span>
+                <span className="px-6 py-1 border-t border-b border-border bg-background text-foreground">{quantity}</span>
                 <button 
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-r"
+                  className="px-3 py-1 bg-muted hover:bg-muted/80 text-foreground rounded-r transition-colors"
                   aria-label="Increase quantity"
                   disabled={quantity >= product.stock}
                 >

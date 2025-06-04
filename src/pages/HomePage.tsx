@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
@@ -54,7 +55,6 @@ const HomePage: React.FC = () => {
           <div className="max-w-2xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Quality Parts for Your Off-Road Adventure</h1>
             <p className="text-xl mb-8">Find genuine spare parts for Toyota Hilux, Land Cruiser, Nissan Patrol, and Mitsubishi L200</p>
-            <Link to="/products" className="btn btn-primary px-8 py-3 text-lg">Shop Now</Link>
           </div>
         </div>
         <div className="absolute inset-0 bg-black opacity-50"></div>

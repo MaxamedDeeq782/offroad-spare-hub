@@ -8,23 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
-import VehicleSelector from './VehicleSelector';
 import BrandSelector from './BrandSelector';
 import ImageUploader from './ImageUploader';
 import { sanitizeText, validateRequiredFields } from '@/utils/sanitization';
-
-const VEHICLE_TYPES = [
-  "Toyota Hilux",
-  "Toyota Land Cruiser",
-  "Nissan Patrol",
-  "Mitsubishi L200"
-];
 
 const AddProductForm: React.FC = () => {
   const [productName, setProductName] = useState('');
   const [price, setPrice] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string>('');
-  const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,14 +58,14 @@ const AddProductForm: React.FC = () => {
     const sanitizedProductName = sanitizeText(productName);
     const sanitizedPrice = sanitizeText(price);
     
-    // Validate required fields
+    // Validate required fields (including brand)
     const formData = {
       productName: sanitizedProductName,
       price: sanitizedPrice,
-      selectedVehicle
+      selectedBrand
     };
     
-    const missingFields = validateRequiredFields(formData, ['productName', 'price', 'selectedVehicle']);
+    const missingFields = validateRequiredFields(formData, ['productName', 'price', 'selectedBrand']);
     
     if (missingFields.length > 0) {
       toast.error(`Please fill in all required fields: ${missingFields.join(', ')}`);
@@ -91,7 +82,7 @@ const AddProductForm: React.FC = () => {
     setLoading(true);
 
     try {
-      // Check user authentication and role
+      // Check user authentication
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -102,44 +93,12 @@ const AddProductForm: React.FC = () => {
 
       console.log('Current user:', user.email);
 
-      // Create full product name with vehicle type
-      const fullProductName = `${sanitizedProductName} for ${selectedVehicle}`;
-      
-      // Upload image if present
+      // Upload image if present (simplified approach)
       let imageUrl = null;
       if (uploadedImage) {
         console.log('Uploading image:', uploadedImage.name);
         
-        // Check if products bucket exists
-        const { data: bucketData, error: bucketError } = await supabase.storage.listBuckets();
-        
-        if (bucketError) {
-          console.error('Error checking buckets:', bucketError);
-          toast.error('Error checking storage buckets');
-          setLoading(false);
-          return;
-        }
-        
-        let bucketExists = bucketData?.some(bucket => bucket.name === 'products');
-        console.log('Bucket exists:', bucketExists);
-        
-        // Create bucket if it doesn't exist
-        if (!bucketExists) {
-          console.log('Creating products bucket');
-          const { error: createError } = await supabase.storage.createBucket('products', {
-            public: true
-          });
-          
-          if (createError) {
-            toast.error('Failed to create storage for images');
-            console.error('Bucket creation error:', createError);
-            setLoading(false);
-            return;
-          }
-          console.log('Products bucket created successfully');
-        }
-        
-        // Upload the file
+        // Try to upload directly without creating bucket (assume it exists or will be created by admin)
         const fileExt = uploadedImage.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
         const filePath = `product-images/${fileName}`;
@@ -150,28 +109,27 @@ const AddProductForm: React.FC = () => {
           .upload(filePath, uploadedImage);
         
         if (uploadError) {
-          toast.error('Failed to upload image');
           console.error('Image upload error:', uploadError);
-          setLoading(false);
-          return;
-        }
-        
-        console.log('Image uploaded successfully');
-        
-        // Get the public URL
-        const { data: publicUrl } = supabase.storage
-          .from('products')
-          .getPublicUrl(filePath);
+          // Continue without image instead of failing
+          console.log('Continuing without image upload');
+        } else {
+          console.log('Image uploaded successfully');
           
-        imageUrl = publicUrl.publicUrl;
-        console.log('Image URL:', imageUrl);
+          // Get the public URL
+          const { data: publicUrl } = supabase.storage
+            .from('products')
+            .getPublicUrl(filePath);
+            
+          imageUrl = publicUrl.publicUrl;
+          console.log('Image URL:', imageUrl);
+        }
       }
       
       // Insert into database
       const productData = {
-        name: fullProductName,
+        name: sanitizedProductName,
         price: priceNum,
-        brand_id: selectedBrand ? parseInt(selectedBrand) : null,
+        brand_id: parseInt(selectedBrand),
         image_url: imageUrl
       };
       
@@ -202,7 +160,6 @@ const AddProductForm: React.FC = () => {
         setProductName('');
         setPrice('');
         setSelectedBrand('');
-        setSelectedVehicle('');
         setUploadedImage(null);
         setImagePreview(null);
         
@@ -225,7 +182,7 @@ const AddProductForm: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <Label htmlFor="product-name">Product Name</Label>
+            <Label htmlFor="product-name">Product Name *</Label>
             <Input 
               id="product-name"
               value={productName}
@@ -236,15 +193,8 @@ const AddProductForm: React.FC = () => {
             />
           </div>
 
-          <VehicleSelector 
-            selectedVehicle={selectedVehicle}
-            setSelectedVehicle={setSelectedVehicle}
-            vehicleTypes={VEHICLE_TYPES}
-            isMobile={isMobile}
-          />
-
           <div>
-            <Label htmlFor="price">Price ($)</Label>
+            <Label htmlFor="price">Price ($) *</Label>
             <Input 
               id="price"
               type="number" 
@@ -261,6 +211,7 @@ const AddProductForm: React.FC = () => {
             selectedBrand={selectedBrand}
             setSelectedBrand={setSelectedBrand}
             isMobile={isMobile}
+            required={true}
           />
 
           <ImageUploader 

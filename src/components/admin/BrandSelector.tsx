@@ -14,9 +14,15 @@ interface BrandSelectorProps {
   selectedBrand: string;
   setSelectedBrand: (value: string) => void;
   isMobile: boolean;
+  required?: boolean;
 }
 
-const BrandSelector: React.FC<BrandSelectorProps> = ({ selectedBrand, setSelectedBrand, isMobile }) => {
+const BrandSelector: React.FC<BrandSelectorProps> = ({ 
+  selectedBrand, 
+  setSelectedBrand, 
+  isMobile, 
+  required = false 
+}) => {
   const [brands, setBrands] = useState<Brand[]>([]);
 
   // Fetch brands on component mount
@@ -42,10 +48,11 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({ selectedBrand, setSelecte
 
   return (
     <div>
-      <Label htmlFor="brand">Brand (Optional)</Label>
+      <Label htmlFor="brand">Brand {required && '*'}</Label>
       <Select 
         value={selectedBrand} 
         onValueChange={setSelectedBrand}
+        required={required}
       >
         <SelectTrigger id="brand">
           <SelectValue placeholder="Select a brand" />

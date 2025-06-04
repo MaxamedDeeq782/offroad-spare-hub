@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
@@ -39,7 +38,7 @@ const CartPage: React.FC = () => {
         </div>
       </div>
     );
-  }
+  };
 
   if (cart.length === 0) {
     return (
@@ -47,9 +46,6 @@ const CartPage: React.FC = () => {
         <h1 className="text-3xl font-bold mb-6">Shopping Cart</h1>
         <div className="bg-white p-8 rounded-lg shadow text-center dark:bg-gray-800">
           <p className="text-xl mb-6">Your cart is empty</p>
-          <Link to="/products" className="btn btn-primary px-6 py-2">
-            Continue Shopping
-          </Link>
         </div>
       </div>
     );

@@ -50,6 +50,14 @@ export interface OrderInput {
 // Add an order to the database
 export const addOrder = async (orderInput: OrderInput): Promise<Order | null> => {
   try {
+    console.log("Adding order to database:", orderInput);
+
+    // Validate required fields
+    if (!orderInput.userId || !orderInput.items || orderInput.items.length === 0) {
+      console.error("Missing required order data");
+      return null;
+    }
+
     // Insert the order
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
@@ -73,6 +81,7 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       return null;
     }
 
+    console.log("Order created successfully:", orderData);
     const orderId = orderData.id;
 
     // Insert all order items
@@ -83,16 +92,21 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       price: item.price,
     }));
 
+    console.log("Inserting order items:", orderItemsToInsert);
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(orderItemsToInsert);
 
     if (itemsError) {
       console.error('Error creating order items:', itemsError);
+      // Try to clean up the order if items insertion failed
+      await supabase.from('orders').delete().eq('id', orderId);
       return null;
     }
 
-    // Return the created order
+    console.log("Order items created successfully");
+
+    // Return the created order with all details
     return {
       id: orderId,
       userId: orderInput.userId,
@@ -112,7 +126,7 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       guestName: orderData.guest_name,
       guestEmail: orderData.guest_email,
       items: orderInput.items.map((item, index) => ({
-        id: index.toString(), // Temporary ID for newly created items
+        id: `temp-${index}`, // Temporary ID for newly created items
         orderId: orderId,
         productId: item.productId,
         quantity: item.quantity,

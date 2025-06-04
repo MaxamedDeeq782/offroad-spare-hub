@@ -24,7 +24,8 @@ const HomePage: React.FC = () => {
       slug: 'toyota-land-cruiser',
       image: '/images/toyota-land-cruiser.jpg',
       partId: 'Tie Rod End Kit for Toyota Land Cruiser FJ80 FzJ80 91-97 Lexus LX450',
-      hasLogo: false
+      hasLogo: true,
+      logoSrc: '/lovable-uploads/c935c10d-07b7-4fc3-a1b8-a5b2d3fde696.png'
     },
     {
       name: 'Nissan Patrol',

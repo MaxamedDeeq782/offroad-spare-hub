@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
@@ -32,7 +31,8 @@ const HomePage: React.FC = () => {
       slug: 'nissan-patrol',
       image: '/images/nissan-patrol.jpg',
       partId: 'Fit Nissan Patrol Y62 & Armada 5.6L 8 Cyl AT 2010 - 2023 aluminum radiator',
-      hasLogo: false
+      hasLogo: true,
+      logoSrc: '/lovable-uploads/39ccdbeb-223b-4378-ae17-fba0d1d3e3f4.png'
     },
     {
       name: 'Mitsubishi L200',

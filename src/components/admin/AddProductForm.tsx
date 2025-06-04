@@ -11,6 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import VehicleSelector from './VehicleSelector';
 import BrandSelector from './BrandSelector';
 import ImageUploader from './ImageUploader';
+import { sanitizeText, validateRequiredFields } from '@/utils/sanitization';
 
 const VEHICLE_TYPES = [
   "Toyota Hilux",
@@ -34,6 +35,19 @@ const AddProductForm: React.FC = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image file must be less than 5MB');
+        return;
+      }
+      
       setUploadedImage(file);
       
       // Create a preview
@@ -49,16 +63,47 @@ const AddProductForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!productName || !price || !selectedVehicle) {
-      toast.error('Please fill in all required fields');
+    // Sanitize inputs
+    const sanitizedProductName = sanitizeText(productName);
+    const sanitizedPrice = sanitizeText(price);
+    
+    // Validate required fields
+    const formData = {
+      productName: sanitizedProductName,
+      price: sanitizedPrice,
+      selectedVehicle
+    };
+    
+    const missingFields = validateRequiredFields(formData, ['productName', 'price', 'selectedVehicle']);
+    
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      return;
+    }
+
+    // Validate price is a positive number
+    const priceNum = parseFloat(sanitizedPrice);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      toast.error('Please enter a valid price');
       return;
     }
 
     setLoading(true);
 
     try {
+      // Check user authentication and role
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('You must be logged in to add products');
+        navigate('/login');
+        return;
+      }
+
+      console.log('Current user:', user.email);
+
       // Create full product name with vehicle type
-      const fullProductName = `${productName} for ${selectedVehicle}`;
+      const fullProductName = `${sanitizedProductName} for ${selectedVehicle}`;
       
       // Upload image if present
       let imageUrl = null;
@@ -123,27 +168,32 @@ const AddProductForm: React.FC = () => {
       }
       
       // Insert into database
-      console.log('Inserting product into database:', {
+      const productData = {
         name: fullProductName,
-        price: parseFloat(price),
+        price: priceNum,
         brand_id: selectedBrand ? parseInt(selectedBrand) : null,
         image_url: imageUrl
-      });
+      };
+      
+      console.log('Inserting product into database:', productData);
       
       const { data, error } = await supabase
         .from('products')
-        .insert({
-          name: fullProductName,
-          price: parseFloat(price),
-          brand_id: selectedBrand ? parseInt(selectedBrand) : null,
-          image_url: imageUrl
-        })
+        .insert(productData)
         .select()
         .single();
       
       if (error) {
-        toast.error('Failed to add product');
         console.error('Product creation error:', error);
+        
+        // Provide more specific error messages
+        if (error.code === 'PGRST301') {
+          toast.error('Access denied. You need admin privileges to add products.');
+        } else if (error.code === '23505') {
+          toast.error('A product with this name already exists');
+        } else {
+          toast.error(`Failed to add product: ${error.message}`);
+        }
       } else {
         console.log('Product added successfully:', data);
         toast.success('Product added successfully!');
@@ -182,6 +232,7 @@ const AddProductForm: React.FC = () => {
               onChange={(e) => setProductName(e.target.value)}
               placeholder="Enter product name"
               required
+              maxLength={255}
             />
           </div>
 

@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Review {
   id: string;
@@ -10,6 +11,7 @@ interface Review {
   rating: number;
   message: string;
   date: string;
+  userId?: string;
 }
 
 interface ProductReviewsProps {
@@ -17,6 +19,8 @@ interface ProductReviewsProps {
 }
 
 const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => {
+  const { user } = useAuth();
+  
   const [reviews, setReviews] = useState<Review[]>([
     {
       id: '1',
@@ -35,18 +39,38 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => {
   ]);
   
   const [newReview, setNewReview] = useState({
-    customerName: '',
     rating: 5,
     message: ''
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Get username from user metadata or fallback to email username
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    
+    // Try to get name from user metadata first
+    const metaName = user.user_metadata?.name;
+    if (metaName) return metaName;
+    
+    // Fallback to the part before @ in email
+    if (user.email) {
+      return user.email.split('@')[0];
+    }
+    
+    return 'Anonymous User';
+  };
+
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newReview.customerName.trim() || !newReview.message.trim()) {
-      toast.error('Please fill in all fields');
+    if (!user) {
+      toast.error('Please login to leave a review');
+      return;
+    }
+    
+    if (!newReview.message.trim()) {
+      toast.error('Please write a review message');
       return;
     }
 
@@ -56,14 +80,15 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => {
     setTimeout(() => {
       const review: Review = {
         id: Date.now().toString(),
-        customerName: newReview.customerName,
+        customerName: getUserDisplayName(),
         rating: newReview.rating,
         message: newReview.message,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        userId: user.id
       };
       
       setReviews(prev => [review, ...prev]);
-      setNewReview({ customerName: '', rating: 5, message: '' });
+      setNewReview({ rating: 5, message: '' });
       setIsSubmitting(false);
       toast.success('Review submitted successfully!');
     }, 1000);
@@ -106,77 +131,81 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => {
       </div>
 
       {/* Add Review Form */}
-      <div className="mb-8 border-t pt-8">
+      <div id="review-form" className="mb-8 border-t pt-8">
         <h3 className="text-xl font-semibold mb-4">Write a Review</h3>
-        <form onSubmit={handleSubmitReview} className="space-y-4">
-          <div>
-            <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1">
-              Your Name
-            </label>
-            <input
-              type="text"
-              id="customerName"
-              value={newReview.customerName}
-              onChange={(e) => setNewReview(prev => ({ ...prev, customerName: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Enter your name"
-              required
-            />
+        
+        {!user ? (
+          <div className="text-center py-8 bg-gray-50 rounded-lg">
+            <p className="text-gray-600 mb-4">Please login to leave a review</p>
+            <Button 
+              onClick={() => window.location.href = '/login'}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Login to Review
+            </Button>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rating
-            </label>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((rating) => (
-                <button
-                  key={rating}
-                  type="button"
-                  onClick={() => setNewReview(prev => ({ ...prev, rating }))}
-                  className="focus:outline-none"
-                >
-                  <svg
-                    className={`w-6 h-6 ${rating <= newReview.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} hover:text-yellow-400`}
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    fill="none"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                    />
-                  </svg>
-                </button>
-              ))}
+        ) : (
+          <form onSubmit={handleSubmitReview} className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-600">
+                Reviewing as: <span className="font-semibold text-blue-700">{getUserDisplayName()}</span>
+              </p>
             </div>
-          </div>
-          
-          <div>
-            <label htmlFor="reviewMessage" className="block text-sm font-medium text-gray-700 mb-1">
-              Your Review
-            </label>
-            <Textarea
-              id="reviewMessage"
-              value={newReview.message}
-              onChange={(e) => setNewReview(prev => ({ ...prev, message: e.target.value }))}
-              placeholder="Share your experience with this product..."
-              rows={4}
-              className="w-full"
-              required
-            />
-          </div>
-          
-          <Button 
-            type="submit" 
-            disabled={isSubmitting}
-            className="w-full md:w-auto"
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Review'}
-          </Button>
-        </form>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Rating
+              </label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    type="button"
+                    onClick={() => setNewReview(prev => ({ ...prev, rating }))}
+                    className="focus:outline-none"
+                  >
+                    <svg
+                      className={`w-6 h-6 ${rating <= newReview.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} hover:text-yellow-400`}
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      fill="none"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                      />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="reviewMessage" className="block text-sm font-medium text-gray-700 mb-1">
+                Your Review
+              </label>
+              <Textarea
+                id="reviewMessage"
+                value={newReview.message}
+                onChange={(e) => setNewReview(prev => ({ ...prev, message: e.target.value }))}
+                placeholder="Share your experience with this product..."
+                rows={4}
+                className="w-full"
+                required
+              />
+            </div>
+            
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full md:w-auto"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            </Button>
+          </form>
+        )}
       </div>
 
       {/* Reviews List */}

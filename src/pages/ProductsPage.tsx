@@ -21,6 +21,16 @@ const ProductsPage: React.FC = () => {
   const hasActiveFilters = !!(searchTerm || selectedPartId);
   const availableBrands = getAvailableBrands();
 
+  // Create a wrapper function that matches the expected signature
+  const getVehicleFromName = (productName: string): string => {
+    // Find the product by name to get the full product object
+    const product = filteredDbProducts.find(p => p.name === productName);
+    if (product) {
+      return getVehicleFromProductName(product);
+    }
+    return '';
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">
@@ -47,7 +57,7 @@ const ProductsPage: React.FC = () => {
             products={filteredDbProducts}
             loading={loading}
             selectedVehicle={selectedVehicle}
-            getVehicleFromProductName={getVehicleFromProductName}
+            getVehicleFromProductName={getVehicleFromName}
           />
         </div>
       </div>

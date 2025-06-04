@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const HomePage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { user } = useAuth();
 
   // Available vehicle makes with their specific part mappings
   const vehicles = [
@@ -117,8 +116,8 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Admin Button - Only show at bottom of home page for admin users */}
-      {isAdmin && (
+      {/* Admin Button - Only show at bottom of home page for authenticated users */}
+      {user && (
         <div className="py-8 bg-white">
           <div className="container mx-auto px-4 text-center">
             <Link 

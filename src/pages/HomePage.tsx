@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import Image from '../components/Image';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -15,25 +17,30 @@ const HomePage: React.FC = () => {
       name: 'Toyota Hilux',
       slug: 'toyota-hilux',
       image: '/images/toyota-hilux.jpg',
-      partId: 'Toyota Hilux Gearbox 5-Speed Manual'
+      partId: 'Toyota Hilux Gearbox 5-Speed Manual',
+      hasLogo: false
     },
     {
       name: 'Toyota Land Cruiser',
       slug: 'toyota-land-cruiser',
       image: '/images/toyota-land-cruiser.jpg',
-      partId: 'Tie Rod End Kit for Toyota Land Cruiser FJ80 FzJ80 91-97 Lexus LX450'
+      partId: 'Tie Rod End Kit for Toyota Land Cruiser FJ80 FzJ80 91-97 Lexus LX450',
+      hasLogo: false
     },
     {
       name: 'Nissan Patrol',
       slug: 'nissan-patrol',
       image: '/images/nissan-patrol.jpg',
-      partId: 'Fit Nissan Patrol Y62 & Armada 5.6L 8 Cyl AT 2010 - 2023 aluminum radiator'
+      partId: 'Fit Nissan Patrol Y62 & Armada 5.6L 8 Cyl AT 2010 - 2023 aluminum radiator',
+      hasLogo: false
     },
     {
       name: 'Mitsubishi L200',
       slug: 'mitsubishi-l200',
       image: '/images/mitsubishi-l200.jpg',
-      partId: 'Exhaust Pipe Kit Full System for MITSUBISHI L200 2.5L Diesel'
+      partId: 'Exhaust Pipe Kit Full System for MITSUBISHI L200 2.5L Diesel',
+      hasLogo: true,
+      logoSrc: '/lovable-uploads/45f35bee-963c-4247-ab50-23fec1e661ff.png'
     }
   ];
 
@@ -67,7 +74,15 @@ const HomePage: React.FC = () => {
               >
                 <div className="h-48 bg-gray-200 relative">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-bold">{vehicle.name}</span>
+                    {vehicle.hasLogo && vehicle.logoSrc ? (
+                      <Image 
+                        src={vehicle.logoSrc} 
+                        alt={`${vehicle.name} logo`}
+                        className="max-w-full max-h-full object-contain p-4"
+                      />
+                    ) : (
+                      <span className="text-xl font-bold">{vehicle.name}</span>
+                    )}
                   </div>
                 </div>
                 <div className="p-4">

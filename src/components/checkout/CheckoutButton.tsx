@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useCart } from '@/contexts/CartContext';
@@ -73,12 +74,8 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
           toast.info("Using Stripe test mode - use test card 4242 4242 4242 4242");
         }
         
-        // Store the session ID for verification later
-        localStorage.setItem('stripe_session_id', data.sessionId);
-        
-        // For development/testing environment or lovable hosted preview, open in a new tab
-        // instead of redirecting to keep the app state
-        window.open(data.url, '_blank');
+        // Redirect directly to Stripe checkout
+        window.location.href = data.url;
       } else {
         toast.error("No checkout URL received from Stripe");
       }

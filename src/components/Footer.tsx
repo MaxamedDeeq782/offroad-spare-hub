@@ -1,18 +1,9 @@
 
 import React from 'react';
-import { Phone, Mail, ShieldCheck } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Phone, Mail } from 'lucide-react';
 
 const Footer: React.FC = () => {
-  const { user, isAdmin } = useAuth();
-  const location = useLocation();
   const currentYear = new Date().getFullYear();
-  
-  // Check if we are currently on the admin page or a subpage of admin
-  const isAdminPage = () => {
-    return location.pathname.startsWith('/admin');
-  };
 
   return (
     <footer className="bg-gray-800 text-white py-6">
@@ -33,32 +24,8 @@ const Footer: React.FC = () => {
           <div className="text-center text-gray-400 text-sm">
             <p>&copy; {currentYear} OffroadSpareHub. All rights reserved.</p>
           </div>
-          
-          {isAdmin && (
-            <div className="mt-4">
-              <Link 
-                to="/admin" 
-                className="bg-red-600 text-white px-6 py-2 rounded-md flex items-center shadow-md hover:bg-red-700 font-extrabold border-2 border-red-400 animate-pulse"
-              >
-                <ShieldCheck size={20} className="mr-2" />
-                <span className="uppercase">ADMIN DASHBOARD</span>
-              </Link>
-            </div>
-          )}
         </div>
       </div>
-      
-      {/* Fixed AD button - only show if not on admin page and user is admin */}
-      {!isAdminPage() && isAdmin && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Link 
-            to="/admin"
-            className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xl w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-2 border-red-400"
-          >
-            AD
-          </Link>
-        </div>
-      )}
     </footer>
   );
 };

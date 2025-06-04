@@ -19,15 +19,18 @@ const OrderConfirmationPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [orderVerified, setOrderVerified] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
   
   useEffect(() => {
     console.log("Order confirmation page loaded");
     console.log("Session ID:", sessionId);
     console.log("Order ID:", orderId);
     console.log("User:", user);
+    console.log("Location state:", location.state);
     
     if (!sessionId && !orderId) {
       console.error("No session ID or order ID found");
+      setErrorMessage("No order information found");
       toast.error("No order information found");
       navigate('/');
       return;
@@ -45,17 +48,27 @@ const OrderConfirmationPage: React.FC = () => {
       clearCart(); // Clear the cart on successful order
     } else {
       setLoading(false);
+      setErrorMessage("No order information found");
       toast.error("No order information found");
     }
   }, [sessionId, orderId, user]);
   
   const verifyOrder = async () => {
     setLoading(true);
+    setErrorMessage('');
     console.log("Starting order verification process");
     
     try {
       if (!sessionId) {
         console.error("No session ID provided for verification");
+        setErrorMessage("No session ID provided for verification");
+        return;
+      }
+
+      if (!user) {
+        console.error("User not authenticated");
+        setErrorMessage("User not authenticated. Please log in and try again.");
+        setLoading(false);
         return;
       }
       
@@ -69,6 +82,7 @@ const OrderConfirmationPage: React.FC = () => {
 
       if (existingOrderError) {
         console.error("Error checking existing order:", existingOrderError);
+        setErrorMessage(`Database error: ${existingOrderError.message}`);
       } else if (existingOrderData) {
         console.log("Found existing order:", existingOrderData);
         setOrderVerified(true);
@@ -81,56 +95,63 @@ const OrderConfirmationPage: React.FC = () => {
       
       // If order doesn't exist, fetch session from Stripe via edge function
       console.log("Fetching session from Stripe for session ID:", sessionId);
-      const response = await supabase.functions.invoke("verify-stripe-session", {
+      
+      const { data: stripeResponse, error: invokeError } = await supabase.functions.invoke("verify-stripe-session", {
         body: { sessionId }
       });
       
-      console.log("Edge function response:", response);
+      console.log("Edge function invoke response:", { data: stripeResponse, error: invokeError });
       
-      const stripeData = response.data;
-      const stripeError = response.error;
-
-      if (stripeError) {
-        console.error("Edge function error:", stripeError);
+      if (invokeError) {
+        console.error("Edge function invoke error:", invokeError);
+        setErrorMessage(`Failed to verify payment: ${invokeError.message}`);
         toast.error("Could not verify your payment. Please contact support.");
         setLoading(false);
         return;
       }
 
-      if (!stripeData?.success) {
-        console.error("Stripe verification failed:", stripeData?.error);
-        toast.error(stripeData?.error || "Could not verify your payment. Please contact support.");
+      if (!stripeResponse) {
+        console.error("No response from edge function");
+        setErrorMessage("No response received from payment verification");
+        toast.error("Could not verify your payment. Please contact support.");
+        setLoading(false);
+        return;
+      }
+
+      if (!stripeResponse.success) {
+        console.error("Stripe verification failed:", stripeResponse.error);
+        setErrorMessage(`Payment verification failed: ${stripeResponse.error || 'Unknown error'}`);
+        toast.error(stripeResponse.error || "Could not verify your payment. Please contact support.");
         setLoading(false);
         return;
       }
       
-      console.log("Stripe data received:", stripeData);
+      console.log("Stripe data received:", stripeResponse);
       
-      // Create the order in our database
-      const userId = user?.id;
-      
-      if (!userId) {
-        console.error("User not authenticated");
-        toast.error("User not authenticated. Cannot create order.");
+      // Ensure we have the required data
+      if (!stripeResponse.amount_total) {
+        console.error("Missing amount in Stripe response");
+        setErrorMessage("Invalid payment data received");
+        toast.error("Invalid payment data. Please contact support.");
         setLoading(false);
         return;
       }
 
       // Extract shipping information from Stripe data
-      const shippingInfo = stripeData.shipping || {};
+      const shippingInfo = stripeResponse.shipping || {};
       console.log("Shipping info:", shippingInfo);
       
       const orderData = {
-        user_id: userId,
-        total: stripeData.amount_total / 100, // Convert from cents to dollars
+        user_id: user.id,
+        total: (stripeResponse.amount_total || 0) / 100, // Convert from cents to dollars
         status: 'pending',
         stripe_session_id: sessionId,
-        shipping_name: shippingInfo.name,
-        shipping_address: shippingInfo.address,
-        shipping_city: shippingInfo.city,
-        shipping_state: shippingInfo.state,
-        shipping_zip: shippingInfo.zipCode,
-        shipping_email: shippingInfo.email || stripeData.customer_email
+        shipping_name: shippingInfo.name || '',
+        shipping_address: shippingInfo.address || '',
+        shipping_city: shippingInfo.city || '',
+        shipping_state: shippingInfo.state || '',
+        shipping_zip: shippingInfo.zipCode || '',
+        shipping_email: shippingInfo.email || stripeResponse.customer_email || ''
       };
       
       console.log("Creating order with data:", orderData);
@@ -143,7 +164,8 @@ const OrderConfirmationPage: React.FC = () => {
 
       if (orderError) {
         console.error("Error creating order:", orderError);
-        toast.error("Could not create your order. Please check your orders page.");
+        setErrorMessage(`Failed to create order: ${orderError.message}`);
+        toast.error("Could not create your order. Please check your orders page or contact support.");
         setLoading(false);
         return;
       }
@@ -152,15 +174,21 @@ const OrderConfirmationPage: React.FC = () => {
       setOrderDetails(createdOrderData);
       
       // Insert order items based on the line items from Stripe
-      if (stripeData.line_items && stripeData.line_items.length > 0) {
-        console.log("Creating order items:", stripeData.line_items);
+      if (stripeResponse.line_items && stripeResponse.line_items.length > 0) {
+        console.log("Creating order items:", stripeResponse.line_items);
         
-        const orderItems = stripeData.line_items.map(item => ({
-          order_id: createdOrderData.id,
-          product_id: item.price.product.id,
-          quantity: item.quantity,
-          price: (item.amount_total / 100) / item.quantity // Convert from cents to dollars and get price per item
-        }));
+        const orderItems = stripeResponse.line_items.map(item => {
+          const productId = typeof item.price?.product === 'string' 
+            ? item.price.product 
+            : item.price?.product?.id || 'unknown';
+          
+          return {
+            order_id: createdOrderData.id,
+            product_id: productId,
+            quantity: item.quantity || 1,
+            price: ((item.amount_total || 0) / 100) / (item.quantity || 1) // Convert from cents to dollars and get price per item
+          };
+        });
 
         const { error: itemsError } = await supabase
           .from('order_items')
@@ -179,9 +207,17 @@ const OrderConfirmationPage: React.FC = () => {
       toast.success("Your order has been confirmed!");
     } catch (error) {
       console.error("Error in order verification:", error);
-      toast.error("An unexpected error occurred. Please check your orders page.");
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
+      setErrorMessage(`Verification failed: ${errorMsg}`);
+      toast.error("An unexpected error occurred. Please check your orders page or contact support.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const retryVerification = () => {
+    if (sessionId) {
+      verifyOrder();
     }
   };
 
@@ -241,24 +277,34 @@ const OrderConfirmationPage: React.FC = () => {
         ) : (
           <>
             <div className="mb-8">
-              <svg className="h-20 w-20 text-yellow-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-20 w-20 text-red-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
             
             <h1 className="text-3xl font-bold mb-4">Order Verification Failed</h1>
             
-            <p className="text-gray-600 mb-4 dark:text-gray-400">
-              We couldn't verify your order. Please check your orders page or contact customer support.
-            </p>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+              <p className="text-red-700 dark:text-red-300 font-medium mb-2">
+                {errorMessage || "We couldn't verify your order."}
+              </p>
+              <p className="text-red-600 dark:text-red-400 text-sm">
+                Don't worry - if your payment went through, your order was processed. Check your orders page or contact support.
+              </p>
+            </div>
             
             {sessionId && (
-              <p className="text-sm text-gray-500 mb-8">
+              <p className="text-sm text-gray-500 mb-6">
                 Session ID: {sessionId}
               </p>
             )}
             
             <div className="flex flex-col sm:flex-row justify-center gap-4">
+              {sessionId && (
+                <Button onClick={retryVerification} className="px-6 py-3">
+                  Retry Verification
+                </Button>
+              )}
               <Button asChild>
                 <Link to="/orders" className="px-6 py-3">
                   View My Orders

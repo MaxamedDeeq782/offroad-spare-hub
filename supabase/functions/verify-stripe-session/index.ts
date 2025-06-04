@@ -25,34 +25,81 @@ serve(async (req) => {
     const corsResponse = handleCors(req);
     if (corsResponse) return corsResponse;
     
+    console.log("=== VERIFY STRIPE SESSION START ===");
+    
     // Get Stripe secret key from environment variables
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
       console.error("STRIPE_SECRET_KEY is not set");
-      throw new Error("STRIPE_SECRET_KEY is not set");
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Stripe configuration error - please contact support" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      });
     }
     
     // Initialize Stripe
     const stripe = new Stripe(stripeSecretKey);
+    console.log("Stripe initialized successfully");
     
     // Get the request body
-    const { sessionId } = await req.json();
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (parseError) {
+      console.error("Failed to parse request body:", parseError);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Invalid request format" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+    
+    const { sessionId } = requestBody;
     
     if (!sessionId) {
-      console.error("No sessionId provided");
-      throw new Error("No sessionId provided");
+      console.error("No sessionId provided in request body");
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Session ID is required" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     }
     
     console.log(`Retrieving session information for: ${sessionId}`);
     
     // Retrieve the session with expanded data
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['line_items', 'line_items.data.price.product', 'customer_details']
-    });
+    let session;
+    try {
+      session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ['line_items', 'line_items.data.price.product', 'customer_details']
+      });
+    } catch (stripeError) {
+      console.error("Stripe API error:", stripeError);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: `Failed to retrieve session: ${stripeError.message}` 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
     
     if (!session) {
       console.error("No session found with the provided ID");
-      throw new Error("No session found with the provided ID");
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Session not found" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404,
+      });
     }
     
     console.log(`Found session: ${session.id} with status: ${session.status}`);
@@ -63,7 +110,7 @@ serve(async (req) => {
       console.warn(`Payment not completed. Status: ${session.payment_status}`);
       return new Response(JSON.stringify({ 
         success: false,
-        error: `Payment not completed. Status: ${session.payment_status}` 
+        error: `Payment status: ${session.payment_status}. Please try again or contact support.` 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -74,10 +121,21 @@ serve(async (req) => {
     const lineItems = session.line_items?.data || [];
     console.log(`Processing ${lineItems.length} line items`);
     
-    const processedLineItems = lineItems.map(item => {
-      const product = typeof item.price.product === 'string' 
+    if (lineItems.length === 0) {
+      console.warn("No line items found in session");
+    }
+    
+    const processedLineItems = lineItems.map((item, index) => {
+      console.log(`Processing line item ${index + 1}:`, {
+        id: item.id,
+        quantity: item.quantity,
+        amount_total: item.amount_total,
+        product: item.price?.product
+      });
+      
+      const product = typeof item.price?.product === 'string' 
         ? { id: item.price.product } 
-        : item.price.product;
+        : item.price?.product || { id: 'unknown' };
       
       return {
         ...item,
@@ -94,6 +152,18 @@ serve(async (req) => {
     
     console.log("Customer details:", customerDetails);
     console.log("Shipping address:", shippingAddress);
+    
+    // Validate required fields
+    if (!session.amount_total) {
+      console.error("Missing amount_total in session");
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Invalid payment amount" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
     
     // Return the session details with comprehensive information
     const responseData = { 
@@ -118,20 +188,24 @@ serve(async (req) => {
       metadata: session.metadata || {}
     };
     
-    console.log("Returning successful response:", responseData);
+    console.log("Returning successful response with amount:", responseData.amount_total);
+    console.log("=== VERIFY STRIPE SESSION SUCCESS ===");
     
     return new Response(JSON.stringify(responseData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Error verifying Stripe session:", error);
+    console.error("=== VERIFY STRIPE SESSION ERROR ===");
+    console.error("Unexpected error:", error);
+    console.error("Error stack:", error.stack);
     
-    // Return detailed error information
+    // Return detailed error information for debugging
     const errorResponse = { 
       success: false,
-      error: error.message,
-      details: error.stack || "No stack trace available"
+      error: error.message || "An unexpected error occurred",
+      details: error.stack || "No stack trace available",
+      timestamp: new Date().toISOString()
     };
     
     return new Response(JSON.stringify(errorResponse), {

@@ -105,15 +105,8 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => {
         </div>
       </div>
 
-      {/* Add Review Section Header */}
+      {/* Add Review Form */}
       <div className="mb-8 border-t pt-8">
-        <div className="text-center mb-6">
-          <Button className="mb-2 bg-blue-600 hover:bg-blue-700">
-            Leave Your Review
-          </Button>
-          <p className="text-gray-600 italic">Ra'yigaaga noo sheeg</p>
-        </div>
-        
         <h3 className="text-xl font-semibold mb-4">Write a Review</h3>
         <form onSubmit={handleSubmitReview} className="space-y-4">
           <div>

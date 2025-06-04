@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { addOrder } from '@/models/Order';
 import { Loader2 } from 'lucide-react';
 
 const OrderConfirmationPage: React.FC = () => {
@@ -12,35 +13,77 @@ const OrderConfirmationPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { clearCart } = useCart();
+  const { cart, clearCart } = useCart();
   const sessionId = searchParams.get('session_id');
-  const orderId = location.state?.orderId || sessionId?.substring(0, 8);
   const [loading, setLoading] = useState(true);
+  const [orderCreated, setOrderCreated] = useState(false);
   
   useEffect(() => {
-    console.log("Order confirmation page loaded");
-    console.log("Session ID:", sessionId);
-    console.log("Order ID:", orderId);
-    console.log("User:", user);
-    console.log("Location state:", location.state);
-    
-    // Simple timeout to show loading state briefly, then show success
+    const createOrderFromCart = async () => {
+      console.log("Order confirmation page loaded");
+      console.log("Session ID:", sessionId);
+      console.log("User:", user);
+      console.log("Cart:", cart);
+      
+      // If no session ID, redirect to home
+      if (!sessionId) {
+        console.error("No session ID found");
+        toast.error("No order information found");
+        navigate('/');
+        return;
+      }
+
+      // If no user or empty cart, we can't create an order
+      if (!user || cart.length === 0) {
+        console.log("No user or empty cart, showing success anyway");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Calculate total from cart
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        // Create order in database
+        const orderData = {
+          userId: user.id,
+          items: cart.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          total: total,
+          status: 'approved' as const, // Since payment already succeeded via Stripe
+          stripeSessionId: sessionId,
+        };
+
+        console.log("Creating order with data:", orderData);
+        const createdOrder = await addOrder(orderData);
+        
+        if (createdOrder) {
+          console.log("Order created successfully:", createdOrder.id);
+          setOrderCreated(true);
+          clearCart(); // Clear cart only after successful order creation
+          toast.success("Your order has been confirmed!");
+        } else {
+          console.error("Failed to create order");
+          toast.error("Order confirmation failed, but payment was successful. Please contact support.");
+        }
+      } catch (error) {
+        console.error("Error creating order:", error);
+        toast.error("Order confirmation failed, but payment was successful. Please contact support.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Small delay to show loading state, then create order
     const timer = setTimeout(() => {
-      setLoading(false);
-      clearCart(); // Clear the cart on successful order
-      toast.success("Your order has been confirmed!");
+      createOrderFromCart();
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [sessionId, orderId, user, clearCart]);
-
-  // If no session ID or order ID, redirect to home
-  if (!sessionId && !orderId) {
-    console.error("No session ID or order ID found");
-    toast.error("No order information found");
-    navigate('/');
-    return null;
-  }
+  }, [sessionId, user, cart, navigate, clearCart]);
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -61,14 +104,16 @@ const OrderConfirmationPage: React.FC = () => {
             
             <h1 className="text-3xl font-bold mb-4">Thank You For Your Order!</h1>
             
-            {orderId && (
+            {sessionId && (
               <p className="text-xl mb-4">
-                Your order number is <span className="font-semibold">#{orderId}</span>
+                Your order number is <span className="font-semibold">#{sessionId.substring(0, 8)}</span>
               </p>
             )}
             
             <p className="text-gray-600 mb-8 dark:text-gray-400">
-              Your payment has been processed successfully. We'll send you a confirmation email shortly with your order details.
+              Your payment has been processed successfully. 
+              {orderCreated ? " Your order has been created and " : " "}
+              We'll send you a confirmation email shortly.
             </p>
             
             <div className="flex flex-col sm:flex-row justify-center gap-4">

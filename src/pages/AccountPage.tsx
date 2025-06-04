@@ -4,7 +4,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const AccountPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
 
   // Helper functions to access user data safely
   const getUserName = () => {
@@ -15,10 +15,6 @@ const AccountPage: React.FC = () => {
     if (!user) return '';
     const name = user.user_metadata?.name || user.email || '';
     return name.charAt(0);
-  };
-
-  const isUserAdmin = () => {
-    return user?.user_metadata?.isAdmin === true;
   };
 
   // Redirect if not logged in
@@ -39,6 +35,11 @@ const AccountPage: React.FC = () => {
             <div>
               <h2 className="text-xl font-extrabold">{getUserName()}</h2>
               <p className="text-gray-600 font-bold">{user.email}</p>
+              {isAdmin && (
+                <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mt-1">
+                  Administrator
+                </span>
+              )}
             </div>
           </div>
           
@@ -46,7 +47,7 @@ const AccountPage: React.FC = () => {
             Account Details
           </Link>
           
-          {isUserAdmin() && (
+          {isAdmin && (
             <Link to="/admin" className="block w-full btn btn-secondary py-2 mb-4 font-bold text-center">
               Admin Dashboard
             </Link>

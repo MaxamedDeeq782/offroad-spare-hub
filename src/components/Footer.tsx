@@ -5,15 +5,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Footer: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const location = useLocation();
   const currentYear = new Date().getFullYear();
   
-  // Helper to check if user is admin
-  const isUserAdmin = () => {
-    return user?.user_metadata?.isAdmin === true;
-  };
-
   // Check if we are currently on the admin page or a subpage of admin
   const isAdminPage = () => {
     return location.pathname.startsWith('/admin');
@@ -39,7 +34,7 @@ const Footer: React.FC = () => {
             <p>&copy; {currentYear} OffroadSpareHub. All rights reserved.</p>
           </div>
           
-          {isUserAdmin() && (
+          {isAdmin && (
             <div className="mt-4">
               <Link 
                 to="/admin" 
@@ -53,8 +48,8 @@ const Footer: React.FC = () => {
         </div>
       </div>
       
-      {/* Fixed AD button - only show if not on admin page */}
-      {!isAdminPage() && (
+      {/* Fixed AD button - only show if not on admin page and user is admin */}
+      {!isAdminPage() && isAdmin && (
         <div className="fixed bottom-4 right-4 z-50">
           <Link 
             to="/admin"

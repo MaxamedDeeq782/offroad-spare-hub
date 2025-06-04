@@ -1,58 +1,46 @@
 
-import React, { useState, useEffect } from 'react';
-import { Navigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import AdminAuth from '../components/admin/AdminAuth';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useAdminAccess } from '../hooks/useAdminAccess';
+import AccessDenied from '../components/admin/AccessDenied';
 import AdminTabs from '../components/admin/AdminTabs';
 import { Button } from '../components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 const AdminPage: React.FC = () => {
-  const { adminSecretKeyAuth, user } = useAuth();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { hasAccess, isLoading, user } = useAdminAccess();
   const [activeTab, setActiveTab] = useState<'orders' | 'users'>('orders');
 
-  // Check if user is admin
-  useEffect(() => {
-    if (user?.user_metadata?.isAdmin) {
-      setIsAuthenticated(true);
-    }
-  }, [user]);
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
-  const handleAdminAuth = async (secretKey: string) => {
-    const isValid = await adminSecretKeyAuth(secretKey);
-    if (isValid) {
-      setIsAuthenticated(true);
-    }
-    return isValid;
-  };
+  if (!hasAccess) {
+    return <AccessDenied isLoggedIn={!!user} />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {!isAuthenticated ? (
-        <AdminAuth 
-          adminSecretKeyAuth={handleAdminAuth} 
-          onSuccessfulAuth={() => setIsAuthenticated(true)}
-        />
-      ) : (
-        <>
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <Link to="/admin/add-product">
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add New Product
-              </Button>
-            </Link>
-          </div>
-          
-          <AdminTabs 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab}
-            showProducts={false} // We don't show products tab, but we can conditionally render it if needed
-          />
-        </>
-      )}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <Link to="/admin/add-product">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Product
+          </Button>
+        </Link>
+      </div>
+      
+      <AdminTabs 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        showProducts={false}
+      />
     </div>
   );
 };

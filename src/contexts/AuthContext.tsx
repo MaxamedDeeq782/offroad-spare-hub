@@ -6,21 +6,25 @@ import { supabase } from '../integrations/supabase/client';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  userRole: string | null;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error: string | null }>;
   register: (email: string, password: string, name: string) => Promise<{ success: boolean; error: string | null }>;
   logout: () => Promise<void>;
   isLoading: boolean;
-  adminSecretKeyAuth: (secretKey: string) => Promise<boolean>;
+  checkUserRole: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
+  userRole: null,
+  isAdmin: false,
   login: async () => ({ success: false, error: 'Auth context not initialized' }),
   register: async () => ({ success: false, error: 'Auth context not initialized' }),
   logout: async () => {},
   isLoading: true,
-  adminSecretKeyAuth: async () => false
+  checkUserRole: async () => {}
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -28,27 +32,74 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const checkUserRole = async () => {
+    if (!user) {
+      setUserRole(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user role:', error);
+        setUserRole('user'); // Default to user role
+      } else {
+        setUserRole(data?.role || 'user');
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching user role:', err);
+      setUserRole('user');
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      async (event, newSession) => {
         console.log('Auth event:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        
+        if (newSession?.user) {
+          // Check user role when user signs in
+          setTimeout(async () => {
+            await checkUserRole();
+          }, 0);
+        } else {
+          setUserRole(null);
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      
+      if (currentSession?.user) {
+        await checkUserRole();
+      }
+      
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Update user role when user changes
+  useEffect(() => {
+    if (user) {
+      checkUserRole();
+    }
+  }, [user]);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error: string | null }> => {
     try {
@@ -77,7 +128,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             name,
-            isAdmin: email === 'admin@offroadspares.com', // Set admin for specific email
           },
         },
       });
@@ -85,6 +135,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error('Registration error:', error.message);
         return { success: false, error: error.message };
+      }
+
+      // Create user role entry for new user
+      if (data.user) {
+        try {
+          await supabase.from('user_roles').insert({
+            user_id: data.user.id,
+            role: 'user'
+          });
+        } catch (roleError) {
+          console.error('Error creating user role:', roleError);
+          // Don't fail registration if role creation fails
+        }
       }
 
       return { success: true, error: null };
@@ -96,52 +159,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async (): Promise<void> => {
     await supabase.auth.signOut();
+    setUserRole(null);
   };
-  
-  // Improved admin secret key auth that updates user metadata
-  const adminSecretKeyAuth = async (secretKey: string): Promise<boolean> => {
-    // Compare with the hardcoded secret key
-    if (secretKey === 'maxamed782') {
-      // If user is authenticated, update their metadata to set isAdmin flag
-      if (user && session) {
-        try {
-          const { data, error } = await supabase.auth.updateUser({
-            data: { isAdmin: true }
-          });
-          
-          if (error) {
-            console.error('Error updating user metadata:', error);
-            return true; // Still return true to grant temporary access
-          }
-          
-          // Update local user state with admin flag
-          setUser(prev => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              user_metadata: { ...prev.user_metadata, isAdmin: true }
-            };
-          });
-          
-          console.log('User metadata updated with admin privileges');
-        } catch (err) {
-          console.error('Unexpected error updating user metadata:', err);
-        }
-      }
-      return true;
-    }
-    return false;
-  };
+
+  const isAdmin = userRole === 'admin';
 
   return (
     <AuthContext.Provider value={{ 
       user, 
       session, 
+      userRole,
+      isAdmin,
       login, 
       register, 
       logout, 
       isLoading, 
-      adminSecretKeyAuth
+      checkUserRole
     }}>
       {children}
     </AuthContext.Provider>

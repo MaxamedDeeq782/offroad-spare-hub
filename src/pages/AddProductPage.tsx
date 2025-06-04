@@ -1,27 +1,22 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React from 'react';
+import { useAdminAccess } from '../hooks/useAdminAccess';
 import AccessDenied from '../components/admin/AccessDenied';
 import AddProductForm from '../components/admin/AddProductForm';
+import { Loader2 } from 'lucide-react';
 
 const AddProductPage: React.FC = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const { user } = useAuth();
+  const { hasAccess, isLoading, user } = useAdminAccess();
 
-  // Check admin status whenever user changes
-  useEffect(() => {
-    // Check if the user is admin from metadata
-    if (user?.user_metadata?.isAdmin) {
-      setIsAdmin(true);
-    } else {
-      // If not in user metadata, check session storage as fallback
-      const adminAuth = sessionStorage.getItem('adminAuth');
-      setIsAdmin(adminAuth === 'true');
-    }
-  }, [user]);
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
-  // If not admin, show access denied
-  if (!isAdmin) {
+  if (!hasAccess) {
     return <AccessDenied isLoggedIn={!!user} />;
   }
 

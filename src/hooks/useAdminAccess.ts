@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 
 export const useAdminAccess = () => {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [hasAccess, setHasAccess] = useState(false);
   const [checking, setChecking] = useState(true);
 
@@ -16,10 +16,11 @@ export const useAdminAccess = () => {
       return;
     }
 
-    // Admin access is determined by the role in the database
-    setHasAccess(isAdmin);
+    // Only allow access for the specific admin email
+    const isAuthorizedAdmin = user.email === 'moemoalin782@gmail.com';
+    setHasAccess(isAuthorizedAdmin);
     setChecking(false);
-  }, [user, isAdmin, isLoading]);
+  }, [user, isLoading]);
 
   return {
     hasAccess,

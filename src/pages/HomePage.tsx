@@ -17,7 +17,8 @@ const HomePage: React.FC = () => {
       slug: 'toyota-hilux',
       image: '/images/toyota-hilux.jpg',
       partId: 'Toyota Hilux Gearbox 5-Speed Manual',
-      hasLogo: false
+      hasLogo: true,
+      logoSrc: '/lovable-uploads/dfe2c4cb-d7d0-4fb0-80e8-d717a3ff30ab.png'
     },
     {
       name: 'Toyota Land Cruiser',

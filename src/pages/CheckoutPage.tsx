@@ -146,41 +146,59 @@ const CheckoutPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-      
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="lg:w-2/3">
-          <form onSubmit={handleSubmit}>
-            <ShippingForm 
-              formData={formData} 
-              handleChange={handleChange} 
-              isSubmitting={isSubmitting}
-              fieldErrors={fieldErrors}
-            />
-            
-            <PaymentMethodForm 
-              paymentMethod={formData.paymentMethod} 
-              handleChange={handleChange}
-            />
-            
-            <div className="mt-8">
-              <CheckoutButton 
-                isSubmitting={isSubmitting || paymentProcessing} 
-                paymentMethod={formData.paymentMethod}
-                userId={user.id}
-                formData={formData}
-                createOrder={createOrder}
-              />
-            </div>
-          </form>
-        </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Checkout</h1>
         
-        <div className="lg:w-1/3">
-          <OrderSummary 
-            cart={cart} 
-            getCartTotal={getCartTotal} 
-          />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+          {/* Form Section - Takes 2 columns on xl screens */}
+          <div className="xl:col-span-2 order-2 xl:order-1">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <ShippingForm 
+                formData={formData} 
+                handleChange={handleChange} 
+                isSubmitting={isSubmitting}
+                fieldErrors={fieldErrors}
+              />
+              
+              <PaymentMethodForm 
+                paymentMethod={formData.paymentMethod} 
+                handleChange={handleChange}
+              />
+              
+              {/* Mobile Checkout Button */}
+              <div className="xl:hidden">
+                <CheckoutButton 
+                  isSubmitting={isSubmitting || paymentProcessing} 
+                  paymentMethod={formData.paymentMethod}
+                  userId={user.id}
+                  formData={formData}
+                  createOrder={createOrder}
+                />
+              </div>
+            </form>
+          </div>
+          
+          {/* Order Summary Section - Takes 1 column on xl screens */}
+          <div className="xl:col-span-1 order-1 xl:order-2">
+            <div className="sticky top-4">
+              <OrderSummary 
+                cart={cart} 
+                getCartTotal={getCartTotal} 
+              />
+              
+              {/* Desktop Checkout Button */}
+              <div className="hidden xl:block mt-6">
+                <CheckoutButton 
+                  isSubmitting={isSubmitting || paymentProcessing} 
+                  paymentMethod={formData.paymentMethod}
+                  userId={user.id}
+                  formData={formData}
+                  createOrder={createOrder}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

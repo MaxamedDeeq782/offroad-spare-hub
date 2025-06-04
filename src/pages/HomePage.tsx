@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
@@ -54,7 +55,8 @@ const HomePage: React.FC = () => {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-2xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Quality Parts for Your Off-Road Adventure</h1>
-            <p className="text-xl mb-8">Find genuine spare parts for Toyota Hilux, Land Cruiser, Nissan Patrol, and Mitsubishi L200</p>
+            <p className="text-xl mb-4">Find genuine spare parts for Toyota Hilux, Land Cruiser, Nissan Patrol, and Mitsubishi L200</p>
+            <p className="text-lg mb-8 text-gray-300">Soo hel qaybo dheeri ah oo sax ah Toyota Hilux, Land Cruiser, Nissan Patrol, iyo Mitsubishi L200</p>
           </div>
         </div>
         <div className="absolute inset-0 bg-black opacity-50"></div>
@@ -155,3 +157,4 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+

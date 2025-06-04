@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -37,33 +38,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const { addToCart } = useCart();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  // Filter out duplicate Mitsubishi L200 Exhaust Pipe Kit products
-  const filteredProducts = products.reduce((acc: DbProduct[], current) => {
-    // Check if this is a Mitsubishi L200 Exhaust Pipe Kit
-    const isMitsubishiL200ExhaustKit = 
-      current.name.toLowerCase().includes('mitsubishi l200') && 
-      current.name.toLowerCase().includes('exhaust pipe');
-    
-    // If it's not a Mitsubishi L200 Exhaust Pipe Kit, keep it
-    if (!isMitsubishiL200ExhaustKit) {
-      return [...acc, current];
-    }
-    
-    // If we already have a Mitsubishi L200 Exhaust Pipe Kit in our filtered list
-    // skip additional ones
-    const hasExistingExhaustKit = acc.some(
-      product => 
-        product.name.toLowerCase().includes('mitsubishi l200') && 
-        product.name.toLowerCase().includes('exhaust pipe')
-    );
-    
-    if (hasExistingExhaustKit) {
-      return acc;
-    }
-    
-    return [...acc, current];
-  }, []);
-
   const handleAddToCart = (product: DbProduct) => {
     const mockModelProduct = {
       id: product.id.toString(),
@@ -81,6 +55,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
   // Function to get the appropriate image URL for a product
   const getProductImage = (product: DbProduct): string => {
+    // If the product has an image_url, use it
+    if (product.image_url) {
+      return product.image_url;
+    }
+    
     // Check if the product is the Tie Rod End Kit for Toyota Land Cruiser
     if (product.name.includes("Tie Rod End Kit for Toyota Land Cruiser")) {
       return "/lovable-uploads/24d8adc5-ed35-48c1-8cc9-e09314fa4597.png";
@@ -101,8 +80,8 @@ const ProductTable: React.FC<ProductTableProps> = ({
       return "/lovable-uploads/6bd92b92-92f2-45e4-99fa-75c2ee81ee77.png";
     }
     
-    // Return the default image URL or placeholder if not available
-    return product.image_url || "/placeholder.svg";
+    // Return placeholder if no image is available
+    return "/placeholder.svg";
   };
 
   if (loading) {
@@ -113,7 +92,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
     );
   }
 
-  if (filteredProducts.length === 0) {
+  if (products.length === 0) {
     return (
       <div className="text-center py-8">
         <p>No products found for {selectedVehicle || "selected filters"}</p>
@@ -133,7 +112,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredProducts.map((product) => {
+          {products.map((product) => {
             const vehicleType = getVehicleFromProductName(product.name);
             const imageUrl = getProductImage(product);
             

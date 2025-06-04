@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../integrations/supabase/client';
@@ -10,11 +11,17 @@ interface DbProduct {
   brand_id: number | null;
 }
 
+interface Brand {
+  id: number;
+  name: string;
+}
+
 export const useProductFilters = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [selectedPartId, setSelectedPartId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
 
@@ -30,40 +37,52 @@ export const useProductFilters = () => {
     
     if (partIdParam) {
       setSelectedPartId(partIdParam);
-      setSearchTerm(partIdParam); // Also set the search term to the part ID for filtering
+      setSearchTerm(partIdParam);
     }
   }, [location.search]);
 
-  // Fetch products from Supabase
+  // Fetch products and brands from Supabase
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        // Fetch products
+        const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select('*');
         
-        if (error) {
-          console.error('Error fetching products:', error);
+        if (productsError) {
+          console.error('Error fetching products:', productsError);
         } else {
-          setDbProducts(data || []);
+          setDbProducts(productsData || []);
+        }
+
+        // Fetch brands
+        const { data: brandsData, error: brandsError } = await supabase
+          .from('brands')
+          .select('*');
+        
+        if (brandsError) {
+          console.error('Error fetching brands:', brandsError);
+        } else {
+          setBrands(brandsData || []);
         }
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
 
   // Set default vehicle selection when products are loaded
   useEffect(() => {
     if (!loading && dbProducts.length > 0 && !selectedVehicle) {
-      const brands = getAvailableBrands();
-      if (brands.length > 0) {
-        setSelectedVehicle(brands[0]);
+      const availableBrands = getAvailableBrands();
+      if (availableBrands.length > 0) {
+        setSelectedVehicle(availableBrands[0]);
       }
     }
   }, [loading, dbProducts]);
@@ -88,6 +107,39 @@ export const useProductFilters = () => {
     return '';
   };
 
+  // Helper function to determine vehicle from brand
+  const getVehicleFromBrand = (brandId: number | null): string => {
+    if (!brandId) return '';
+    
+    const brand = brands.find(b => b.id === brandId);
+    if (!brand) return '';
+    
+    const brandVehicleMapping: Record<string, string> = {
+      'Toyota': 'Toyota Hilux', // Default to Hilux for Toyota
+      'Nissan': 'Nissan Patrol',
+      'Mitsubishi': 'Mitsubishi L200'
+    };
+    
+    // Check if brand name contains specific vehicle indicators
+    const brandName = brand.name.toLowerCase();
+    if (brandName.includes('hilux')) return 'Toyota Hilux';
+    if (brandName.includes('land cruiser')) return 'Toyota Land Cruiser';
+    if (brandName.includes('patrol')) return 'Nissan Patrol';
+    if (brandName.includes('l200')) return 'Mitsubishi L200';
+    
+    return brandVehicleMapping[brand.name] || '';
+  };
+
+  // Enhanced function to get vehicle compatibility
+  const getVehicleCompatibility = (product: DbProduct): string => {
+    // First try to get vehicle from product name
+    const vehicleFromName = getVehicleFromProductName(product.name);
+    if (vehicleFromName) return vehicleFromName;
+    
+    // If not found in name, try to get from brand
+    return getVehicleFromBrand(product.brand_id);
+  };
+
   // Map specific part IDs to their corresponding vehicles
   const getSpecificPartForVehicle = (vehicle: string): string => {
     const partMap: Record<string, string> = {
@@ -102,21 +154,21 @@ export const useProductFilters = () => {
 
   // Get available brands with products
   const getAvailableBrands = (): string[] => {
-    const brands = new Set<string>();
+    const vehicleSet = new Set<string>();
     
     dbProducts.forEach(product => {
-      const vehicleType = getVehicleFromProductName(product.name);
+      const vehicleType = getVehicleCompatibility(product);
       if (vehicleType) {
-        brands.add(vehicleType);
+        vehicleSet.add(vehicleType);
       }
     });
     
-    return Array.from(brands);
+    return Array.from(vehicleSet);
   };
 
   // Filter database products based on selected vehicle and specific part or search term
   const filteredDbProducts = dbProducts.filter(product => {
-    const productVehicle = getVehicleFromProductName(product.name);
+    const productVehicle = getVehicleCompatibility(product);
     
     // Filter by selected vehicle (now required)
     if (selectedVehicle && productVehicle !== selectedVehicle) {
@@ -143,8 +195,8 @@ export const useProductFilters = () => {
 
   const clearFilters = () => {
     // Instead of clearing vehicle to empty string, set it to the first available brand
-    const brands = getAvailableBrands();
-    setSelectedVehicle(brands.length > 0 ? brands[0] : '');
+    const availableBrands = getAvailableBrands();
+    setSelectedVehicle(availableBrands.length > 0 ? availableBrands[0] : '');
     setSelectedPartId('');
     setSearchTerm('');
   };
@@ -177,7 +229,7 @@ export const useProductFilters = () => {
     searchTerm,
     loading,
     filteredDbProducts,
-    getVehicleFromProductName,
+    getVehicleFromProductName: getVehicleCompatibility,
     getAvailableBrands,
     clearFilters,
     handleVehicleChange,

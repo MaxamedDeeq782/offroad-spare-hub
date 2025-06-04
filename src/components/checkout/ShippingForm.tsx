@@ -2,8 +2,7 @@
 import React from 'react';
 
 interface FormData {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   address: string;
   city: string;
@@ -29,46 +28,24 @@ const ShippingForm: React.FC<ShippingFormProps> = ({
     <div className="bg-white p-6 rounded-lg shadow dark:bg-gray-800">
       <h2 className="text-xl font-semibold mb-6">Shipping Information</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            First Name
-          </label>
-          <input
-            type="text"
-            id="firstName"
-            name="firstName"
-            value={formData.firstName}
-            onChange={handleChange}
-            className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-              fieldErrors.firstName ? 'border-red-500' : ''
-            }`}
-            required
-          />
-          {fieldErrors.firstName && (
-            <p className="mt-1 text-sm text-red-500">{fieldErrors.firstName}</p>
-          )}
-        </div>
-        
-        <div>
-          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Last Name
-          </label>
-          <input
-            type="text"
-            id="lastName"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleChange}
-            className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-              fieldErrors.lastName ? 'border-red-500' : ''
-            }`}
-            required
-          />
-          {fieldErrors.lastName && (
-            <p className="mt-1 text-sm text-red-500">{fieldErrors.lastName}</p>
-          )}
-        </div>
+      <div className="mb-6">
+        <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Full Name
+        </label>
+        <input
+          type="text"
+          id="fullName"
+          name="fullName"
+          value={formData.fullName}
+          onChange={handleChange}
+          className={`w-full border rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+            fieldErrors.fullName ? 'border-red-500' : ''
+          }`}
+          required
+        />
+        {fieldErrors.fullName && (
+          <p className="mt-1 text-sm text-red-500">{fieldErrors.fullName}</p>
+        )}
       </div>
       
       <div className="mb-6">

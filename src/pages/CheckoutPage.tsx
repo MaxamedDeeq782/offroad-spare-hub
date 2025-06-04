@@ -15,8 +15,7 @@ const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
-    firstName: user?.user_metadata?.name?.split(' ')[0] || '',
-    lastName: user?.user_metadata?.name?.split(' ')[1] || '',
+    fullName: user?.user_metadata?.name || '',
     email: user?.email || '',
     address: '',
     city: '',
@@ -63,8 +62,7 @@ const CheckoutPage: React.FC = () => {
     const errors: Record<string, string> = {};
     
     // Required fields
-    if (!formData.firstName) errors.firstName = "First name is required";
-    if (!formData.lastName) errors.lastName = "Last name is required";
+    if (!formData.fullName) errors.fullName = "Full name is required";
     if (!formData.email) errors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = "Email is invalid";
     if (!formData.address) errors.address = "Address is required";

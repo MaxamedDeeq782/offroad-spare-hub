@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Review {

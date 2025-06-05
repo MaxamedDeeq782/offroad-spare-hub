@@ -27,7 +27,9 @@ const ProductList: React.FC<ProductListProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Products</CardTitle>
+        <CardTitle>
+          Products {!loading && products.length > 0 && `(${products.length})`}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ProductTable

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../integrations/supabase/client';
 
@@ -41,31 +41,33 @@ export const useProductFilters = () => {
     }
   }, [location.search]);
 
-  // Fetch products and brands from Supabase
+  // Fetch products and brands from Supabase with optimization
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch products
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('*');
+        // Fetch both products and brands in parallel for better performance
+        const [productsResponse, brandsResponse] = await Promise.all([
+          supabase
+            .from('products')
+            .select('id, name, price, image_url, brand_id')
+            .order('name'),
+          supabase
+            .from('brands')
+            .select('id, name')
+            .order('name')
+        ]);
         
-        if (productsError) {
-          console.error('Error fetching products:', productsError);
+        if (productsResponse.error) {
+          console.error('Error fetching products:', productsResponse.error);
         } else {
-          setDbProducts(productsData || []);
+          setDbProducts(productsResponse.data || []);
         }
 
-        // Fetch brands
-        const { data: brandsData, error: brandsError } = await supabase
-          .from('brands')
-          .select('*');
-        
-        if (brandsError) {
-          console.error('Error fetching brands:', brandsError);
+        if (brandsResponse.error) {
+          console.error('Error fetching brands:', brandsResponse.error);
         } else {
-          setBrands(brandsData || []);
+          setBrands(brandsResponse.data || []);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -87,114 +89,118 @@ export const useProductFilters = () => {
     }
   }, [loading, dbProducts]);
 
-  // Helper function to determine vehicle from product name for database products
-  const getVehicleFromProductName = (productName: string): string => {
-    const vehicleKeywords = {
-      'Toyota Hilux': ['hilux', 'toyota hilux'],
-      'Toyota Land Cruiser': ['land cruiser', 'toyota land cruiser', 'fj80', 'fzj80'],
-      'Nissan Patrol': ['patrol', 'nissan patrol', 'y62', 'armada'],
-      'Mitsubishi L200': ['l200', 'mitsubishi l200']
-    };
+  // Memoized helper function to determine vehicle from product name
+  const getVehicleFromProductName = useMemo(() => {
+    return (productName: string): string => {
+      const vehicleKeywords = {
+        'Toyota Hilux': ['hilux', 'toyota hilux'],
+        'Toyota Land Cruiser': ['land cruiser', 'toyota land cruiser', 'fj80', 'fzj80'],
+        'Nissan Patrol': ['patrol', 'nissan patrol', 'y62', 'armada'],
+        'Mitsubishi L200': ['l200', 'mitsubishi l200']
+      };
 
-    const lowercaseName = productName.toLowerCase();
-    
-    for (const [vehicle, keywords] of Object.entries(vehicleKeywords)) {
-      if (keywords.some(keyword => lowercaseName.includes(keyword.toLowerCase()))) {
-        return vehicle;
+      const lowercaseName = productName.toLowerCase();
+      
+      for (const [vehicle, keywords] of Object.entries(vehicleKeywords)) {
+        if (keywords.some(keyword => lowercaseName.includes(keyword.toLowerCase()))) {
+          return vehicle;
+        }
       }
-    }
-    
-    return '';
-  };
-
-  // Helper function to determine vehicle from brand
-  const getVehicleFromBrand = (brandId: number | null): string => {
-    if (!brandId) return '';
-    
-    const brand = brands.find(b => b.id === brandId);
-    if (!brand) return '';
-    
-    const brandVehicleMapping: Record<string, string> = {
-      'Toyota': 'Toyota Hilux', // Default to Hilux for Toyota
-      'Nissan': 'Nissan Patrol',
-      'Mitsubishi': 'Mitsubishi L200'
+      
+      return '';
     };
-    
-    // Check if brand name contains specific vehicle indicators
-    const brandName = brand.name.toLowerCase();
-    if (brandName.includes('hilux')) return 'Toyota Hilux';
-    if (brandName.includes('land cruiser')) return 'Toyota Land Cruiser';
-    if (brandName.includes('patrol')) return 'Nissan Patrol';
-    if (brandName.includes('l200')) return 'Mitsubishi L200';
-    
-    return brandVehicleMapping[brand.name] || '';
-  };
+  }, []);
 
-  // Enhanced function to get vehicle compatibility
-  const getVehicleCompatibility = (product: DbProduct): string => {
-    // First try to get vehicle from product name
-    const vehicleFromName = getVehicleFromProductName(product.name);
-    if (vehicleFromName) return vehicleFromName;
-    
-    // If not found in name, try to get from brand
-    return getVehicleFromBrand(product.brand_id);
-  };
-
-  // Map specific part IDs to their corresponding vehicles
-  const getSpecificPartForVehicle = (vehicle: string): string => {
-    const partMap: Record<string, string> = {
-      'Toyota Hilux': 'Toyota Hilux Gearbox 5-Speed Manual',
-      'Toyota Land Cruiser': 'Tie Rod End Kit for Toyota Land Cruiser FJ80 FzJ80 91-97 Lexus LX450',
-      'Nissan Patrol': 'Fit Nissan Patrol Y62 & Armada 5.6L 8 Cyl AT 2010 - 2023 aluminum radiator',
-      'Mitsubishi L200': 'Exhaust Pipe Kit Full System for MITSUBISHI L200 2.5L Diesel'
+  // Memoized helper function to determine vehicle from brand
+  const getVehicleFromBrand = useMemo(() => {
+    return (brandId: number | null): string => {
+      if (!brandId) return '';
+      
+      const brand = brands.find(b => b.id === brandId);
+      if (!brand) return '';
+      
+      const brandVehicleMapping: Record<string, string> = {
+        'Toyota': 'Toyota Hilux',
+        'Nissan': 'Nissan Patrol',
+        'Mitsubishi': 'Mitsubishi L200'
+      };
+      
+      const brandName = brand.name.toLowerCase();
+      if (brandName.includes('hilux')) return 'Toyota Hilux';
+      if (brandName.includes('land cruiser')) return 'Toyota Land Cruiser';
+      if (brandName.includes('patrol')) return 'Nissan Patrol';
+      if (brandName.includes('l200')) return 'Mitsubishi L200';
+      
+      return brandVehicleMapping[brand.name] || '';
     };
-    
-    return partMap[vehicle] || '';
-  };
+  }, [brands]);
 
-  // Get available brands with products
-  const getAvailableBrands = (): string[] => {
-    const vehicleSet = new Set<string>();
-    
-    dbProducts.forEach(product => {
-      const vehicleType = getVehicleCompatibility(product);
-      if (vehicleType) {
-        vehicleSet.add(vehicleType);
+  // Memoized enhanced function to get vehicle compatibility
+  const getVehicleCompatibility = useMemo(() => {
+    return (product: DbProduct): string => {
+      const vehicleFromName = getVehicleFromProductName(product.name);
+      if (vehicleFromName) return vehicleFromName;
+      
+      return getVehicleFromBrand(product.brand_id);
+    };
+  }, [getVehicleFromProductName, getVehicleFromBrand]);
+
+  // Memoized function to map specific part IDs to their corresponding vehicles
+  const getSpecificPartForVehicle = useMemo(() => {
+    return (vehicle: string): string => {
+      const partMap: Record<string, string> = {
+        'Toyota Hilux': 'Toyota Hilux Gearbox 5-Speed Manual',
+        'Toyota Land Cruiser': 'Tie Rod End Kit for Toyota Land Cruiser FJ80 FzJ80 91-97 Lexus LX450',
+        'Nissan Patrol': 'Fit Nissan Patrol Y62 & Armada 5.6L 8 Cyl AT 2010 - 2023 aluminum radiator',
+        'Mitsubishi L200': 'Exhaust Pipe Kit Full System for MITSUBISHI L200 2.5L Diesel'
+      };
+      
+      return partMap[vehicle] || '';
+    };
+  }, []);
+
+  // Memoized available brands calculation
+  const getAvailableBrands = useMemo(() => {
+    return (): string[] => {
+      const vehicleSet = new Set<string>();
+      
+      dbProducts.forEach(product => {
+        const vehicleType = getVehicleCompatibility(product);
+        if (vehicleType) {
+          vehicleSet.add(vehicleType);
+        }
+      });
+      
+      return Array.from(vehicleSet);
+    };
+  }, [dbProducts, getVehicleCompatibility]);
+
+  // Memoized filtered products for better performance
+  const filteredDbProducts = useMemo(() => {
+    return dbProducts.filter(product => {
+      const productVehicle = getVehicleCompatibility(product);
+      
+      if (selectedVehicle && productVehicle !== selectedVehicle) {
+        return false;
       }
+      
+      if (!productVehicle) {
+        return false;
+      }
+      
+      if (selectedPartId && product.name !== selectedPartId) {
+        return false;
+      }
+      
+      if (!selectedPartId && searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+      
+      return true;
     });
-    
-    return Array.from(vehicleSet);
-  };
-
-  // Filter database products based on selected vehicle and specific part or search term
-  const filteredDbProducts = dbProducts.filter(product => {
-    const productVehicle = getVehicleCompatibility(product);
-    
-    // Filter by selected vehicle (now required)
-    if (selectedVehicle && productVehicle !== selectedVehicle) {
-      return false;
-    }
-    
-    // Only display products that have a recognized vehicle type
-    if (!productVehicle) {
-      return false;
-    }
-    
-    // If a specific part ID is selected, check if the product name matches exactly
-    if (selectedPartId && product.name !== selectedPartId) {
-      return false;
-    }
-    
-    // If no specific part ID is selected but search term exists, filter by search term
-    if (!selectedPartId && searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
-    
-    return true;
-  });
+  }, [dbProducts, selectedVehicle, selectedPartId, searchTerm, getVehicleCompatibility]);
 
   const clearFilters = () => {
-    // Instead of clearing vehicle to empty string, set it to the first available brand
     const availableBrands = getAvailableBrands();
     setSelectedVehicle(availableBrands.length > 0 ? availableBrands[0] : '');
     setSelectedPartId('');
@@ -204,7 +210,6 @@ export const useProductFilters = () => {
   const handleVehicleChange = (newVehicle: string) => {
     setSelectedVehicle(newVehicle);
     
-    // If a vehicle is selected, automatically set the part ID for that vehicle
     if (newVehicle) {
       const specificPart = getSpecificPartForVehicle(newVehicle);
       setSelectedPartId(specificPart);
@@ -217,7 +222,6 @@ export const useProductFilters = () => {
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    // Clear selected part ID when search term is manually changed
     if (selectedPartId && value !== selectedPartId) {
       setSelectedPartId('');
     }

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Table, 
   TableHeader, 
@@ -13,6 +13,7 @@ import { ShoppingCart, Maximize2 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import Image from './Image';
 import { Dialog, DialogContent } from './ui/dialog';
+import ProductTableSkeleton from './ProductTableSkeleton';
 
 interface DbProduct {
   id: number;
@@ -53,43 +54,35 @@ const ProductTable: React.FC<ProductTableProps> = ({
     addToCart(mockModelProduct, 1);
   };
 
-  // Function to get the appropriate image URL for a product
-  const getProductImage = (product: DbProduct): string => {
-    // If the product has an image_url, use it
-    if (product.image_url) {
-      return product.image_url;
-    }
-    
-    // Check if the product is the Tie Rod End Kit for Toyota Land Cruiser
-    if (product.name.includes("Tie Rod End Kit for Toyota Land Cruiser")) {
-      return "/lovable-uploads/24d8adc5-ed35-48c1-8cc9-e09314fa4597.png";
-    }
-    
-    // Check if the product is the Toyota Hilux Gearbox
-    if (product.name.includes("Toyota Hilux Gearbox 5-Speed Manual")) {
-      return "/lovable-uploads/8141ace2-fd8d-4f8e-bace-f155332b298f.png";
-    }
-    
-    // Check if the product is the Nissan Patrol Radiator
-    if (product.name.includes("Fit Nissan Patrol Y62 & Armada 5.6L")) {
-      return "/lovable-uploads/00d7891c-ee78-4e3a-a14c-e516197e30dd.png";
-    }
-    
-    // Check if the product is the Mitsubishi L200 Exhaust Pipe Kit
-    if (product.name.includes("Exhaust Pipe Kit") && product.name.includes("MITSUBISHI L200")) {
-      return "/lovable-uploads/6bd92b92-92f2-45e4-99fa-75c2ee81ee77.png";
-    }
-    
-    // Return placeholder if no image is available
-    return "/placeholder.svg";
-  };
+  // Memoized function to get the appropriate image URL for a product
+  const getProductImage = useMemo(() => {
+    return (product: DbProduct): string => {
+      if (product.image_url) {
+        return product.image_url;
+      }
+      
+      if (product.name.includes("Tie Rod End Kit for Toyota Land Cruiser")) {
+        return "/lovable-uploads/24d8adc5-ed35-48c1-8cc9-e09314fa4597.png";
+      }
+      
+      if (product.name.includes("Toyota Hilux Gearbox 5-Speed Manual")) {
+        return "/lovable-uploads/8141ace2-fd8d-4f8e-bace-f155332b298f.png";
+      }
+      
+      if (product.name.includes("Fit Nissan Patrol Y62 & Armada 5.6L")) {
+        return "/lovable-uploads/00d7891c-ee78-4e3a-a14c-e516197e30dd.png";
+      }
+      
+      if (product.name.includes("Exhaust Pipe Kit") && product.name.includes("MITSUBISHI L200")) {
+        return "/lovable-uploads/6bd92b92-92f2-45e4-99fa-75c2ee81ee77.png";
+      }
+      
+      return "/placeholder.svg";
+    };
+  }, []);
 
   if (loading) {
-    return (
-      <div className="text-center py-8">
-        <p>Loading products...</p>
-      </div>
-    );
+    return <ProductTableSkeleton />;
   }
 
   if (products.length === 0) {

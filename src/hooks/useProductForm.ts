@@ -109,6 +109,20 @@ export const useProductForm = () => {
       return;
     }
 
+    // Double check brand selection
+    if (!selectedBrand || selectedBrand === '') {
+      toast.error('Please select a brand from the dropdown');
+      return;
+    }
+
+    const brandId = parseInt(selectedBrand);
+    if (isNaN(brandId) || brandId <= 0) {
+      toast.error('Invalid brand selection. Please select a valid brand.');
+      return;
+    }
+
+    console.log('Brand validation passed. Brand ID:', brandId);
+
     setLoading(true);
 
     try {
@@ -136,7 +150,10 @@ export const useProductForm = () => {
       const imageUrl = await uploadImage();
       const productData = createProductData(sanitizedFormData, imageUrl);
       
-      console.log('Inserting product into database:', productData);
+      // Ensure brand_id is correctly set
+      productData.brand_id = brandId;
+      
+      console.log('Final product data to insert:', productData);
       
       // Insert product
       const { data, error } = await supabase
@@ -159,7 +176,8 @@ export const useProductForm = () => {
         }
       } else {
         console.log('Product added successfully:', data);
-        toast.success('Product added successfully!');
+        console.log('Product brand_id:', data.brand_id);
+        toast.success(`Product added successfully to brand ID ${data.brand_id}!`);
         resetForm();
         navigate('/admin');
       }

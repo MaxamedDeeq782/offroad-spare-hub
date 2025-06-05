@@ -73,6 +73,13 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
     }
   };
 
+  const handleBrandChange = (value: string) => {
+    console.log('Brand selected:', value);
+    const selectedBrandData = brands.find(brand => brand.id.toString() === value);
+    console.log('Selected brand data:', selectedBrandData);
+    setSelectedBrand(value);
+  };
+
   if (loading) {
     return (
       <div>
@@ -91,7 +98,7 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
       <Label htmlFor="brand">Brand {required && '*'}</Label>
       <Select 
         value={selectedBrand} 
-        onValueChange={setSelectedBrand}
+        onValueChange={handleBrandChange}
         required={required}
       >
         <SelectTrigger id="brand">
@@ -114,6 +121,11 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
       {brands.length === 0 && (
         <p className="text-sm text-red-500 mt-1">
           No brands found. Please contact admin to add brands.
+        </p>
+      )}
+      {selectedBrand && (
+        <p className="text-sm text-green-600 mt-1">
+          Selected: {brands.find(b => b.id.toString() === selectedBrand)?.name}
         </p>
       )}
     </div>

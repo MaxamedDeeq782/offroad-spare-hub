@@ -1,207 +1,63 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { validateProductForm, createProductData, ProductFormData } from '@/utils/productFormValidation';
-import { sanitizeText } from '@/utils/sanitization';
+import { useProductFormState } from './useProductFormState';
+import { useImageUpload } from './useImageUpload';
+import { submitProduct } from '@/utils/productSubmission';
 
 export const useProductForm = () => {
-  const [productName, setProductName] = useState('');
-  const [price, setPrice] = useState('');
-  const [selectedBrand, setSelectedBrand] = useState<string>('');
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  
+  const {
+    productName,
+    setProductName,
+    price,
+    setPrice,
+    selectedBrand,
+    setSelectedBrand,
+    resetFormState
+  } = useProductFormState();
+
+  const {
+    uploadedImage,
+    imagePreview,
+    handleImageChange,
+    uploadImage,
+    resetImage
+  } = useImageUpload();
 
   const resetForm = () => {
-    setProductName('');
-    setPrice('');
-    setSelectedBrand('');
-    setUploadedImage(null);
-    setImagePreview(null);
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select a valid image file');
-        return;
-      }
-      
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image file must be less than 5MB');
-        return;
-      }
-      
-      setUploadedImage(file);
-      
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImagePreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const uploadImage = async (): Promise<string | null> => {
-    if (!uploadedImage) return null;
-
-    console.log('Uploading image:', uploadedImage.name);
-    
-    try {
-      const fileExt = uploadedImage.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `product-images/${fileName}`;
-      
-      console.log('Uploading file to path:', filePath);
-      
-      // First check if the bucket exists, if not create it
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const productsBucket = buckets?.find(bucket => bucket.name === 'products');
-      
-      if (!productsBucket) {
-        console.log('Products bucket not found, will continue without image upload');
-        return null;
-      }
-      
-      const { error: uploadError } = await supabase.storage
-        .from('products')
-        .upload(filePath, uploadedImage);
-      
-      if (uploadError) {
-        console.error('Image upload error:', uploadError);
-        console.log('Continuing without image upload');
-        return null;
-      }
-
-      console.log('Image uploaded successfully');
-      
-      const { data: publicUrl } = supabase.storage
-        .from('products')
-        .getPublicUrl(filePath);
-        
-      console.log('Image URL:', publicUrl.publicUrl);
-      return publicUrl.publicUrl;
-    } catch (error) {
-      console.error('Image upload failed:', error);
-      return null;
-    }
+    resetFormState();
+    resetImage();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('=== PRODUCT SUBMISSION STARTED ===');
-    console.log('Form data:', { productName, price, selectedBrand });
-    
-    // Validate brand selection first
-    if (!selectedBrand || selectedBrand === '' || selectedBrand === '0') {
-      console.error('No brand selected');
-      toast.error('Please select a brand from the dropdown');
-      return;
-    }
-
-    const brandId = parseInt(selectedBrand);
-    if (isNaN(brandId) || brandId <= 0) {
-      console.error('Invalid brand ID:', selectedBrand);
-      toast.error('Invalid brand selection. Please select a valid brand.');
-      return;
-    }
-
-    console.log('✓ Brand validation passed. Brand ID:', brandId);
-    
-    const sanitizedFormData: ProductFormData = {
-      productName: sanitizeText(productName),
-      price: sanitizeText(price),
-      selectedBrand
-    };
-    
-    if (!validateProductForm(sanitizedFormData)) {
-      console.log('Form validation failed');
-      return;
-    }
-
-    console.log('✓ Form validation passed');
-
     setLoading(true);
 
     try {
-      // Check authentication
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError) {
-        console.error('Auth error:', authError);
-        toast.error('Authentication error. Please try logging in again.');
-        setLoading(false);
-        return;
-      }
-      
-      if (!user) {
-        console.log('No user found');
-        toast.error('You must be logged in to add products');
-        navigate('/login');
-        setLoading(false);
-        return;
-      }
-
-      console.log('✓ User authenticated:', user.email);
-
       // Upload image if provided
       const imageUrl = await uploadImage();
       
-      // Create the product data with explicit brand_id
-      const productData = {
-        name: sanitizedFormData.productName.trim(),
-        price: parseFloat(sanitizedFormData.price),
-        brand_id: brandId, // Explicitly set the brand_id
-        image_url: imageUrl
-      };
+      // Submit the product
+      await submitProduct({
+        productName,
+        price,
+        selectedBrand,
+        imageUrl
+      });
       
-      console.log('=== INSERTING PRODUCT ===');
-      console.log('Product data to insert:', productData);
-      console.log('Brand ID being set:', productData.brand_id);
-      
-      // Insert product
-      const { data, error } = await supabase
-        .from('products')
-        .insert(productData)
-        .select('*, brands(name)')
-        .single();
-      
-      if (error) {
-        console.error('=== PRODUCT INSERTION ERROR ===');
-        console.error('Error details:', error);
-        
-        if (error.code === 'PGRST301') {
-          toast.error('Access denied. You need admin privileges to add products.');
-        } else if (error.code === '23505') {
-          toast.error('A product with this name already exists');
-        } else if (error.message.includes('permission denied')) {
-          toast.error('Permission denied. Please check your admin access.');
-        } else if (error.code === '23503' && error.message.includes('brand_id')) {
-          toast.error('Invalid brand selected. Please select a valid brand.');
-        } else {
-          toast.error(`Failed to add product: ${error.message}`);
-        }
-      } else {
-        console.log('=== PRODUCT INSERTED SUCCESSFULLY ===');
-        console.log('Inserted product:', data);
-        console.log('Product brand_id:', data.brand_id);
-        
-        // Show success message with brand info
-        const brandName = data.brands?.name || `Brand ID ${data.brand_id}`;
-        toast.success(`Product "${data.name}" added successfully to ${brandName}!`);
-        resetForm();
-        navigate('/admin');
-      }
+      resetForm();
+      navigate('/admin');
     } catch (error) {
       console.error('=== UNEXPECTED ERROR ===');
       console.error('Unexpected error:', error);
-      toast.error('An unexpected error occurred while adding the product');
+      if (error instanceof Error && !error.message.includes('No brand selected') && !error.message.includes('Form validation failed') && !error.message.includes('Authentication error') && !error.message.includes('No user found')) {
+        toast.error('An unexpected error occurred while adding the product');
+      }
     } finally {
       setLoading(false);
     }

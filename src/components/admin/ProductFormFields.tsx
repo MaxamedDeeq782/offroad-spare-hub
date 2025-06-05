@@ -37,10 +37,14 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
           id="product-name"
           value={productName}
           onChange={(e) => setProductName(e.target.value)}
-          placeholder="Enter product name"
+          placeholder="Enter product name (e.g., Toyota Hilux Brake Pads)"
           required
           maxLength={255}
+          className="mt-1"
         />
+        <p className="text-sm text-muted-foreground mt-1">
+          Include vehicle model in the name for better organization
+        </p>
       </div>
 
       <div>
@@ -49,11 +53,12 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
           id="price"
           type="number" 
           step="0.01" 
-          min="0"
+          min="0.01"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           placeholder="0.00"
           required
+          className="mt-1"
         />
       </div>
 

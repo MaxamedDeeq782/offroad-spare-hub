@@ -52,33 +52,51 @@ export const useProductForm = () => {
 
     console.log('Uploading image:', uploadedImage.name);
     
-    const fileExt = uploadedImage.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `product-images/${fileName}`;
-    
-    console.log('Uploading file to path:', filePath);
-    const { error: uploadError } = await supabase.storage
-      .from('products')
-      .upload(filePath, uploadedImage);
-    
-    if (uploadError) {
-      console.error('Image upload error:', uploadError);
-      console.log('Continuing without image upload');
+    try {
+      const fileExt = uploadedImage.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `product-images/${fileName}`;
+      
+      console.log('Uploading file to path:', filePath);
+      
+      // First check if the bucket exists, if not create it
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const productsBucket = buckets?.find(bucket => bucket.name === 'products');
+      
+      if (!productsBucket) {
+        console.log('Products bucket not found, will continue without image upload');
+        return null;
+      }
+      
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, uploadedImage);
+      
+      if (uploadError) {
+        console.error('Image upload error:', uploadError);
+        console.log('Continuing without image upload');
+        return null;
+      }
+
+      console.log('Image uploaded successfully');
+      
+      const { data: publicUrl } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
+        
+      console.log('Image URL:', publicUrl.publicUrl);
+      return publicUrl.publicUrl;
+    } catch (error) {
+      console.error('Image upload failed:', error);
       return null;
     }
-
-    console.log('Image uploaded successfully');
-    
-    const { data: publicUrl } = supabase.storage
-      .from('products')
-      .getPublicUrl(filePath);
-      
-    console.log('Image URL:', publicUrl.publicUrl);
-    return publicUrl.publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('Form submission started');
+    console.log('Form data:', { productName, price, selectedBrand });
     
     const sanitizedFormData: ProductFormData = {
       productName: sanitizeText(productName),
@@ -87,27 +105,40 @@ export const useProductForm = () => {
     };
     
     if (!validateProductForm(sanitizedFormData)) {
+      console.log('Form validation failed');
       return;
     }
 
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Check authentication
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        toast.error('Authentication error. Please try logging in again.');
+        setLoading(false);
+        return;
+      }
       
       if (!user) {
+        console.log('No user found');
         toast.error('You must be logged in to add products');
         navigate('/login');
+        setLoading(false);
         return;
       }
 
       console.log('Current user:', user.email);
 
+      // Upload image if provided
       const imageUrl = await uploadImage();
       const productData = createProductData(sanitizedFormData, imageUrl);
       
       console.log('Inserting product into database:', productData);
       
+      // Insert product
       const { data, error } = await supabase
         .from('products')
         .insert(productData)
@@ -121,6 +152,8 @@ export const useProductForm = () => {
           toast.error('Access denied. You need admin privileges to add products.');
         } else if (error.code === '23505') {
           toast.error('A product with this name already exists');
+        } else if (error.message.includes('permission denied')) {
+          toast.error('Permission denied. Please check your admin access.');
         } else {
           toast.error(`Failed to add product: ${error.message}`);
         }
@@ -132,7 +165,7 @@ export const useProductForm = () => {
       }
     } catch (error) {
       console.error('Unexpected error:', error);
-      toast.error('An unexpected error occurred');
+      toast.error('An unexpected error occurred while adding the product');
     } finally {
       setLoading(false);
     }

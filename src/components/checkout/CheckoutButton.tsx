@@ -38,7 +38,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
       }));
       
       // Validate form fields before proceeding with Stripe checkout
-      if (!formData.firstName || !formData.lastName || !formData.email || 
+      if (!formData.fullName || !formData.email || 
           !formData.address || !formData.city || !formData.state || !formData.zipCode) {
         toast.error("Please fill in all required fields");
         return;
@@ -50,7 +50,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
           cartItems, 
           userId,
           customerInfo: {
-            name: `${formData.firstName} ${formData.lastName}`,
+            name: formData.fullName,
             email: formData.email,
             address: {
               line1: formData.address,
@@ -59,6 +59,14 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
               postal_code: formData.zipCode,
               country: 'US'
             }
+          },
+          shipping: {
+            name: formData.fullName,
+            email: formData.email,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zipCode: formData.zipCode
           }
         }
       });

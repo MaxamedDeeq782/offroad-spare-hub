@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -78,7 +79,9 @@ const CheckoutPage: React.FC = () => {
   // Create an order in your database
   const createOrder = async (stripeSessionId?: string) => {
     try {
-      // Create a new order 
+      console.log("Creating order with shipping info:", formData);
+      
+      // Create a new order with shipping information
       const orderData = {
         userId: user.id,
         items: cart.map(item => ({
@@ -87,8 +90,16 @@ const CheckoutPage: React.FC = () => {
           price: item.price
         })),
         total: getCartTotal(),
-        status: 'pending' as const,
-        stripeSessionId
+        status: 'approved' as const, // Set as approved since payment was successful
+        stripeSessionId,
+        shipping: {
+          name: formData.fullName,
+          email: formData.email,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode
+        }
       };
       
       console.log("Creating order with data:", orderData);
@@ -104,7 +115,10 @@ const CheckoutPage: React.FC = () => {
         
         // Navigate to order confirmation
         navigate('/order-confirmation', { state: { orderId: newOrder.id } });
+        
+        toast.success("Order created successfully!");
       } else {
+        console.error("Failed to create order");
         toast.error("Failed to create order. Please try again.");
       }
     } catch (error) {

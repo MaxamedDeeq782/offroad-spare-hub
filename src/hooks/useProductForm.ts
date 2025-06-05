@@ -95,8 +95,24 @@ export const useProductForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Form submission started');
+    console.log('=== PRODUCT SUBMISSION STARTED ===');
     console.log('Form data:', { productName, price, selectedBrand });
+    
+    // Validate brand selection first
+    if (!selectedBrand || selectedBrand === '' || selectedBrand === '0') {
+      console.error('No brand selected');
+      toast.error('Please select a brand from the dropdown');
+      return;
+    }
+
+    const brandId = parseInt(selectedBrand);
+    if (isNaN(brandId) || brandId <= 0) {
+      console.error('Invalid brand ID:', selectedBrand);
+      toast.error('Invalid brand selection. Please select a valid brand.');
+      return;
+    }
+
+    console.log('✓ Brand validation passed. Brand ID:', brandId);
     
     const sanitizedFormData: ProductFormData = {
       productName: sanitizeText(productName),
@@ -109,19 +125,7 @@ export const useProductForm = () => {
       return;
     }
 
-    // Double check brand selection
-    if (!selectedBrand || selectedBrand === '') {
-      toast.error('Please select a brand from the dropdown');
-      return;
-    }
-
-    const brandId = parseInt(selectedBrand);
-    if (isNaN(brandId) || brandId <= 0) {
-      toast.error('Invalid brand selection. Please select a valid brand.');
-      return;
-    }
-
-    console.log('Brand validation passed. Brand ID:', brandId);
+    console.log('✓ Form validation passed');
 
     setLoading(true);
 
@@ -144,26 +148,33 @@ export const useProductForm = () => {
         return;
       }
 
-      console.log('Current user:', user.email);
+      console.log('✓ User authenticated:', user.email);
 
       // Upload image if provided
       const imageUrl = await uploadImage();
-      const productData = createProductData(sanitizedFormData, imageUrl);
       
-      // Ensure brand_id is correctly set
-      productData.brand_id = brandId;
+      // Create the product data with explicit brand_id
+      const productData = {
+        name: sanitizedFormData.productName.trim(),
+        price: parseFloat(sanitizedFormData.price),
+        brand_id: brandId, // Explicitly set the brand_id
+        image_url: imageUrl
+      };
       
-      console.log('Final product data to insert:', productData);
+      console.log('=== INSERTING PRODUCT ===');
+      console.log('Product data to insert:', productData);
+      console.log('Brand ID being set:', productData.brand_id);
       
       // Insert product
       const { data, error } = await supabase
         .from('products')
         .insert(productData)
-        .select()
+        .select('*, brands(name)')
         .single();
       
       if (error) {
-        console.error('Product creation error:', error);
+        console.error('=== PRODUCT INSERTION ERROR ===');
+        console.error('Error details:', error);
         
         if (error.code === 'PGRST301') {
           toast.error('Access denied. You need admin privileges to add products.');
@@ -171,17 +182,24 @@ export const useProductForm = () => {
           toast.error('A product with this name already exists');
         } else if (error.message.includes('permission denied')) {
           toast.error('Permission denied. Please check your admin access.');
+        } else if (error.code === '23503' && error.message.includes('brand_id')) {
+          toast.error('Invalid brand selected. Please select a valid brand.');
         } else {
           toast.error(`Failed to add product: ${error.message}`);
         }
       } else {
-        console.log('Product added successfully:', data);
+        console.log('=== PRODUCT INSERTED SUCCESSFULLY ===');
+        console.log('Inserted product:', data);
         console.log('Product brand_id:', data.brand_id);
-        toast.success(`Product added successfully to brand ID ${data.brand_id}!`);
+        
+        // Show success message with brand info
+        const brandName = data.brands?.name || `Brand ID ${data.brand_id}`;
+        toast.success(`Product "${data.name}" added successfully to ${brandName}!`);
         resetForm();
         navigate('/admin');
       }
     } catch (error) {
+      console.error('=== UNEXPECTED ERROR ===');
       console.error('Unexpected error:', error);
       toast.error('An unexpected error occurred while adding the product');
     } finally {

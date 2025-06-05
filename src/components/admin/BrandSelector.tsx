@@ -33,7 +33,7 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
 
   // Fetch all brands from the database
   const fetchBrands = async () => {
-    console.log('Fetching brands from database...');
+    console.log('=== FETCHING BRANDS ===');
     setLoading(true);
     
     try {
@@ -74,9 +74,11 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
   };
 
   const handleBrandChange = (value: string) => {
-    console.log('Brand selected:', value);
+    console.log('=== BRAND SELECTION ===');
+    console.log('Brand selected value:', value);
     const selectedBrandData = brands.find(brand => brand.id.toString() === value);
     console.log('Selected brand data:', selectedBrandData);
+    console.log('Setting selectedBrand to:', value);
     setSelectedBrand(value);
   };
 
@@ -123,11 +125,14 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
           No brands found. Please contact admin to add brands.
         </p>
       )}
-      {selectedBrand && (
+      {selectedBrand && brands.length > 0 && (
         <p className="text-sm text-green-600 mt-1">
           Selected: {brands.find(b => b.id.toString() === selectedBrand)?.name}
         </p>
       )}
+      <div className="text-xs text-gray-500 mt-1">
+        Debug: Selected brand value = "{selectedBrand}"
+      </div>
     </div>
   );
 };

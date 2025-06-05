@@ -15,6 +15,9 @@ interface Product {
   price: number;
   image_url: string | null;
   brand_id: number | null;
+  brands?: {
+    name: string;
+  };
 }
 
 const AdminProducts: React.FC = () => {
@@ -28,30 +31,28 @@ const AdminProducts: React.FC = () => {
     fetchBrands();
   }, []);
 
-  // Fetch all products from the database
+  // Fetch all products from the database with brand information
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      console.log('=== FETCHING PRODUCTS FOR ADMIN ===');
+      
       const { data, error } = await supabase
         .from('products')
-        .select('*');
+        .select(`
+          *,
+          brands (
+            name
+          )
+        `)
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching products:', error);
         toast.error('Failed to load products');
       } else {
-        // Filter products to only show the specific vehicle types
-        const filteredProducts = (data || []).filter(product => {
-          const productName = product.name.toLowerCase();
-          return (
-            productName.includes('toyota hilux') || 
-            productName.includes('land cruiser') ||
-            productName.includes('nissan patrol') ||
-            productName.includes('mitsubishi l200')
-          );
-        });
-        
-        setProducts(filteredProducts);
+        console.log('Fetched products with brands:', data);
+        setProducts(data || []);
       }
     } catch (error) {
       console.error('Unexpected error fetching products:', error);
@@ -92,12 +93,13 @@ const AdminProducts: React.FC = () => {
                 <TableHead>Name</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Brand</TableHead>
+                <TableHead>Brand ID</TableHead>
                 <TableHead>Vehicle Type</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {products.map((product) => {
-                const brand = brands.find(b => b.id === product.brand_id);
+                const brandName = product.brands?.name || brands.find(b => b.id === product.brand_id)?.name || 'No brand';
                 
                 // Determine the vehicle type
                 let vehicleType = "";
@@ -124,7 +126,12 @@ const AdminProducts: React.FC = () => {
                     </TableCell>
                     <TableCell>{product.name}</TableCell>
                     <TableCell>${product.price.toFixed(2)}</TableCell>
-                    <TableCell>{brand?.name || 'No brand'}</TableCell>
+                    <TableCell>{brandName}</TableCell>
+                    <TableCell>
+                      <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        {product.brand_id || 'NULL'}
+                      </span>
+                    </TableCell>
                     <TableCell>{vehicleType || 'Unknown'}</TableCell>
                   </TableRow>
                 );
@@ -132,7 +139,7 @@ const AdminProducts: React.FC = () => {
             </TableBody>
           </Table>
         ) : (
-          <div className="text-center py-4">No products found for the specified vehicle types.</div>
+          <div className="text-center py-4">No products found.</div>
         )}
       </div>
     </div>

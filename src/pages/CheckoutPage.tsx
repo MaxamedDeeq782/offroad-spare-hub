@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -110,8 +109,10 @@ const CheckoutPage: React.FC = () => {
       if (newOrder) {
         console.log("Order created successfully:", newOrder);
         
-        // Clear cart
-        clearCart();
+        // Clear cart immediately after successful order creation
+        console.log("Clearing cart after order creation...");
+        await clearCart();
+        console.log("Cart cleared successfully");
         
         // Navigate to order confirmation
         navigate('/order-confirmation', { state: { orderId: newOrder.id } });

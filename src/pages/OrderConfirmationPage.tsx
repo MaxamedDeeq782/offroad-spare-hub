@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -31,11 +30,18 @@ const OrderConfirmationPage: React.FC = () => {
       console.log("User:", user);
       console.log("Cart:", cart);
       
-      // If we have an existing order ID (from credit card payment), just show confirmation
+      // If we have an existing order ID (from credit card payment), clear cart and show confirmation
       if (existingOrderId) {
         console.log("Order already exists with ID:", existingOrderId);
         setOrderCreated(true);
         setOrderDetails({ id: existingOrderId, total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) });
+        
+        // Clear cart for credit card payments
+        if (user && cart.length > 0) {
+          console.log("Clearing cart for credit card payment...");
+          await clearCart();
+        }
+        
         setLoading(false);
         return;
       }
@@ -121,9 +127,11 @@ const OrderConfirmationPage: React.FC = () => {
           setOrderCreated(true);
           setOrderDetails(createdOrder);
           
-          // Clear cart only if user is logged in
+          // Clear cart after successful order creation for Stripe payments
           if (user && cart.length > 0) {
-            clearCart();
+            console.log("Clearing cart after successful Stripe payment...");
+            await clearCart();
+            console.log("Cart cleared successfully");
           }
           
           toast.success("Your order has been confirmed and payment verified!");

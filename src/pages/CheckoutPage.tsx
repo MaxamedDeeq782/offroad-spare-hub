@@ -159,11 +159,9 @@ const CheckoutPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Checkout</h1>
-        
-        {/* Important Notice Box */}
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 dark:bg-blue-900/20 dark:border-blue-800">
+      {/* Sticky Notice Box */}
+      <div className="sticky top-0 z-50 bg-blue-50 border-b border-blue-200 px-4 py-3 dark:bg-blue-900/20 dark:border-blue-800">
+        <div className="container mx-auto max-w-7xl">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -177,6 +175,10 @@ const CheckoutPage: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Checkout</h1>
         
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
           {/* Form Section - Takes 2 columns on xl screens */}

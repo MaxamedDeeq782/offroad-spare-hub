@@ -73,7 +73,7 @@ export const submitProduct = async (data: ProductSubmissionData) => {
   console.log('Product data to insert:', productData);
   console.log('Brand ID being set:', productData.brand_id);
   
-  // Insert product
+  // Insert product with better error handling
   const { data: insertedData, error } = await supabase
     .from('products')
     .insert(productData)
@@ -83,15 +83,18 @@ export const submitProduct = async (data: ProductSubmissionData) => {
   if (error) {
     console.error('=== PRODUCT INSERTION ERROR ===');
     console.error('Error details:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
     
-    if (error.code === 'PGRST301') {
-      toast.error('Access denied. You need admin privileges to add products.');
+    // More specific error handling
+    if (error.code === '42501' || error.message.includes('permission denied')) {
+      toast.error('Permission denied. You need admin privileges to add products.');
     } else if (error.code === '23505') {
       toast.error('A product with this name already exists');
-    } else if (error.message.includes('permission denied')) {
-      toast.error('Permission denied. Please check your admin access.');
     } else if (error.code === '23503' && error.message.includes('brand_id')) {
       toast.error('Invalid brand selected. Please select a valid brand.');
+    } else if (error.code === '42P01') {
+      toast.error('Database table not found. Please contact support.');
     } else {
       toast.error(`Failed to add product: ${error.message}`);
     }
@@ -100,9 +103,8 @@ export const submitProduct = async (data: ProductSubmissionData) => {
 
   console.log('=== PRODUCT INSERTED SUCCESSFULLY ===');
   console.log('Inserted product:', insertedData);
-  console.log('Product brand_id:', insertedData.brand_id);
   
-  // Show success message with brand info
+  // Show success message
   const brandName = insertedData.brands?.name || `Brand ID ${insertedData.brand_id}`;
   toast.success(`Product "${insertedData.name}" added successfully to ${brandName}!`);
   

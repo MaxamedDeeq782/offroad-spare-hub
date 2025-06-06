@@ -11,6 +11,8 @@ export const useImageUpload = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
+      console.log('Image selected:', file.name, file.size, file.type);
+      
       if (!file.type.startsWith('image/')) {
         toast.error('Please select a valid image file');
         return;
@@ -32,8 +34,12 @@ export const useImageUpload = () => {
   };
 
   const uploadImage = async (): Promise<string | null> => {
-    if (!uploadedImage) return null;
+    if (!uploadedImage) {
+      console.log('No image to upload');
+      return null;
+    }
 
+    console.log('=== STARTING IMAGE UPLOAD ===');
     console.log('Uploading image:', uploadedImage.name);
     
     try {
@@ -43,14 +49,25 @@ export const useImageUpload = () => {
       
       console.log('Uploading file to path:', filePath);
       
-      // First check if the bucket exists, if not create it
-      const { data: buckets } = await supabase.storage.listBuckets();
+      // First check if the bucket exists
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        console.error('Error listing buckets:', bucketsError);
+        toast.error('Storage not available. Continuing without image.');
+        return null;
+      }
+      
+      console.log('Available buckets:', buckets);
       const productsBucket = buckets?.find(bucket => bucket.name === 'products');
       
       if (!productsBucket) {
-        console.log('Products bucket not found, will continue without image upload');
+        console.log('Products bucket not found, available buckets:', buckets?.map(b => b.name));
+        toast.error('Products storage bucket not found. Continuing without image.');
         return null;
       }
+      
+      console.log('Products bucket found, proceeding with upload...');
       
       const { error: uploadError } = await supabase.storage
         .from('products')
@@ -58,20 +75,22 @@ export const useImageUpload = () => {
       
       if (uploadError) {
         console.error('Image upload error:', uploadError);
-        console.log('Continuing without image upload');
+        toast.error(`Image upload failed: ${uploadError.message}. Continuing without image.`);
         return null;
       }
 
-      console.log('Image uploaded successfully');
+      console.log('Image uploaded successfully to:', filePath);
       
       const { data: publicUrl } = supabase.storage
         .from('products')
         .getPublicUrl(filePath);
         
-      console.log('Image URL:', publicUrl.publicUrl);
+      console.log('Public image URL:', publicUrl.publicUrl);
+      toast.success('Image uploaded successfully!');
       return publicUrl.publicUrl;
     } catch (error) {
-      console.error('Image upload failed:', error);
+      console.error('Unexpected image upload error:', error);
+      toast.error('Image upload failed. Continuing without image.');
       return null;
     }
   };

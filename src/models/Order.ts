@@ -1,4 +1,3 @@
-
 import { supabase } from '../integrations/supabase/client';
 
 export type OrderStatus = 'pending' | 'approved' | 'shipped' | 'delivered' | 'canceled';
@@ -50,39 +49,86 @@ export interface OrderInput {
 // Add an order to the database
 export const addOrder = async (orderInput: OrderInput): Promise<Order | null> => {
   try {
-    console.log("Adding order to database:", orderInput);
+    console.log("=== STARTING ORDER CREATION ===");
+    console.log("Order input:", orderInput);
+
+    // Check authentication first
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error('Authentication error:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
+    if (!user) {
+      console.error('No authenticated user found');
+      throw new Error('You must be logged in to create an order');
+    }
+
+    console.log("✓ User authenticated:", user.id);
 
     // Validate required fields
     if (!orderInput.userId || !orderInput.items || orderInput.items.length === 0) {
-      console.error("Missing required order data");
-      return null;
+      console.error("Missing required order data:", { 
+        userId: !!orderInput.userId, 
+        itemsLength: orderInput.items?.length || 0 
+      });
+      throw new Error('Missing required order information');
     }
 
+    // Ensure the order is for the authenticated user
+    if (orderInput.userId !== user.id) {
+      console.error('User ID mismatch:', { inputUserId: orderInput.userId, authUserId: user.id });
+      throw new Error('Invalid user ID for order creation');
+    }
+
+    console.log("✓ Validation passed");
+
+    // Prepare order data for insertion
+    const orderData = {
+      user_id: orderInput.userId,
+      total: orderInput.total,
+      status: orderInput.status,
+      stripe_session_id: orderInput.stripeSessionId,
+      shipping_name: orderInput.shipping?.name,
+      shipping_address: orderInput.shipping?.address,
+      shipping_city: orderInput.shipping?.city,
+      shipping_state: orderInput.shipping?.state,
+      shipping_zip: orderInput.shipping?.zipCode,
+      shipping_email: orderInput.shipping?.email
+    };
+
+    console.log("Inserting order with data:", orderData);
+
     // Insert the order
-    const { data: orderData, error: orderError } = await supabase
+    const { data: orderData_result, error: orderError } = await supabase
       .from('orders')
-      .insert({
-        user_id: orderInput.userId,
-        total: orderInput.total,
-        status: orderInput.status,
-        stripe_session_id: orderInput.stripeSessionId,
-        shipping_name: orderInput.shipping?.name,
-        shipping_address: orderInput.shipping?.address,
-        shipping_city: orderInput.shipping?.city,
-        shipping_state: orderInput.shipping?.state,
-        shipping_zip: orderInput.shipping?.zipCode,
-        shipping_email: orderInput.shipping?.email
-      })
+      .insert(orderData)
       .select()
       .single();
 
-    if (orderError || !orderData) {
-      console.error('Error creating order:', orderError);
-      return null;
+    if (orderError) {
+      console.error('=== ORDER INSERTION ERROR ===');
+      console.error('Error details:', orderError);
+      console.error('Error code:', orderError.code);
+      console.error('Error message:', orderError.message);
+      
+      if (orderError.code === '42501') {
+        throw new Error('Permission denied. You do not have permission to create orders.');
+      } else if (orderError.code === '23505') {
+        throw new Error('Order with this information already exists.');
+      } else {
+        throw new Error(`Failed to create order: ${orderError.message}`);
+      }
     }
 
-    console.log("Order created successfully:", orderData);
-    const orderId = orderData.id;
+    if (!orderData_result) {
+      console.error('No order data returned after insertion');
+      throw new Error('Order creation failed - no data returned');
+    }
+
+    console.log("✓ Order created successfully:", orderData_result);
+    const orderId = orderData_result.id;
 
     // Insert all order items
     const orderItemsToInsert = orderInput.items.map(item => ({
@@ -93,49 +139,69 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
     }));
 
     console.log("Inserting order items:", orderItemsToInsert);
-    const { error: itemsError } = await supabase
+    
+    const { data: itemsData, error: itemsError } = await supabase
       .from('order_items')
-      .insert(orderItemsToInsert);
+      .insert(orderItemsToInsert)
+      .select();
 
     if (itemsError) {
-      console.error('Error creating order items:', itemsError);
+      console.error('=== ORDER ITEMS INSERTION ERROR ===');
+      console.error('Error details:', itemsError);
+      
       // Try to clean up the order if items insertion failed
+      console.log("Cleaning up order due to items insertion failure...");
       await supabase.from('orders').delete().eq('id', orderId);
-      return null;
+      
+      throw new Error(`Failed to create order items: ${itemsError.message}`);
     }
 
-    console.log("Order items created successfully");
+    console.log("✓ Order items created successfully:", itemsData);
 
     // Return the created order with all details
-    return {
+    const createdOrder: Order = {
       id: orderId,
       userId: orderInput.userId,
       total: orderInput.total,
       status: orderInput.status,
-      stripeSessionId: orderData.stripe_session_id,
-      createdAt: new Date(orderData.created_at),
-      updatedAt: new Date(orderData.updated_at),
+      stripeSessionId: orderData_result.stripe_session_id,
+      createdAt: new Date(orderData_result.created_at),
+      updatedAt: new Date(orderData_result.updated_at),
       shipping: {
-        name: orderData.shipping_name,
-        address: orderData.shipping_address,
-        city: orderData.shipping_city,
-        state: orderData.shipping_state,
-        zipCode: orderData.shipping_zip,
-        email: orderData.shipping_email
+        name: orderData_result.shipping_name,
+        address: orderData_result.shipping_address,
+        city: orderData_result.shipping_city,
+        state: orderData_result.shipping_state,
+        zipCode: orderData_result.shipping_zip,
+        email: orderData_result.shipping_email
       },
-      guestName: orderData.guest_name,
-      guestEmail: orderData.guest_email,
+      guestName: orderData_result.guest_name,
+      guestEmail: orderData_result.guest_email,
       items: orderInput.items.map((item, index) => ({
-        id: `temp-${index}`, // Temporary ID for newly created items
+        id: itemsData[index]?.id || `temp-${index}`,
         orderId: orderId,
         productId: item.productId,
         quantity: item.quantity,
         price: item.price,
       })),
     };
+
+    console.log("=== ORDER CREATION COMPLETED SUCCESSFULLY ===");
+    console.log("Final order:", createdOrder);
+    
+    return createdOrder;
   } catch (error) {
-    console.error('Unexpected error creating order:', error);
-    return null;
+    console.error('=== UNEXPECTED ERROR IN ORDER CREATION ===');
+    console.error('Error type:', typeof error);
+    console.error('Error details:', error);
+    
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      throw error; // Re-throw the error with the original message
+    } else {
+      throw new Error('An unexpected error occurred while creating the order');
+    }
   }
 };
 

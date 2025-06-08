@@ -21,7 +21,7 @@ const CheckoutPage: React.FC = () => {
     city: '',
     state: '',
     zipCode: '',
-    paymentMethod: 'stripe' // Default to Stripe instead of credit_card
+    paymentMethod: 'stripe'
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,7 +78,24 @@ const CheckoutPage: React.FC = () => {
   // Create an order in your database
   const createOrder = async (stripeSessionId?: string) => {
     try {
-      console.log("Creating order with shipping info:", formData);
+      console.log("=== CREATING ORDER FROM CHECKOUT ===");
+      console.log("User ID:", user.id);
+      console.log("Cart items:", cart);
+      console.log("Form data:", formData);
+      
+      if (!user.id) {
+        throw new Error('No user ID available for order creation');
+      }
+
+      if (cart.length === 0) {
+        throw new Error('Cart is empty - cannot create order');
+      }
+
+      // Validate required shipping information
+      if (!formData.fullName || !formData.email || !formData.address || 
+          !formData.city || !formData.state || !formData.zipCode) {
+        throw new Error('Missing required shipping information');
+      }
       
       // Create a new order with shipping information
       const orderData = {
@@ -89,7 +106,7 @@ const CheckoutPage: React.FC = () => {
           price: item.price
         })),
         total: getCartTotal(),
-        status: 'approved' as const, // Set as approved since payment was successful
+        status: 'approved' as const,
         stripeSessionId,
         shipping: {
           name: formData.fullName,
@@ -101,30 +118,39 @@ const CheckoutPage: React.FC = () => {
         }
       };
       
-      console.log("Creating order with data:", orderData);
+      console.log("Order data prepared:", orderData);
       
       // Add order to Supabase
       const newOrder = await addOrder(orderData);
       
       if (newOrder) {
-        console.log("Order created successfully:", newOrder);
+        console.log("✓ Order created successfully:", newOrder.id);
         
-        // Clear cart immediately after successful order creation
-        console.log("Clearing cart after order creation...");
+        // Clear cart after successful order creation
+        console.log("Clearing cart...");
         await clearCart();
-        console.log("Cart cleared successfully");
+        console.log("✓ Cart cleared");
         
         // Navigate to order confirmation
         navigate('/order-confirmation', { state: { orderId: newOrder.id } });
         
         toast.success("Order created successfully!");
+        return newOrder;
       } else {
-        console.error("Failed to create order");
-        toast.error("Failed to create order. Please try again.");
+        throw new Error("Order creation returned null");
       }
     } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error("An error occurred while processing your order");
+      console.error('=== ERROR IN CHECKOUT ORDER CREATION ===');
+      console.error('Error details:', error);
+      
+      let errorMessage = "An error occurred while processing your order";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+      throw error; // Re-throw to handle in calling function
     } finally {
       setPaymentProcessing(false);
       setIsSubmitting(false);
@@ -133,6 +159,9 @@ const CheckoutPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log("=== FORM SUBMIT STARTED ===");
+    console.log("Payment method:", formData.paymentMethod);
     
     // Validate form
     if (!validateForm()) {
@@ -144,7 +173,7 @@ const CheckoutPage: React.FC = () => {
     
     try {
       if (formData.paymentMethod === 'credit_card') {
-        // Credit card payment processing would go here
+        console.log("Processing credit card payment...");
         setPaymentProcessing(true);
         toast.success("Credit card payment processed successfully");
         await createOrder();
@@ -152,8 +181,10 @@ const CheckoutPage: React.FC = () => {
       // For Stripe, the checkout is handled by the CheckoutButton
     } catch (error) {
       console.error('Error during checkout:', error);
-      toast.error("An error occurred while processing your order");
+      // Error already handled in createOrder function
+    } finally {
       setIsSubmitting(false);
+      setPaymentProcessing(false);
     }
   };
 

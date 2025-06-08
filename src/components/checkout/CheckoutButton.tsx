@@ -11,7 +11,7 @@ interface CheckoutButtonProps {
   paymentMethod: string;
   userId?: string;
   formData: any;
-  createOrder: () => Promise<void>;
+  createOrder: (stripeSessionId?: string) => Promise<void>;
 }
 
 const CheckoutButton: React.FC<CheckoutButtonProps> = ({ 
@@ -26,6 +26,25 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
 
   const handleStripeCheckout = async () => {
     try {
+      console.log("=== STRIPE CHECKOUT STARTED ===");
+      
+      if (!userId) {
+        toast.error("You must be logged in to checkout");
+        return;
+      }
+
+      if (cart.length === 0) {
+        toast.error("Your cart is empty");
+        return;
+      }
+      
+      // Validate form fields before proceeding with Stripe checkout
+      if (!formData.fullName || !formData.email || 
+          !formData.address || !formData.city || !formData.state || !formData.zipCode) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+
       toast.info("Preparing your Stripe checkout...");
       
       // Transform cart items for the stripe checkout
@@ -37,12 +56,8 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
         imageUrl: item.imageUrl,
       }));
       
-      // Validate form fields before proceeding with Stripe checkout
-      if (!formData.fullName || !formData.email || 
-          !formData.address || !formData.city || !formData.state || !formData.zipCode) {
-        toast.error("Please fill in all required fields");
-        return;
-      }
+      console.log("Cart items for Stripe:", cartItems);
+      console.log("Customer info:", formData);
       
       // Call the Supabase Edge Function to create a Stripe checkout session
       const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
@@ -72,9 +87,11 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
       });
       
       if (error) {
-        console.error("Error from Edge Function:", error);
+        console.error("Error from Stripe Edge Function:", error);
         throw new Error(error.message || "Failed to create checkout session");
       }
+      
+      console.log("Stripe checkout response:", data);
       
       if (data?.url) {
         // If it's a test URL, show a message
@@ -82,14 +99,23 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
           toast.info("Using Stripe test mode - use test card 4242 4242 4242 4242");
         }
         
+        console.log("Redirecting to Stripe checkout:", data.url);
         // Redirect directly to Stripe checkout
         window.location.href = data.url;
       } else {
+        console.error("No checkout URL received from Stripe");
         toast.error("No checkout URL received from Stripe");
       }
     } catch (error) {
-      console.error("Error creating checkout:", error);
-      toast.error("Failed to create checkout session. Please try again later.");
+      console.error("=== STRIPE CHECKOUT ERROR ===");
+      console.error("Error details:", error);
+      
+      let errorMessage = "Failed to create checkout session. Please try again later.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     }
   };
 

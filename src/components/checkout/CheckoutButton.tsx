@@ -5,13 +5,14 @@ import { useCart } from '@/contexts/CartContext';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { Order } from '@/models/Order';
 
 interface CheckoutButtonProps {
   isSubmitting: boolean;
   paymentMethod: string;
   userId?: string;
   formData: any;
-  createOrder: (stripeSessionId?: string) => Promise<void>;
+  createOrder: (stripeSessionId?: string) => Promise<Order | null>;
 }
 
 const CheckoutButton: React.FC<CheckoutButtonProps> = ({ 

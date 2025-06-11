@@ -75,6 +75,9 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
     order.shipping.zipCode || 
     order.shipping.email
   );
+
+  // Check if this order was processed via webhook (has stripe data)
+  const isWebhookOrder = !!(order.stripeSessionId || order.stripeCustomerId || order.stripePaymentIntentId);
   
   return (
     <Card className="mb-4">
@@ -86,14 +89,26 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
               <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(order.status)}`}>
                 {order.status.toUpperCase()}
               </span>
+              {isWebhookOrder && (
+                <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                  STRIPE
+                </span>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">
-              Placed by: {order.userId}
+              Customer: {order.userId}
             </p>
             <p className="text-sm text-muted-foreground">
               Date: {formatDate(order.createdAt)}
             </p>
             <p className="font-medium mt-1">Total: ${order.total.toFixed(2)}</p>
+            
+            {/* Show Stripe payment info if available */}
+            {order.stripeSessionId && (
+              <p className="text-sm text-muted-foreground">
+                Stripe Session: {order.stripeSessionId.substring(0, 20)}...
+              </p>
+            )}
           </div>
           
           <div className="flex flex-col gap-2">
@@ -190,7 +205,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
                 </Table>
               </div>
               
-              {/* Shipping Information */}
+              {/* Shipping Information - now from webhook data */}
               {hasShippingInfo && (
                 <div>
                   <h4 className="text-sm font-medium mb-2">Shipping Information:</h4>
@@ -209,6 +224,24 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
                         {order.shipping.city}{order.shipping.city && order.shipping.state && ', '}
                         {order.shipping.state} {order.shipping.zipCode}
                       </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Stripe Payment Details */}
+              {isWebhookOrder && (
+                <div className="md:col-span-2">
+                  <h4 className="text-sm font-medium mb-2">Payment Details:</h4>
+                  <div className="bg-muted p-3 rounded-md space-y-1">
+                    {order.stripeSessionId && (
+                      <p className="text-sm">Session ID: {order.stripeSessionId}</p>
+                    )}
+                    {order.stripeCustomerId && (
+                      <p className="text-sm">Customer ID: {order.stripeCustomerId}</p>
+                    )}
+                    {order.stripePaymentIntentId && (
+                      <p className="text-sm">Payment Intent: {order.stripePaymentIntentId}</p>
                     )}
                   </div>
                 </div>

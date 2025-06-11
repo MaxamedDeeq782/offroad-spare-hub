@@ -38,13 +38,6 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
         toast.error("Your cart is empty");
         return;
       }
-      
-      // Validate form fields before proceeding with Stripe checkout
-      if (!formData.fullName || !formData.email || 
-          !formData.address || !formData.city || !formData.state || !formData.zipCode) {
-        toast.error("Please fill in all required fields");
-        return;
-      }
 
       toast.info("Preparing your Stripe checkout...");
       
@@ -58,32 +51,12 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
       }));
       
       console.log("Cart items for Stripe:", cartItems);
-      console.log("Customer info:", formData);
       
       // Call the Supabase Edge Function to create a Stripe checkout session
       const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
         body: { 
           cartItems, 
-          userId,
-          customerInfo: {
-            name: formData.fullName,
-            email: formData.email,
-            address: {
-              line1: formData.address,
-              city: formData.city,
-              state: formData.state,
-              postal_code: formData.zipCode,
-              country: 'US'
-            }
-          },
-          shipping: {
-            name: formData.fullName,
-            email: formData.email,
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            zipCode: formData.zipCode
-          }
+          userId
         }
       });
       

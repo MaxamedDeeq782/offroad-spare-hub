@@ -1,10 +1,10 @@
+
 import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { addOrder } from '../models/Order';
 import { toast } from 'sonner';
-import ShippingForm from '../components/checkout/ShippingForm';
 import PaymentMethodForm from '../components/checkout/PaymentMethodForm';
 import OrderSummary from '../components/checkout/OrderSummary';
 import CheckoutButton from '../components/checkout/CheckoutButton';
@@ -15,12 +15,6 @@ const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
-    fullName: user?.user_metadata?.name || '',
-    email: user?.email || '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
     paymentMethod: 'stripe'
   });
   
@@ -57,31 +51,12 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  // Validate form fields
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-    
-    // Required fields
-    if (!formData.fullName) errors.fullName = "Full name is required";
-    if (!formData.email) errors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = "Email is invalid";
-    if (!formData.address) errors.address = "Address is required";
-    if (!formData.city) errors.city = "City is required";
-    if (!formData.state) errors.state = "State is required";
-    if (!formData.zipCode) errors.zipCode = "ZIP code is required";
-    else if (!/^\d{5}(-\d{4})?$/.test(formData.zipCode)) errors.zipCode = "ZIP code is invalid";
-    
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   // Create an order in your database
   const createOrder = async (stripeSessionId?: string) => {
     try {
       console.log("=== CREATING ORDER FROM CHECKOUT ===");
       console.log("User ID:", user.id);
       console.log("Cart items:", cart);
-      console.log("Form data:", formData);
       
       if (!user.id) {
         throw new Error('No user ID available for order creation');
@@ -90,14 +65,8 @@ const CheckoutPage: React.FC = () => {
       if (cart.length === 0) {
         throw new Error('Cart is empty - cannot create order');
       }
-
-      // Validate required shipping information
-      if (!formData.fullName || !formData.email || !formData.address || 
-          !formData.city || !formData.state || !formData.zipCode) {
-        throw new Error('Missing required shipping information');
-      }
       
-      // Create a new order with shipping information
+      // Create a new order without shipping information (Stripe handles this)
       const orderData = {
         userId: user.id,
         items: cart.map(item => ({
@@ -107,15 +76,7 @@ const CheckoutPage: React.FC = () => {
         })),
         total: getCartTotal(),
         status: 'approved' as const,
-        stripeSessionId,
-        shipping: {
-          name: formData.fullName,
-          email: formData.email,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode
-        }
+        stripeSessionId
       };
       
       console.log("Order data prepared:", orderData);
@@ -163,12 +124,6 @@ const CheckoutPage: React.FC = () => {
     console.log("=== FORM SUBMIT STARTED ===");
     console.log("Payment method:", formData.paymentMethod);
     
-    // Validate form
-    if (!validateForm()) {
-      toast.error("Please fill in all required fields correctly");
-      return;
-    }
-    
     setIsSubmitting(true);
     
     try {
@@ -215,13 +170,6 @@ const CheckoutPage: React.FC = () => {
           {/* Form Section - Takes 2 columns on xl screens */}
           <div className="xl:col-span-2 order-2 xl:order-1">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <ShippingForm 
-                formData={formData} 
-                handleChange={handleChange} 
-                isSubmitting={isSubmitting}
-                fieldErrors={fieldErrors}
-              />
-              
               <PaymentMethodForm 
                 paymentMethod={formData.paymentMethod} 
                 handleChange={handleChange}

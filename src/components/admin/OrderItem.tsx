@@ -1,9 +1,19 @@
-
 import React, { useState } from 'react';
 import { Order, OrderStatus, updateOrderStatus } from '../../models/Order';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -122,23 +132,72 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
                     >
                       Approve
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="destructive"
-                      onClick={() => handleStatusChange('canceled')}
-                    >
-                      Cancel
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                        >
+                          Cancel
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to cancel this order? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>No, keep order</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleStatusChange('canceled')}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Yes, cancel order
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </>
                 )}
                 
                 {order.status === 'approved' && (
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleStatusChange('shipped')}
-                  >
-                    Mark Shipped
-                  </Button>
+                  <>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleStatusChange('shipped')}
+                    >
+                      Mark Shipped
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                        >
+                          Cancel Order
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel Approved Order</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to cancel this approved order? This is typically done when a refund has been processed through Stripe. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>No, keep order</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleStatusChange('canceled')}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Yes, cancel order
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
                 )}
                 
                 {order.status === 'shipped' && (

@@ -105,6 +105,8 @@ export type Database = {
           shipping_state: string | null
           shipping_zip: string | null
           status: string
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
           stripe_session_id: string | null
           total: number
           updated_at: string
@@ -122,6 +124,8 @@ export type Database = {
           shipping_state?: string | null
           shipping_zip?: string | null
           status: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
           total: number
           updated_at?: string
@@ -139,6 +143,8 @@ export type Database = {
           shipping_state?: string | null
           shipping_zip?: string | null
           status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
           total?: number
           updated_at?: string
@@ -174,6 +180,38 @@ export type Database = {
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_webhooks: {
+        Row: {
+          event_type: string
+          id: string
+          order_id: string | null
+          processed_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          order_id?: string | null
+          processed_at?: string
+          stripe_event_id: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          processed_at?: string
+          stripe_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_webhooks_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]

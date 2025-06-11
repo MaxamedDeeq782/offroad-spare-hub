@@ -1,3 +1,4 @@
+
 import { supabase } from '../integrations/supabase/client';
 
 export type OrderStatus = 'pending' | 'approved' | 'shipped' | 'delivered' | 'canceled';
@@ -27,6 +28,8 @@ export interface Order {
   createdAt: Date;
   updatedAt: Date;
   stripeSessionId?: string;
+  stripeCustomerId?: string;
+  stripePaymentIntentId?: string;
   items?: OrderItem[];
   shipping?: ShippingInfo;
   guestName?: string;
@@ -43,6 +46,8 @@ export interface OrderInput {
   total: number;
   status: OrderStatus;
   stripeSessionId?: string;
+  stripeCustomerId?: string;
+  stripePaymentIntentId?: string;
   shipping?: ShippingInfo;
 }
 
@@ -90,6 +95,8 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       total: orderInput.total,
       status: orderInput.status,
       stripe_session_id: orderInput.stripeSessionId,
+      stripe_customer_id: orderInput.stripeCustomerId,
+      stripe_payment_intent_id: orderInput.stripePaymentIntentId,
       shipping_name: orderInput.shipping?.name,
       shipping_address: orderInput.shipping?.address,
       shipping_city: orderInput.shipping?.city,
@@ -165,6 +172,8 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       total: orderInput.total,
       status: orderInput.status,
       stripeSessionId: orderData_result.stripe_session_id,
+      stripeCustomerId: orderData_result.stripe_customer_id,
+      stripePaymentIntentId: orderData_result.stripe_payment_intent_id,
       createdAt: new Date(orderData_result.created_at),
       updatedAt: new Date(orderData_result.updated_at),
       shipping: {
@@ -238,6 +247,8 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
             createdAt: new Date(order.created_at),
             updatedAt: new Date(order.updated_at),
             stripeSessionId: order.stripe_session_id,
+            stripeCustomerId: order.stripe_customer_id,
+            stripePaymentIntentId: order.stripe_payment_intent_id,
             shipping: {
               name: order.shipping_name,
               address: order.shipping_address,
@@ -268,6 +279,8 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
           createdAt: new Date(order.created_at),
           updatedAt: new Date(order.updated_at),
           stripeSessionId: order.stripe_session_id,
+          stripeCustomerId: order.stripe_customer_id,
+          stripePaymentIntentId: order.stripe_payment_intent_id,
           shipping: {
             name: order.shipping_name,
             address: order.shipping_address,

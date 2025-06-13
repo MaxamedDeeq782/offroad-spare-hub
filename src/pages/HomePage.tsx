@@ -58,30 +58,24 @@ const HomePage: React.FC = () => {
           <div className="absolute -bottom-8 left-20 w-72 h-72 bg-gradient-to-r from-green-500 to-teal-600 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-2000"></div>
         </div>
         
-        <div className="container mx-auto px-4 py-24 md:py-32 relative z-10">
+        <div className="container mx-auto px-4 py-16 md:py-32 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent animate-fade-in">
+            <h1 className="text-4xl md:text-7xl font-extrabold mb-4 md:mb-6 bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent animate-fade-in">
               Premium Off-Road Parts
             </h1>
-            <p className="text-xl md:text-2xl mb-6 text-gray-300 leading-relaxed animate-fade-in delay-200">
+            <p className="text-lg md:text-2xl mb-4 md:mb-6 text-gray-300 leading-relaxed animate-fade-in delay-200">
               Discover genuine spare parts for your adventure vehicles
             </p>
-            <p className="text-lg md:text-xl mb-10 text-gray-400 animate-fade-in delay-300">
+            <p className="text-base md:text-xl mb-8 md:mb-10 text-gray-400 animate-fade-in delay-300">
               Soo hel qaybo dheeri ah oo sax ah Toyota Hilux, Land Cruiser, Nissan Patrol, iyo Mitsubishi L200
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in delay-500">
+            <div className="flex justify-center animate-fade-in delay-500">
               <Link 
                 to="/products" 
-                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-2xl transform hover:scale-105 transition-all duration-300 hover:shadow-orange-500/25"
+                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-2xl transform hover:scale-105 transition-all duration-300 hover:shadow-orange-500/25"
               >
                 Shop Now
-              </Link>
-              <Link 
-                to="/products" 
-                className="border-2 border-white/30 hover:border-white/50 text-white px-8 py-4 rounded-xl font-bold text-lg backdrop-blur-sm hover:bg-white/10 transition-all duration-300"
-              >
-                Browse Catalog
               </Link>
             </div>
           </div>
@@ -96,18 +90,18 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Vehicle Categories with Enhanced Cards */}
-      <div className="py-20 bg-background">
+      <div className="py-12 md:py-20 bg-background">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
               Shop by Vehicle
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               Find the perfect parts for your off-road machine
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {vehicles.map((vehicle, index) => (
               <Link 
                 key={vehicle.slug} 
@@ -118,8 +112,8 @@ const HomePage: React.FC = () => {
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
-                <div className="h-56 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                <div className="h-48 md:h-56 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
                     {vehicle.hasLogo && vehicle.logoSrc ? (
                       <Image 
                         src={vehicle.logoSrc} 
@@ -127,7 +121,7 @@ const HomePage: React.FC = () => {
                         className="max-w-full max-h-full object-contain filter group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
-                      <span className="text-2xl font-bold text-gray-600 dark:text-gray-300">{vehicle.name}</span>
+                      <span className="text-xl md:text-2xl font-bold text-gray-600 dark:text-gray-300">{vehicle.name}</span>
                     )}
                   </div>
                   
@@ -135,15 +129,15 @@ const HomePage: React.FC = () => {
                   <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-orange-500 to-red-600 opacity-80 transform rotate-45 translate-x-8 -translate-y-8"></div>
                 </div>
                 
-                <div className="p-6">
-                  <h3 className="font-bold text-xl mb-2 text-foreground group-hover:text-orange-600 transition-colors duration-300">
+                <div className="p-4 md:p-6">
+                  <h3 className="font-bold text-lg md:text-xl mb-2 text-foreground group-hover:text-orange-600 transition-colors duration-300">
                     {vehicle.name}
                   </h3>
-                  <p className="text-muted-foreground">Browse all {vehicle.name} parts</p>
+                  <p className="text-sm md:text-base text-muted-foreground">Browse all {vehicle.name} parts</p>
                   
                   {/* Arrow indicator */}
-                  <div className="mt-4 flex items-center text-orange-600 font-medium opacity-0 group-hover:opacity-100 transform translate-x-0 group-hover:translate-x-2 transition-all duration-300">
-                    <span className="mr-2">Explore Parts</span>
+                  <div className="mt-3 md:mt-4 flex items-center text-orange-600 font-medium opacity-0 group-hover:opacity-100 transform translate-x-0 group-hover:translate-x-2 transition-all duration-300">
+                    <span className="mr-2 text-sm md:text-base">Explore Parts</span>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -156,18 +150,18 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Enhanced Why Choose Us Section */}
-      <div className="py-20 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="py-12 md:py-20 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
               Why Choose OffroadSpareHub
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               We're committed to keeping your adventure going with premium parts and exceptional service
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {[
               {
                 icon: Shield,
@@ -193,11 +187,11 @@ const HomePage: React.FC = () => {
                 className="group text-center animate-fade-in"
                 style={{ animationDelay: `${index * 200}ms` }}
               >
-                <div className={`bg-gradient-to-br ${feature.gradient} rounded-2xl w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-300`}>
-                  <feature.icon className="h-10 w-10 text-white" />
+                <div className={`bg-gradient-to-br ${feature.gradient} rounded-2xl w-16 md:w-20 h-16 md:h-20 flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-300`}>
+                  <feature.icon className="h-8 md:h-10 w-8 md:w-10 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-foreground">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed max-w-sm mx-auto">{feature.description}</p>
+                <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4 text-foreground">{feature.title}</h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-sm mx-auto">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -205,9 +199,9 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Stats Section */}
-      <div className="py-16 bg-gradient-to-r from-orange-600 to-red-600 text-white">
+      <div className="py-12 md:py-16 bg-gradient-to-r from-orange-600 to-red-600 text-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
             {[
               { number: "10,000+", label: "Parts Available" },
               { number: "500+", label: "Happy Customers" },
@@ -215,8 +209,8 @@ const HomePage: React.FC = () => {
               { number: "99%", label: "Satisfaction Rate" }
             ].map((stat, index) => (
               <div key={stat.label} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                <div className="text-4xl md:text-5xl font-extrabold mb-2">{stat.number}</div>
-                <div className="text-lg font-medium opacity-90">{stat.label}</div>
+                <div className="text-2xl md:text-5xl font-extrabold mb-1 md:mb-2">{stat.number}</div>
+                <div className="text-sm md:text-lg font-medium opacity-90">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -225,14 +219,14 @@ const HomePage: React.FC = () => {
 
       {/* Admin Button - Enhanced styling */}
       {isAuthorizedAdmin && (
-        <div className="py-12 bg-background">
+        <div className="py-8 md:py-12 bg-background">
           <div className="container mx-auto px-4 text-center">
             <Link 
               to="/admin" 
-              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-4 rounded-xl inline-flex items-center shadow-xl hover:shadow-2xl font-extrabold border-2 border-red-400 transform hover:scale-105 transition-all duration-300"
+              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl inline-flex items-center shadow-xl hover:shadow-2xl font-extrabold border-2 border-red-400 transform hover:scale-105 transition-all duration-300"
             >
-              <ShieldCheck size={24} className="mr-3" />
-              <span className="uppercase tracking-wide">ADMIN DASHBOARD</span>
+              <ShieldCheck size={20} className="mr-2 md:mr-3" />
+              <span className="uppercase tracking-wide text-sm md:text-base">ADMIN DASHBOARD</span>
             </Link>
           </div>
         </div>

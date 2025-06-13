@@ -1,8 +1,7 @@
 
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Truck, Star, Shield, Clock, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Image from '../components/Image';
 
@@ -49,49 +48,106 @@ const HomePage: React.FC = () => {
   ];
 
   return (
-    <div>
-      {/* Hero Section */}
-      <div className="relative bg-gray-900 text-white py-24">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Quality Parts for Your Off-Road Adventure</h1>
-            <p className="text-xl mb-4">Find genuine spare parts for Toyota Hilux, Land Cruiser, Nissan Patrol, and Mitsubishi L200</p>
-            <p className="text-lg mb-8 text-gray-300">Soo hel qaybo dheeri ah oo sax ah Toyota Hilux, Land Cruiser, Nissan Patrol, iyo Mitsubishi L200</p>
+    <div className="min-h-screen">
+      {/* Hero Section with Enhanced Gradient */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-white">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-orange-500 to-red-600 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
+          <div className="absolute top-40 right-10 w-72 h-72 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-gradient-to-r from-green-500 to-teal-600 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-2000"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 py-24 md:py-32 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent animate-fade-in">
+              Premium Off-Road Parts
+            </h1>
+            <p className="text-xl md:text-2xl mb-6 text-gray-300 leading-relaxed animate-fade-in delay-200">
+              Discover genuine spare parts for your adventure vehicles
+            </p>
+            <p className="text-lg md:text-xl mb-10 text-gray-400 animate-fade-in delay-300">
+              Soo hel qaybo dheeri ah oo sax ah Toyota Hilux, Land Cruiser, Nissan Patrol, iyo Mitsubishi L200
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in delay-500">
+              <Link 
+                to="/products" 
+                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-2xl transform hover:scale-105 transition-all duration-300 hover:shadow-orange-500/25"
+              >
+                Shop Now
+              </Link>
+              <Link 
+                to="/products" 
+                className="border-2 border-white/30 hover:border-white/50 text-white px-8 py-4 rounded-xl font-bold text-lg backdrop-blur-sm hover:bg-white/10 transition-all duration-300"
+              >
+                Browse Catalog
+              </Link>
+            </div>
           </div>
         </div>
-        <div className="absolute inset-0 bg-black opacity-50"></div>
+        
+        {/* Decorative bottom wave */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg className="w-full h-20 text-background" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M0,120L48,112C96,104,192,88,288,80C384,72,480,72,576,76C672,80,768,88,864,92C960,96,1056,96,1152,88C1248,80,1344,64,1392,56L1440,48L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z" fill="currentColor"></path>
+          </svg>
+        </div>
       </div>
 
-      {/* Vehicle Categories */}
-      <div className="py-16 bg-gray-100">
+      {/* Vehicle Categories with Enhanced Cards */}
+      <div className="py-20 bg-background">
         <div className="container mx-auto px-4">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-center">Shop by Vehicle</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+              Shop by Vehicle
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Find the perfect parts for your off-road machine
+            </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {vehicles.map((vehicle) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {vehicles.map((vehicle, index) => (
               <Link 
                 key={vehicle.slug} 
                 to={`/products?vehicle=${encodeURIComponent(vehicle.name)}&partId=${encodeURIComponent(vehicle.partId)}`}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                className="group relative bg-card rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-48 bg-gray-200 relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <div className="h-56 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center p-6">
                     {vehicle.hasLogo && vehicle.logoSrc ? (
                       <Image 
                         src={vehicle.logoSrc} 
                         alt={`${vehicle.name} logo`}
-                        className="max-w-full max-h-full object-contain p-4"
+                        className="max-w-full max-h-full object-contain filter group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
-                      <span className="text-xl font-bold">{vehicle.name}</span>
+                      <span className="text-2xl font-bold text-gray-600 dark:text-gray-300">{vehicle.name}</span>
                     )}
                   </div>
+                  
+                  {/* Decorative corner accent */}
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-orange-500 to-red-600 opacity-80 transform rotate-45 translate-x-8 -translate-y-8"></div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{vehicle.name}</h3>
-                  <p className="text-sm text-gray-600">Browse all {vehicle.name} parts</p>
+                
+                <div className="p-6">
+                  <h3 className="font-bold text-xl mb-2 text-foreground group-hover:text-orange-600 transition-colors duration-300">
+                    {vehicle.name}
+                  </h3>
+                  <p className="text-muted-foreground">Browse all {vehicle.name} parts</p>
+                  
+                  {/* Arrow indicator */}
+                  <div className="mt-4 flex items-center text-orange-600 font-medium opacity-0 group-hover:opacity-100 transform translate-x-0 group-hover:translate-x-2 transition-all duration-300">
+                    <span className="mr-2">Explore Parts</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -99,55 +155,84 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Why Choose Us Section */}
-      <div className="py-16 bg-gray-100">
+      {/* Enhanced Why Choose Us Section */}
+      <div className="py-20 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-12 text-center">Why Choose OffroadSpareHub</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+              Why Choose OffroadSpareHub
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              We're committed to keeping your adventure going with premium parts and exceptional service
+            </p>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-white rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 shadow-md">
-                <svg className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
+            {[
+              {
+                icon: Shield,
+                title: "Quality Guaranteed",
+                description: "All our parts are genuine or OEM quality, tested and verified to meet or exceed manufacturer standards.",
+                gradient: "from-blue-500 to-blue-600"
+              },
+              {
+                icon: Truck,
+                title: "Fast Delivery",
+                description: "We know your vehicle needs to be back on the road ASAP. Enjoy fast delivery on all orders.",
+                gradient: "from-green-500 to-green-600"
+              },
+              {
+                icon: Users,
+                title: "Expert Support",
+                description: "Our team of off-road enthusiasts and mechanics are here to help you find the right parts.",
+                gradient: "from-purple-500 to-purple-600"
+              }
+            ].map((feature, index) => (
+              <div 
+                key={feature.title}
+                className="group text-center animate-fade-in"
+                style={{ animationDelay: `${index * 200}ms` }}
+              >
+                <div className={`bg-gradient-to-br ${feature.gradient} rounded-2xl w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-300`}>
+                  <feature.icon className="h-10 w-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-foreground">{feature.title}</h3>
+                <p className="text-muted-foreground leading-relaxed max-w-sm mx-auto">{feature.description}</p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Quality Guaranteed</h3>
-              <p className="text-gray-600">All our parts are genuine or OEM quality, tested and verified to meet or exceed manufacturer standards.</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-white rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 shadow-md">
-                <svg className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Fast Delivery</h3>
-              <p className="text-gray-600">We know your vehicle needs to be back on the road ASAP. Enjoy fast delivery on all orders.</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-white rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 shadow-md">
-                <svg className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 018 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Expert Support</h3>
-              <p className="text-gray-600">Our team of off-road enthusiasts and mechanics are here to help you find the right parts.</p>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Admin Button - Only show at bottom of home page for the specific admin user */}
+      {/* Stats Section */}
+      <div className="py-16 bg-gradient-to-r from-orange-600 to-red-600 text-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+            {[
+              { number: "10,000+", label: "Parts Available" },
+              { number: "500+", label: "Happy Customers" },
+              { number: "24/7", label: "Customer Support" },
+              { number: "99%", label: "Satisfaction Rate" }
+            ].map((stat, index) => (
+              <div key={stat.label} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+                <div className="text-4xl md:text-5xl font-extrabold mb-2">{stat.number}</div>
+                <div className="text-lg font-medium opacity-90">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Admin Button - Enhanced styling */}
       {isAuthorizedAdmin && (
-        <div className="py-8 bg-white">
+        <div className="py-12 bg-background">
           <div className="container mx-auto px-4 text-center">
             <Link 
               to="/admin" 
-              className="bg-red-600 text-white px-6 py-3 rounded-md inline-flex items-center shadow-md hover:bg-red-700 font-extrabold border-2 border-red-400"
+              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-4 rounded-xl inline-flex items-center shadow-xl hover:shadow-2xl font-extrabold border-2 border-red-400 transform hover:scale-105 transition-all duration-300"
             >
-              <ShieldCheck size={20} className="mr-2" />
-              <span className="uppercase">ADMIN DASHBOARD</span>
+              <ShieldCheck size={24} className="mr-3" />
+              <span className="uppercase tracking-wide">ADMIN DASHBOARD</span>
             </Link>
           </div>
         </div>
@@ -157,4 +242,3 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-

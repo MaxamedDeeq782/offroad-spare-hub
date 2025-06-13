@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { User, LogOut } from 'lucide-react';
@@ -45,7 +46,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white shadow-md text-gray-900 transition-colors duration-200">
+    <header className="sticky top-0 z-50 bg-white shadow-md text-gray-900 transition-colors duration-200">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">

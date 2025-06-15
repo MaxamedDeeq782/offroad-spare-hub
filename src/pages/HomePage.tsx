@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Truck, Star, Shield, Clock, Users } from 'lucide-react';
@@ -201,10 +200,8 @@ const HomePage: React.FC = () => {
       {/* Stats Section */}
       <div className="py-12 md:py-16 bg-gradient-to-r from-orange-600 to-red-600 text-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 text-center">
             {[
-              { number: "10,000+", label: "Parts Available" },
-              { number: "500+", label: "Happy Customers" },
               { number: "24/7", label: "Customer Support" },
               { number: "99%", label: "Satisfaction Rate" }
             ].map((stat, index) => (

@@ -1,8 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { validateProductForm, ProductFormData } from '@/utils/productFormValidation';
-import { sanitizeText } from '@/utils/sanitization';
 
 interface ProductSubmissionData {
   productName: string;
@@ -15,7 +13,17 @@ export const submitProduct = async (data: ProductSubmissionData) => {
   console.log('=== PRODUCT SUBMISSION STARTED ===');
   console.log('Form data:', { productName: data.productName, price: data.price, selectedBrand: data.selectedBrand });
   
-  // Validate brand selection first
+  // Validate required fields
+  if (!data.productName?.trim()) {
+    toast.error('Please enter a product name');
+    throw new Error('Product name is required');
+  }
+
+  if (!data.price?.trim()) {
+    toast.error('Please enter a price');
+    throw new Error('Price is required');
+  }
+
   if (!data.selectedBrand || data.selectedBrand === '' || data.selectedBrand === '0') {
     console.error('No brand selected');
     toast.error('Please select a brand from the dropdown');
@@ -30,16 +38,12 @@ export const submitProduct = async (data: ProductSubmissionData) => {
   }
 
   console.log('✓ Brand validation passed. Brand ID:', brandId);
-  
-  const sanitizedFormData: ProductFormData = {
-    productName: sanitizeText(data.productName),
-    price: sanitizeText(data.price),
-    selectedBrand: data.selectedBrand
-  };
-  
-  if (!validateProductForm(sanitizedFormData)) {
-    console.log('Form validation failed');
-    throw new Error('Form validation failed');
+
+  // Validate price
+  const priceNum = parseFloat(data.price);
+  if (isNaN(priceNum) || priceNum <= 0) {
+    toast.error('Please enter a valid price greater than 0');
+    throw new Error('Invalid price');
   }
 
   console.log('✓ Form validation passed');
@@ -61,10 +65,10 @@ export const submitProduct = async (data: ProductSubmissionData) => {
 
   console.log('✓ User authenticated:', user.email);
 
-  // Create the product data with explicit brand_id
+  // Create the product data
   const productData = {
-    name: sanitizedFormData.productName.trim(),
-    price: parseFloat(sanitizedFormData.price),
+    name: data.productName.trim(),
+    price: priceNum,
     brand_id: brandId,
     image_url: data.imageUrl
   };
@@ -73,7 +77,7 @@ export const submitProduct = async (data: ProductSubmissionData) => {
   console.log('Product data to insert:', productData);
   console.log('Brand ID being set:', productData.brand_id);
   
-  // Insert product with better error handling
+  // Insert product
   const { data: insertedData, error } = await supabase
     .from('products')
     .insert(productData)

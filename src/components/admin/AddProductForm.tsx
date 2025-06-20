@@ -51,49 +51,62 @@ const AddProductForm: React.FC = () => {
   const selectedBrand = watch('selectedBrand');
 
   const onSubmit = async (data: FormData) => {
-    console.log('=== FORM SUBMISSION STARTED ===');
-    console.log('Form data:', data);
+    console.log('=== 🚀 FORM SUBMISSION STARTED ===');
+    console.log('Form data from react-hook-form:', data);
+    console.log('Selected brand from watch:', selectedBrand);
+    console.log('Uploaded image state:', !!uploadedImage);
     
     setLoading(true);
 
     try {
       // Upload image if provided
-      console.log('Starting image upload...');
+      console.log('📷 Starting image upload process...');
       const imageUrl = await uploadImage();
-      console.log('Image upload result:', imageUrl);
+      console.log('📷 Image upload completed. URL:', imageUrl);
       
       // Submit the product
-      console.log('Starting product submission...');
-      await submitProduct({
+      console.log('💾 Starting product submission...');
+      const result = await submitProduct({
         productName: data.productName,
         price: data.price,
         selectedBrand: data.selectedBrand,
         imageUrl
       });
       
-      console.log('Product submitted successfully, resetting form...');
+      console.log('✅ Product submission successful!', result);
+      console.log('🔄 Resetting form...');
       reset();
       resetImage();
       
-      console.log('Navigating to admin page...');
+      console.log('🏠 Navigating to admin page...');
       navigate('/admin');
       
     } catch (error) {
-      console.error('=== FORM SUBMISSION ERROR ===');
-      console.error('Error details:', error);
+      console.error('=== ❌ FORM SUBMISSION ERROR ===');
+      console.error('Error type:', typeof error);
+      console.error('Error object:', error);
       
       if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
         // Only show generic error for unexpected errors
         if (!error.message.includes('No brand selected') && 
             !error.message.includes('Form validation failed') && 
             !error.message.includes('Authentication error') && 
-            !error.message.includes('No user found')) {
+            !error.message.includes('No user found') &&
+            !error.message.includes('Product name is required') &&
+            !error.message.includes('Price is required') &&
+            !error.message.includes('Invalid brand ID')) {
+          console.error('Showing generic error message');
           toast.error('An unexpected error occurred while adding the product. Check console for details.');
         }
       } else {
+        console.error('Unknown error type');
         toast.error('An unknown error occurred while adding the product');
       }
     } finally {
+      console.log('🏁 Form submission process completed');
       setLoading(false);
     }
   };
@@ -146,7 +159,10 @@ const AddProductForm: React.FC = () => {
 
           <BrandSelector 
             selectedBrand={selectedBrand}
-            setSelectedBrand={(value) => setValue('selectedBrand', value)}
+            setSelectedBrand={(value) => {
+              console.log('🏷️ Brand selector callback - setting value:', value);
+              setValue('selectedBrand', value);
+            }}
             isMobile={isMobile}
             required={true}
           />

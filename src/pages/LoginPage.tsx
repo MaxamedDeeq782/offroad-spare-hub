@@ -7,17 +7,12 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../compone
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
-  const [isResettingPassword, setIsResettingPassword] = useState(false);
   
   const { login, user } = useAuth();
   const navigate = useNavigate();
@@ -59,93 +54,6 @@ const LoginPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!forgotPasswordEmail) {
-      toast.error('Please enter your email address');
-      return;
-    }
-    
-    setIsResettingPassword(true);
-    
-    try {
-      // Use the current domain for the redirect URL
-      const redirectUrl = `${window.location.origin}/reset-password`;
-      
-      console.log('Sending password reset to:', forgotPasswordEmail);
-      console.log('Redirect URL:', redirectUrl);
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: redirectUrl,
-      });
-      
-      if (error) {
-        console.error('Reset password error:', error);
-        toast.error(`Error: ${error.message}`);
-      } else {
-        toast.success('Password reset email sent! Check your inbox and follow the link to reset your password.');
-        setShowForgotPassword(false);
-        setForgotPasswordEmail('');
-      }
-    } catch (err) {
-      console.error('Password reset error:', err);
-      toast.error('An error occurred while sending the reset email');
-    } finally {
-      setIsResettingPassword(false);
-    }
-  };
-
-  if (showForgotPassword) {
-    return (
-      <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Reset your password</CardTitle>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Enter your email address and we'll send you a link to reset your password.
-            </p>
-          </CardHeader>
-          
-          <form onSubmit={handleForgotPassword}>
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="forgot-email">Email address</Label>
-                <Input
-                  id="forgot-email"
-                  type="email"
-                  value={forgotPasswordEmail}
-                  onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                  placeholder="Enter your email address"
-                  required
-                />
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex flex-col gap-4">
-              <Button
-                type="submit"
-                disabled={isResettingPassword}
-                className="w-full"
-              >
-                {isResettingPassword ? 'Sending...' : 'Send reset email'}
-              </Button>
-              
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowForgotPassword(false)}
-                className="w-full"
-              >
-                Back to login
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -191,28 +99,16 @@ const LoginPage: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="font-medium text-primary hover:text-primary-dark"
-                >
-                  Forgot your password?
-                </button>
-              </div>
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                Remember me
+              </label>
             </div>
           </CardContent>
 

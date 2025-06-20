@@ -71,20 +71,27 @@ const LoginPage: React.FC = () => {
     setIsResettingPassword(true);
     
     try {
+      // Use the current domain for the redirect URL
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      
+      console.log('Sending password reset to:', forgotPasswordEmail);
+      console.log('Redirect URL:', redirectUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: redirectUrl,
       });
       
       if (error) {
+        console.error('Reset password error:', error);
         toast.error(`Error: ${error.message}`);
       } else {
-        toast.success('Password reset email sent! Check your inbox.');
+        toast.success('Password reset email sent! Check your inbox and follow the link to reset your password.');
         setShowForgotPassword(false);
         setForgotPasswordEmail('');
       }
     } catch (err) {
-      toast.error('An error occurred while sending the reset email');
       console.error('Password reset error:', err);
+      toast.error('An error occurred while sending the reset email');
     } finally {
       setIsResettingPassword(false);
     }

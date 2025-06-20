@@ -11,6 +11,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import AccountPage from './pages/AccountPage';
 import AccountDetailsPage from './pages/AccountDetailsPage';
 import OrdersPage from './pages/OrdersPage';
@@ -44,6 +45,7 @@ function App() {
                   <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/account" element={<AccountPage />} />
                   <Route path="/account/details" element={<AccountDetailsPage />} />
                   <Route path="/orders" element={<OrdersPage />} />

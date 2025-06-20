@@ -75,6 +75,22 @@ export const submitProduct = async (data: ProductSubmissionData) => {
 
   console.log('✅ User authenticated:', user.email);
 
+  // Verify the brand exists in the database before inserting
+  console.log('🔍 Verifying brand exists in database...');
+  const { data: brandData, error: brandError } = await supabase
+    .from('brands')
+    .select('id, name')
+    .eq('id', brandId)
+    .single();
+
+  if (brandError || !brandData) {
+    console.error('❌ Brand verification failed:', brandError);
+    toast.error('Selected brand does not exist. Please refresh and try again.');
+    throw new Error('Brand does not exist');
+  }
+
+  console.log('✅ Brand verified:', brandData);
+
   // Create the product data
   const productData = {
     name: data.productName.trim(),

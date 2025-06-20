@@ -76,6 +76,7 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
   const handleBrandChange = (value: string) => {
     console.log('=== BRAND SELECTION ===');
     console.log('Brand selected value:', value);
+    console.log('Brand selected type:', typeof value);
     const selectedBrandData = brands.find(brand => brand.id.toString() === value);
     console.log('Selected brand data:', selectedBrandData);
     console.log('Setting selectedBrand to:', value);
@@ -131,7 +132,7 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
         </p>
       )}
       <div className="text-xs text-gray-500 mt-1">
-        Debug: Selected brand value = "{selectedBrand}"
+        Debug: Selected brand value = "{selectedBrand}" (type: {typeof selectedBrand})
       </div>
     </div>
   );

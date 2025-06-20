@@ -31,7 +31,8 @@ const AddProductForm: React.FC = () => {
     formState: { errors },
     setValue,
     watch,
-    reset
+    reset,
+    trigger
   } = useForm<FormData>({
     defaultValues: {
       productName: '',
@@ -55,6 +56,15 @@ const AddProductForm: React.FC = () => {
     console.log('Form data from react-hook-form:', data);
     console.log('Selected brand from watch:', selectedBrand);
     console.log('Uploaded image state:', !!uploadedImage);
+    
+    // Validate brand selection before submission
+    if (!data.selectedBrand || data.selectedBrand === '' || data.selectedBrand === '0') {
+      console.error('❌ Brand validation failed - no brand selected');
+      toast.error('Please select a brand from the dropdown');
+      return;
+    }
+
+    console.log('✅ Brand validation passed - selected brand:', data.selectedBrand);
     
     setLoading(true);
 
@@ -157,18 +167,34 @@ const AddProductForm: React.FC = () => {
             )}
           </div>
 
-          <BrandSelector 
-            selectedBrand={selectedBrand}
-            setSelectedBrand={(value) => {
-              console.log('🏷️ Brand selector callback - setting value:', value);
-              setValue('selectedBrand', value);
-            }}
-            isMobile={isMobile}
-            required={true}
-          />
-          {errors.selectedBrand && (
-            <p className="text-sm text-red-500 mt-1">{errors.selectedBrand.message}</p>
-          )}
+          <div>
+            <BrandSelector 
+              selectedBrand={selectedBrand}
+              setSelectedBrand={(value) => {
+                console.log('🏷️ Brand selector callback - setting value:', value);
+                setValue('selectedBrand', value);
+                // Trigger validation for the brand field
+                trigger('selectedBrand');
+              }}
+              isMobile={isMobile}
+              required={true}
+            />
+            <input
+              type="hidden"
+              {...register('selectedBrand', { 
+                required: 'Please select a brand',
+                validate: (value) => {
+                  if (!value || value === '' || value === '0') {
+                    return 'Please select a valid brand';
+                  }
+                  return true;
+                }
+              })}
+            />
+            {errors.selectedBrand && (
+              <p className="text-sm text-red-500 mt-1">{errors.selectedBrand.message}</p>
+            )}
+          </div>
 
           <ImageUploader 
             handleImageChange={handleImageChange}

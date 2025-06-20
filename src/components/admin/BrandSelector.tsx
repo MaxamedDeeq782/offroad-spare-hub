@@ -96,6 +96,23 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
     );
   }
 
+  // If no brands are available, show a disabled select with appropriate message
+  if (brands.length === 0) {
+    return (
+      <div>
+        <Label htmlFor="brand">Brand {required && '*'}</Label>
+        <Select disabled>
+          <SelectTrigger id="brand">
+            <SelectValue placeholder="No brands available" />
+          </SelectTrigger>
+        </Select>
+        <p className="text-sm text-red-500 mt-1">
+          No brands found. Please contact admin to add brands.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Label htmlFor="brand">Brand {required && '*'}</Label>
@@ -105,27 +122,16 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
         required={required}
       >
         <SelectTrigger id="brand">
-          <SelectValue placeholder={brands.length > 0 ? "Select a brand" : "No brands available"} />
+          <SelectValue placeholder="Select a brand" />
         </SelectTrigger>
         <SelectContent position={isMobile ? "popper" : "item-aligned"}>
-          {brands.length > 0 ? (
-            brands.map((brand) => (
-              <SelectItem key={brand.id} value={brand.id.toString()}>
-                {brand.name}
-              </SelectItem>
-            ))
-          ) : (
-            <SelectItem value="" disabled>
-              No brands available
+          {brands.map((brand) => (
+            <SelectItem key={brand.id} value={brand.id.toString()}>
+              {brand.name}
             </SelectItem>
-          )}
+          ))}
         </SelectContent>
       </Select>
-      {brands.length === 0 && (
-        <p className="text-sm text-red-500 mt-1">
-          No brands found. Please contact admin to add brands.
-        </p>
-      )}
       {selectedBrand && brands.length > 0 && (
         <p className="text-sm text-green-600 mt-1">
           Selected: {brands.find(b => b.id.toString() === selectedBrand)?.name}

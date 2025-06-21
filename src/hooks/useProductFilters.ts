@@ -31,6 +31,8 @@ export const useProductFilters = () => {
     const vehicleParam = queryParams.get('vehicle');
     const partIdParam = queryParams.get('partId');
     
+    console.log('URL params:', { vehicleParam, partIdParam });
+    
     if (vehicleParam) {
       setSelectedVehicle(vehicleParam);
     }
@@ -61,12 +63,14 @@ export const useProductFilters = () => {
         if (productsResponse.error) {
           console.error('Error fetching products:', productsResponse.error);
         } else {
+          console.log('Fetched products:', productsResponse.data);
           setDbProducts(productsResponse.data || []);
         }
 
         if (brandsResponse.error) {
           console.error('Error fetching brands:', brandsResponse.error);
         } else {
+          console.log('Fetched brands:', brandsResponse.data);
           setBrands(brandsResponse.data || []);
         }
       } catch (error) {
@@ -83,6 +87,7 @@ export const useProductFilters = () => {
   useEffect(() => {
     if (!loading && dbProducts.length > 0 && !selectedVehicle) {
       const availableBrands = getAvailableBrands();
+      console.log('Available brands/vehicles:', availableBrands);
       if (availableBrands.length > 0) {
         setSelectedVehicle(availableBrands[0]);
       }
@@ -100,13 +105,16 @@ export const useProductFilters = () => {
       };
 
       const lowercaseName = productName.toLowerCase();
+      console.log('Checking product name:', productName, 'lowercase:', lowercaseName);
       
       for (const [vehicle, keywords] of Object.entries(vehicleKeywords)) {
         if (keywords.some(keyword => lowercaseName.includes(keyword.toLowerCase()))) {
+          console.log('Found vehicle match:', vehicle, 'for product:', productName);
           return vehicle;
         }
       }
       
+      console.log('No vehicle match found for product:', productName);
       return '';
     };
   }, []);
@@ -118,6 +126,8 @@ export const useProductFilters = () => {
       
       const brand = brands.find(b => b.id === brandId);
       if (!brand) return '';
+      
+      console.log('Checking brand:', brand.name, 'for brand ID:', brandId);
       
       const brandVehicleMapping: Record<string, string> = {
         'Toyota': 'Toyota Hilux',
@@ -131,7 +141,9 @@ export const useProductFilters = () => {
       if (brandName.includes('patrol')) return 'Nissan Patrol';
       if (brandName.includes('l200')) return 'Mitsubishi L200';
       
-      return brandVehicleMapping[brand.name] || '';
+      const result = brandVehicleMapping[brand.name] || '';
+      console.log('Brand to vehicle mapping result:', result, 'for brand:', brand.name);
+      return result;
     };
   }, [brands]);
 
@@ -171,33 +183,46 @@ export const useProductFilters = () => {
         }
       });
       
-      return Array.from(vehicleSet);
+      const result = Array.from(vehicleSet);
+      console.log('Available vehicles from products:', result);
+      return result;
     };
   }, [dbProducts, getVehicleCompatibility]);
 
   // Memoized filtered products for better performance
   const filteredDbProducts = useMemo(() => {
-    return dbProducts.filter(product => {
+    console.log('Filtering products with:', { selectedVehicle, selectedPartId, searchTerm });
+    
+    const filtered = dbProducts.filter(product => {
       const productVehicle = getVehicleCompatibility(product);
+      console.log('Product:', product.name, 'Vehicle:', productVehicle);
       
       if (selectedVehicle && productVehicle !== selectedVehicle) {
+        console.log('Product filtered out - vehicle mismatch:', productVehicle, '!==', selectedVehicle);
         return false;
       }
       
       if (!productVehicle) {
+        console.log('Product filtered out - no vehicle compatibility:', product.name);
         return false;
       }
       
       if (selectedPartId && product.name !== selectedPartId) {
+        console.log('Product filtered out - part ID mismatch');
         return false;
       }
       
       if (!selectedPartId && searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+        console.log('Product filtered out - search term mismatch');
         return false;
       }
       
+      console.log('Product passed all filters:', product.name);
       return true;
     });
+    
+    console.log('Final filtered products:', filtered.length, 'out of', dbProducts.length);
+    return filtered;
   }, [dbProducts, selectedVehicle, selectedPartId, searchTerm, getVehicleCompatibility]);
 
   const clearFilters = () => {

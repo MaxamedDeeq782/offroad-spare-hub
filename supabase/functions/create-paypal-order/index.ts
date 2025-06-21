@@ -18,37 +18,48 @@ const handleCors = (req: Request) => {
   return null;
 };
 
-// PayPal API base URL
+// PayPal API base URL - automatically detects sandbox vs live
 const getPayPalBaseURL = () => {
   const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
-  return clientId?.startsWith("sb-") ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
+  if (!clientId) {
+    throw new Error("PAYPAL_CLIENT_ID not configured");
+  }
+  // Sandbox client IDs start with 'sb-'
+  return clientId.startsWith("sb-") ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
 };
 
-// Get PayPal access token
+// Get PayPal access token using proper authentication
 const getPayPalAccessToken = async () => {
   const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
   const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
   
   if (!clientId || !clientSecret) {
-    throw new Error("PayPal credentials not configured");
+    throw new Error("PayPal credentials not configured - missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET");
   }
 
-  const auth = btoa(`${clientId}:${clientSecret}`);
+  console.log("Getting PayPal access token...");
+  
+  // Create base64 encoded credentials
+  const credentials = btoa(`${clientId}:${clientSecret}`);
   
   const response = await fetch(`${getPayPalBaseURL()}/v1/oauth2/token`, {
     method: "POST",
     headers: {
-      "Authorization": `Basic ${auth}`,
+      "Authorization": `Basic ${credentials}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Accept": "application/json",
     },
     body: "grant_type=client_credentials",
   });
 
   if (!response.ok) {
-    throw new Error("Failed to get PayPal access token");
+    const errorText = await response.text();
+    console.error("PayPal token request failed:", response.status, errorText);
+    throw new Error(`Failed to get PayPal access token: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
+  console.log("PayPal access token obtained successfully");
   return data.access_token;
 };
 
@@ -65,7 +76,11 @@ serve(async (req) => {
     
     // Validate request body
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-      throw new Error("Invalid cart items");
+      throw new Error("Invalid cart items provided");
+    }
+    
+    if (!userId) {
+      throw new Error("User ID is required");
     }
     
     console.log(`Creating PayPal order for user: ${userId}`);
@@ -76,8 +91,9 @@ serve(async (req) => {
     
     // Calculate total amount
     const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    console.log(`Total amount: $${totalAmount.toFixed(2)}`);
     
-    // Create PayPal order
+    // Create PayPal order payload
     const orderData = {
       intent: "CAPTURE",
       purchase_units: [
@@ -107,35 +123,41 @@ serve(async (req) => {
         cancel_url: `${new URL(req.url).origin}/checkout`,
         brand_name: "Auto Parts Store",
         user_action: "PAY_NOW",
+        landing_page: "NO_PREFERENCE",
+        shipping_preference: "NO_SHIPPING"
       },
     };
 
-    console.log("Creating PayPal order with data:", JSON.stringify(orderData, null, 2));
+    console.log("Creating PayPal order...");
 
     const response = await fetch(`${getPayPalBaseURL()}/v2/checkout/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${accessToken}`,
+        "PayPal-Request-Id": `${Date.now()}-${Math.random()}`,
       },
       body: JSON.stringify(orderData),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error("PayPal API error:", errorData);
-      throw new Error(`PayPal API error: ${response.status}`);
+      console.error("PayPal order creation failed:", response.status, errorData);
+      throw new Error(`PayPal order creation failed: ${response.status} - ${errorData}`);
     }
 
     const paypalOrder = await response.json();
-    console.log("PayPal order created:", paypalOrder.id);
+    console.log("PayPal order created successfully:", paypalOrder.id);
 
     // Get approval URL
     const approvalUrl = paypalOrder.links.find((link) => link.rel === "approve")?.href;
     
     if (!approvalUrl) {
+      console.error("No approval URL found in PayPal response:", paypalOrder);
       throw new Error("No approval URL found in PayPal response");
     }
+
+    console.log("Approval URL:", approvalUrl);
 
     return new Response(JSON.stringify({ 
       orderId: paypalOrder.id,
@@ -152,12 +174,20 @@ serve(async (req) => {
     console.error("=== PAYPAL ORDER CREATION ERROR ===");
     console.error("Error details:", error);
     
-    return new Response(JSON.stringify({ error: error.message }), {
+    let errorMessage = "Failed to create PayPal order";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      details: error instanceof Error ? error.stack : "Unknown error"
+    }), {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
       },
-      status: 400,
+      status: 500,
     });
   }
 });

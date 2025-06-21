@@ -21,9 +21,13 @@ interface FormData {
 }
 
 const AddProductForm: React.FC = () => {
+  console.log('=== ADD PRODUCT FORM RENDERING ===');
+  
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  
+  console.log('Form state initialized:', { isMobile, loading });
   
   const {
     register,
@@ -41,6 +45,8 @@ const AddProductForm: React.FC = () => {
     }
   });
 
+  console.log('React Hook Form initialized');
+
   const {
     uploadedImage,
     imagePreview,
@@ -49,7 +55,11 @@ const AddProductForm: React.FC = () => {
     resetImage
   } = useImageUpload();
 
+  console.log('Image upload hook initialized');
+
   const selectedBrand = watch('selectedBrand');
+  
+  console.log('Current form values:', { selectedBrand });
 
   const onSubmit = async (data: FormData) => {
     console.log('=== 🚀 FORM SUBMISSION STARTED ===');
@@ -121,107 +131,114 @@ const AddProductForm: React.FC = () => {
     }
   };
 
-  return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Add New Product</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <Label htmlFor="product-name">Product Name *</Label>
-            <Input 
-              id="product-name"
-              {...register('productName', { 
-                required: 'Product name is required',
-                minLength: { value: 3, message: 'Product name must be at least 3 characters' }
-              })}
-              placeholder="Enter product name (e.g., Toyota Hilux Brake Pads)"
-              maxLength={255}
-              className="mt-1"
-            />
-            {errors.productName && (
-              <p className="text-sm text-red-500 mt-1">{errors.productName.message}</p>
-            )}
-            <p className="text-sm text-muted-foreground mt-1">
-              Include vehicle model in the name for better organization
-            </p>
-          </div>
+  console.log('About to render form JSX');
 
-          <div>
-            <Label htmlFor="price">Price ($) *</Label>
-            <Input 
-              id="price"
-              type="number" 
-              step="0.01" 
-              min="0.01"
-              {...register('price', { 
-                required: 'Price is required',
-                min: { value: 0.01, message: 'Price must be greater than 0' }
-              })}
-              placeholder="0.00"
-              className="mt-1"
-            />
-            {errors.price && (
-              <p className="text-sm text-red-500 mt-1">{errors.price.message}</p>
-            )}
-          </div>
+  try {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Add New Product</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div>
+              <Label htmlFor="product-name">Product Name *</Label>
+              <Input 
+                id="product-name"
+                {...register('productName', { 
+                  required: 'Product name is required',
+                  minLength: { value: 3, message: 'Product name must be at least 3 characters' }
+                })}
+                placeholder="Enter product name (e.g., Toyota Hilux Brake Pads)"
+                maxLength={255}
+                className="mt-1"
+              />
+              {errors.productName && (
+                <p className="text-sm text-red-500 mt-1">{errors.productName.message}</p>
+              )}
+              <p className="text-sm text-muted-foreground mt-1">
+                Include vehicle model in the name for better organization
+              </p>
+            </div>
 
-          <div>
-            <BrandSelector 
-              selectedBrand={selectedBrand}
-              setSelectedBrand={(value) => {
-                console.log('🏷️ Brand selector callback - setting value:', value);
-                setValue('selectedBrand', value);
-                // Trigger validation for the brand field
-                trigger('selectedBrand');
-              }}
-              isMobile={isMobile}
-              required={true}
-            />
-            <input
-              type="hidden"
-              {...register('selectedBrand', { 
-                required: 'Please select a brand',
-                validate: (value) => {
-                  if (!value || value === '' || value === '0') {
-                    return 'Please select a valid brand';
+            <div>
+              <Label htmlFor="price">Price ($) *</Label>
+              <Input 
+                id="price"
+                type="number" 
+                step="0.01" 
+                min="0.01"
+                {...register('price', { 
+                  required: 'Price is required',
+                  min: { value: 0.01, message: 'Price must be greater than 0' }
+                })}
+                placeholder="0.00"
+                className="mt-1"
+              />
+              {errors.price && (
+                <p className="text-sm text-red-500 mt-1">{errors.price.message}</p>
+              )}
+            </div>
+
+            <div>
+              <BrandSelector 
+                selectedBrand={selectedBrand}
+                setSelectedBrand={(value) => {
+                  console.log('🏷️ Brand selector callback - setting value:', value);
+                  setValue('selectedBrand', value);
+                  // Trigger validation for the brand field
+                  trigger('selectedBrand');
+                }}
+                isMobile={isMobile}
+                required={true}
+              />
+              <input
+                type="hidden"
+                {...register('selectedBrand', { 
+                  required: 'Please select a brand',
+                  validate: (value) => {
+                    if (!value || value === '' || value === '0') {
+                      return 'Please select a valid brand';
+                    }
+                    return true;
                   }
-                  return true;
-                }
-              })}
+                })}
+              />
+              {errors.selectedBrand && (
+                <p className="text-sm text-red-500 mt-1">{errors.selectedBrand.message}</p>
+              )}
+            </div>
+
+            <ImageUploader 
+              handleImageChange={handleImageChange}
+              imagePreview={imagePreview}
             />
-            {errors.selectedBrand && (
-              <p className="text-sm text-red-500 mt-1">{errors.selectedBrand.message}</p>
-            )}
-          </div>
 
-          <ImageUploader 
-            handleImageChange={handleImageChange}
-            imagePreview={imagePreview}
-          />
-
-          <div className="flex justify-end flex-wrap gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => navigate('/admin')}
-              className={isMobile ? "w-full" : ""}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading}
-              className={isMobile ? "w-full" : ""}
-            >
-              {loading ? 'Adding Product...' : 'Add Product'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
-  );
+            <div className="flex justify-end flex-wrap gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate('/admin')}
+                className={isMobile ? "w-full" : ""}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className={isMobile ? "w-full" : ""}
+              >
+                {loading ? 'Adding Product...' : 'Add Product'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    );
+  } catch (error) {
+    console.error('ERROR RENDERING FORM:', error);
+    throw error; // Let the error boundary catch it
+  }
 };
 
 export default AddProductForm;

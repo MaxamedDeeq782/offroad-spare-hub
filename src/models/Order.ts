@@ -168,8 +168,8 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       userId: orderInput.userId,
       total: orderInput.total,
       status: orderInput.status,
-      paypalOrderId: orderData_result.paypal_order_id,
-      paypalPaymentId: orderData_result.paypal_payment_id,
+      paypalOrderId: (orderData_result as any).paypal_order_id,
+      paypalPaymentId: (orderData_result as any).paypal_payment_id,
       createdAt: new Date(orderData_result.created_at),
       updatedAt: new Date(orderData_result.updated_at),
       shipping: {
@@ -242,8 +242,8 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
             status: order.status as OrderStatus,
             createdAt: new Date(order.created_at),
             updatedAt: new Date(order.updated_at),
-            paypalOrderId: order.paypal_order_id,
-            paypalPaymentId: order.paypal_payment_id,
+            paypalOrderId: (order as any).paypal_order_id,
+            paypalPaymentId: (order as any).paypal_payment_id,
             shipping: {
               name: order.shipping_name,
               address: order.shipping_address,
@@ -273,8 +273,8 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
           status: order.status as OrderStatus,
           createdAt: new Date(order.created_at),
           updatedAt: new Date(order.updated_at),
-          paypalOrderId: order.paypal_order_id,
-          paypalPaymentId: order.paypal_payment_id,
+          paypalOrderId: (order as any).paypal_order_id,
+          paypalPaymentId: (order as any).paypal_payment_id,
           shipping: {
             name: order.shipping_name,
             address: order.shipping_address,

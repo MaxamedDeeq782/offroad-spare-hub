@@ -41,35 +41,34 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
         <div className="flex items-center space-x-2 rounded-md border p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
           <input
             type="radio"
-            id="stripe"
+            id="paypal"
             name="paymentMethod"
-            value="stripe"
-            checked={paymentMethod === 'stripe'}
+            value="paypal"
+            checked={paymentMethod === 'paypal'}
             onChange={handleChange}
             className="h-4 w-4 text-primary"
           />
-          <Label htmlFor="stripe" className="flex flex-1 cursor-pointer items-center justify-between dark:text-gray-300">
+          <Label htmlFor="paypal" className="flex flex-1 cursor-pointer items-center justify-between dark:text-gray-300">
             <div className="flex items-center gap-2">
-              Stripe
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#6772E5">
-                <path d="M13.479 9.883c-1.626-.604-2.512-.931-2.512-1.618 0-.646.646-1.033 1.701-1.033 2.12 0 4.32.913 5.87 1.756V4.908c-1.23-.763-3.041-1.255-5.870-1.255-2.076 0-3.809.522-4.962 1.469-1.211.989-1.837 2.394-1.837 4.051 0 3.047 1.899 4.316 4.962 5.376 2.384.799 2.982 1.374 2.982 2.24 0 .869-.76 1.374-2.036 1.374-1.758 0-4.259-.904-6.103-2.119v4.125c1.555.97 3.93 1.618 6.103 1.618 2.15 0 3.96-.523 5.15-1.506 1.282-1.052 1.95-2.618 1.95-4.441 0-3.116-1.899-4.317-5.397-5.376l-.001-.001z"/>
+              PayPal
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#0070ba">
+                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.435-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.26-.93 5.34-4.829 7.174-9.604 7.174h-1.875c-.615 0-1.14.447-1.232 1.055l-.69 4.37-.197 1.252a.641.641 0 0 0 .633.74h4.25c.46 0 .852-.335.926-.787l.04-.207.754-4.773.049-.267c.074-.452.466-.787.926-.787h.584c3.784 0 6.749-1.54 7.61-5.995.36-1.855.174-3.407-.695-4.570z"/>
               </svg>
-              <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                Test Mode
+              <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                Sandbox Mode
               </Badge>
             </div>
           </Label>
         </div>
       </div>
       
-      {paymentMethod === 'stripe' && (
+      {paymentMethod === 'paypal' && (
         <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded text-sm">
-          <p className="font-medium">Test Mode Info:</p>
+          <p className="font-medium">PayPal Sandbox Info:</p>
           <ul className="list-disc ml-5 mt-1 space-y-1">
-            <li>Use test card: 4242 4242 4242 4242</li>
-            <li>Any future date for expiry</li>
-            <li>Any 3 digits for CVC</li>
-            <li>Any name and postal code</li>
+            <li>Use PayPal sandbox test accounts</li>
+            <li>Test payments will not be charged</li>
+            <li>Use test PayPal accounts for testing</li>
           </ul>
         </div>
       )}

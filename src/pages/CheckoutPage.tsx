@@ -15,7 +15,7 @@ const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
-    paymentMethod: 'stripe'
+    paymentMethod: 'paypal'
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,7 +52,7 @@ const CheckoutPage: React.FC = () => {
   };
 
   // Create an order in your database
-  const createOrder = async (stripeSessionId?: string) => {
+  const createOrder = async (paypalOrderId?: string) => {
     try {
       console.log("=== CREATING ORDER FROM CHECKOUT ===");
       console.log("User ID:", user.id);
@@ -66,7 +66,7 @@ const CheckoutPage: React.FC = () => {
         throw new Error('Cart is empty - cannot create order');
       }
       
-      // Create a new order without shipping information (Stripe handles this)
+      // Create a new order without shipping information (PayPal handles this)
       const orderData = {
         userId: user.id,
         items: cart.map(item => ({
@@ -76,7 +76,7 @@ const CheckoutPage: React.FC = () => {
         })),
         total: getCartTotal(),
         status: 'approved' as const,
-        stripeSessionId
+        paypalOrderId
       };
       
       console.log("Order data prepared:", orderData);
@@ -133,7 +133,7 @@ const CheckoutPage: React.FC = () => {
         toast.success("Credit card payment processed successfully");
         await createOrder();
       }
-      // For Stripe, the checkout is handled by the CheckoutButton
+      // For PayPal, the checkout is handled by the CheckoutButton
     } catch (error) {
       console.error('Error during checkout:', error);
       // Error already handled in createOrder function

@@ -18,13 +18,13 @@ const handleCors = (req: Request) => {
   return null;
 };
 
-// PayPal API base URL - automatically detects sandbox vs live
+// PayPal API base URL - detects live vs sandbox
 const getPayPalBaseURL = () => {
   const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
   if (!clientId) {
     throw new Error("PAYPAL_CLIENT_ID not configured");
   }
-  // Sandbox client IDs start with 'sb-'
+  // Live PayPal client IDs do NOT start with 'sb-', sandbox ones do
   return clientId.startsWith("sb-") ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
 };
 
@@ -37,12 +37,14 @@ const getPayPalAccessToken = async () => {
     throw new Error("PayPal credentials not configured - missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET");
   }
 
-  console.log("Getting PayPal access token...");
+  const baseURL = getPayPalBaseURL();
+  console.log(`Getting PayPal access token from: ${baseURL}`);
+  console.log(`Using ${baseURL.includes('sandbox') ? 'SANDBOX' : 'LIVE'} PayPal environment`);
   
-  // Create base64 encoded credentials
+  // Create base64 encoded credentials for Basic auth
   const credentials = btoa(`${clientId}:${clientSecret}`);
   
-  const response = await fetch(`${getPayPalBaseURL()}/v1/oauth2/token`, {
+  const response = await fetch(`${baseURL}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       "Authorization": `Basic ${credentials}`,
@@ -83,7 +85,11 @@ serve(async (req) => {
       throw new Error("User ID is required");
     }
     
+    const baseURL = getPayPalBaseURL();
+    const isLive = !baseURL.includes('sandbox');
+    
     console.log(`Creating PayPal order for user: ${userId}`);
+    console.log(`Environment: ${isLive ? 'LIVE' : 'SANDBOX'}`);
     console.log(`Cart items: ${cartItems.length} items`);
     
     // Get PayPal access token
@@ -130,7 +136,7 @@ serve(async (req) => {
 
     console.log("Creating PayPal order...");
 
-    const response = await fetch(`${getPayPalBaseURL()}/v2/checkout/orders`, {
+    const response = await fetch(`${baseURL}/v2/checkout/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -162,7 +168,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       orderId: paypalOrder.id,
       approvalUrl: approvalUrl,
-      isTestMode: getPayPalBaseURL().includes("sandbox")
+      isTestMode: !isLive
     }), {
       headers: {
         ...corsHeaders,

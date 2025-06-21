@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -19,12 +18,13 @@ const handleCors = (req: Request) => {
   return null;
 };
 
-// PayPal API base URL - automatically detects sandbox vs live
+// PayPal API base URL - detects live vs sandbox
 const getPayPalBaseURL = () => {
   const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
   if (!clientId) {
     throw new Error("PAYPAL_CLIENT_ID not configured");
   }
+  // Live PayPal client IDs do NOT start with 'sb-', sandbox ones do
   return clientId.startsWith("sb-") ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
 };
 
@@ -37,11 +37,13 @@ const getPayPalAccessToken = async () => {
     throw new Error("PayPal credentials not configured - missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET");
   }
 
-  console.log("Getting PayPal access token for capture...");
+  const baseURL = getPayPalBaseURL();
+  console.log(`Getting PayPal access token for capture from: ${baseURL}`);
+  console.log(`Using ${baseURL.includes('sandbox') ? 'SANDBOX' : 'LIVE'} PayPal environment`);
   
   const credentials = btoa(`${clientId}:${clientSecret}`);
   
-  const response = await fetch(`${getPayPalBaseURL()}/v1/oauth2/token`, {
+  const response = await fetch(`${baseURL}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       "Authorization": `Basic ${credentials}`,
@@ -89,14 +91,18 @@ serve(async (req) => {
       throw new Error("PayPal Order ID is required");
     }
     
+    const baseURL = getPayPalBaseURL();
+    const isLive = !baseURL.includes('sandbox');
+    
     console.log(`Capturing PayPal order: ${orderId} for user: ${userId}`);
+    console.log(`Environment: ${isLive ? 'LIVE' : 'SANDBOX'}`);
     
     // Get PayPal access token
     const accessToken = await getPayPalAccessToken();
     
     // Capture the PayPal order
     console.log("Sending capture request to PayPal...");
-    const response = await fetch(`${getPayPalBaseURL()}/v2/checkout/orders/${orderId}/capture`, {
+    const response = await fetch(`${baseURL}/v2/checkout/orders/${orderId}/capture`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

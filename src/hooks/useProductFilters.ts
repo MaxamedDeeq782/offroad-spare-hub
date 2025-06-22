@@ -9,6 +9,7 @@ interface DbProduct {
   price: number;
   image_url: string;
   brand_id: number | null;
+  vehicleType?: string; // Add cached vehicle type
 }
 
 interface Brand {
@@ -31,8 +32,6 @@ export const useProductFilters = () => {
     const vehicleParam = queryParams.get('vehicle');
     const partIdParam = queryParams.get('partId');
     
-    console.log('URL params:', { vehicleParam, partIdParam });
-    
     if (vehicleParam) {
       setSelectedVehicle(vehicleParam);
     }
@@ -42,6 +41,65 @@ export const useProductFilters = () => {
       setSearchTerm(partIdParam);
     }
   }, [location.search]);
+
+  // Memoized vehicle detection function
+  const getVehicleFromProductName = useMemo(() => {
+    return (productName: string): string => {
+      const vehicleKeywords = {
+        'Toyota Hilux': ['hilux', 'toyota hilux'],
+        'Toyota Land Cruiser': ['land cruiser', 'toyota land cruiser', 'fj80', 'fzj80'],
+        'Nissan Patrol': ['patrol', 'nissan patrol', 'y62', 'armada'],
+        'Mitsubishi L200': ['l200', 'mitsubishi l200']
+      };
+
+      const lowercaseName = productName.toLowerCase();
+      
+      for (const [vehicle, keywords] of Object.entries(vehicleKeywords)) {
+        if (keywords.some(keyword => lowercaseName.includes(keyword.toLowerCase()))) {
+          return vehicle;
+        }
+      }
+      
+      return '';
+    };
+  }, []);
+
+  // Memoized brand to vehicle mapping
+  const getVehicleFromBrand = useMemo(() => {
+    return (brandId: number | null): string => {
+      if (!brandId) return '';
+      
+      const brand = brands.find(b => b.id === brandId);
+      if (!brand) return '';
+      
+      const brandVehicleMapping: Record<string, string> = {
+        'Toyota': 'Toyota Hilux',
+        'Nissan': 'Nissan Patrol',
+        'Mitsubishi': 'Mitsubishi L200'
+      };
+      
+      const brandName = brand.name.toLowerCase();
+      if (brandName.includes('hilux')) return 'Toyota Hilux';
+      if (brandName.includes('land cruiser')) return 'Toyota Land Cruiser';
+      if (brandName.includes('patrol')) return 'Nissan Patrol';
+      if (brandName.includes('l200')) return 'Mitsubishi L200';
+      
+      return brandVehicleMapping[brand.name] || '';
+    };
+  }, [brands]);
+
+  // Pre-process products with cached vehicle types
+  const processedProducts = useMemo(() => {
+    return dbProducts.map(product => {
+      const vehicleFromName = getVehicleFromProductName(product.name);
+      const vehicleFromBrand = vehicleFromName || getVehicleFromBrand(product.brand_id);
+      
+      return {
+        ...product,
+        vehicleType: vehicleFromBrand
+      };
+    });
+  }, [dbProducts, getVehicleFromProductName, getVehicleFromBrand]);
 
   // Fetch products and brands from Supabase with optimization
   useEffect(() => {
@@ -63,14 +121,12 @@ export const useProductFilters = () => {
         if (productsResponse.error) {
           console.error('Error fetching products:', productsResponse.error);
         } else {
-          console.log('Fetched products:', productsResponse.data);
           setDbProducts(productsResponse.data || []);
         }
 
         if (brandsResponse.error) {
           console.error('Error fetching brands:', brandsResponse.error);
         } else {
-          console.log('Fetched brands:', brandsResponse.data);
           setBrands(brandsResponse.data || []);
         }
       } catch (error) {
@@ -85,77 +141,60 @@ export const useProductFilters = () => {
 
   // Set default vehicle selection when products are loaded
   useEffect(() => {
-    if (!loading && dbProducts.length > 0 && !selectedVehicle) {
-      const availableBrands = getAvailableBrands();
-      console.log('Available brands/vehicles:', availableBrands);
-      if (availableBrands.length > 0) {
-        setSelectedVehicle(availableBrands[0]);
+    if (!loading && processedProducts.length > 0 && !selectedVehicle) {
+      const availableVehicles = Array.from(new Set(
+        processedProducts
+          .filter(product => product.vehicleType)
+          .map(product => product.vehicleType!)
+      ));
+      
+      if (availableVehicles.length > 0) {
+        setSelectedVehicle(availableVehicles[0]);
       }
     }
-  }, [loading, dbProducts]);
+  }, [loading, processedProducts, selectedVehicle]);
 
-  // Memoized helper function to determine vehicle from product name
-  const getVehicleFromProductName = useMemo(() => {
-    return (productName: string): string => {
-      const vehicleKeywords = {
-        'Toyota Hilux': ['hilux', 'toyota hilux'],
-        'Toyota Land Cruiser': ['land cruiser', 'toyota land cruiser', 'fj80', 'fzj80'],
-        'Nissan Patrol': ['patrol', 'nissan patrol', 'y62', 'armada'],
-        'Mitsubishi L200': ['l200', 'mitsubishi l200']
-      };
-
-      const lowercaseName = productName.toLowerCase();
-      console.log('Checking product name:', productName, 'lowercase:', lowercaseName);
+  // Memoized available brands calculation
+  const getAvailableBrands = useMemo(() => {
+    return (): string[] => {
+      const vehicleSet = new Set<string>();
       
-      for (const [vehicle, keywords] of Object.entries(vehicleKeywords)) {
-        if (keywords.some(keyword => lowercaseName.includes(keyword.toLowerCase()))) {
-          console.log('Found vehicle match:', vehicle, 'for product:', productName);
-          return vehicle;
+      processedProducts.forEach(product => {
+        if (product.vehicleType) {
+          vehicleSet.add(product.vehicleType);
         }
+      });
+      
+      return Array.from(vehicleSet);
+    };
+  }, [processedProducts]);
+
+  // Optimized filtered products
+  const filteredDbProducts = useMemo(() => {
+    return processedProducts.filter(product => {
+      // Filter by vehicle type
+      if (selectedVehicle && product.vehicleType !== selectedVehicle) {
+        return false;
       }
       
-      console.log('No vehicle match found for product:', productName);
-      return '';
-    };
-  }, []);
-
-  // Memoized helper function to determine vehicle from brand
-  const getVehicleFromBrand = useMemo(() => {
-    return (brandId: number | null): string => {
-      if (!brandId) return '';
+      // Filter by vehicle type exists
+      if (!product.vehicleType) {
+        return false;
+      }
       
-      const brand = brands.find(b => b.id === brandId);
-      if (!brand) return '';
+      // Filter by specific part ID
+      if (selectedPartId && product.name !== selectedPartId) {
+        return false;
+      }
       
-      console.log('Checking brand:', brand.name, 'for brand ID:', brandId);
+      // Filter by search term
+      if (!selectedPartId && searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
       
-      const brandVehicleMapping: Record<string, string> = {
-        'Toyota': 'Toyota Hilux',
-        'Nissan': 'Nissan Patrol',
-        'Mitsubishi': 'Mitsubishi L200'
-      };
-      
-      const brandName = brand.name.toLowerCase();
-      if (brandName.includes('hilux')) return 'Toyota Hilux';
-      if (brandName.includes('land cruiser')) return 'Toyota Land Cruiser';
-      if (brandName.includes('patrol')) return 'Nissan Patrol';
-      if (brandName.includes('l200')) return 'Mitsubishi L200';
-      
-      const result = brandVehicleMapping[brand.name] || '';
-      console.log('Brand to vehicle mapping result:', result, 'for brand:', brand.name);
-      return result;
-    };
-  }, [brands]);
-
-  // Memoized enhanced function to get vehicle compatibility
-  const getVehicleCompatibility = useMemo(() => {
-    return (product: DbProduct): string => {
-      const vehicleFromName = getVehicleFromProductName(product.name);
-      if (vehicleFromName) return vehicleFromName;
-      
-      return getVehicleFromBrand(product.brand_id);
-    };
-  }, [getVehicleFromProductName, getVehicleFromBrand]);
+      return true;
+    });
+  }, [processedProducts, selectedVehicle, selectedPartId, searchTerm]);
 
   // Memoized function to map specific part IDs to their corresponding vehicles
   const getSpecificPartForVehicle = useMemo(() => {
@@ -170,60 +209,6 @@ export const useProductFilters = () => {
       return partMap[vehicle] || '';
     };
   }, []);
-
-  // Memoized available brands calculation
-  const getAvailableBrands = useMemo(() => {
-    return (): string[] => {
-      const vehicleSet = new Set<string>();
-      
-      dbProducts.forEach(product => {
-        const vehicleType = getVehicleCompatibility(product);
-        if (vehicleType) {
-          vehicleSet.add(vehicleType);
-        }
-      });
-      
-      const result = Array.from(vehicleSet);
-      console.log('Available vehicles from products:', result);
-      return result;
-    };
-  }, [dbProducts, getVehicleCompatibility]);
-
-  // Memoized filtered products for better performance
-  const filteredDbProducts = useMemo(() => {
-    console.log('Filtering products with:', { selectedVehicle, selectedPartId, searchTerm });
-    
-    const filtered = dbProducts.filter(product => {
-      const productVehicle = getVehicleCompatibility(product);
-      console.log('Product:', product.name, 'Vehicle:', productVehicle);
-      
-      if (selectedVehicle && productVehicle !== selectedVehicle) {
-        console.log('Product filtered out - vehicle mismatch:', productVehicle, '!==', selectedVehicle);
-        return false;
-      }
-      
-      if (!productVehicle) {
-        console.log('Product filtered out - no vehicle compatibility:', product.name);
-        return false;
-      }
-      
-      if (selectedPartId && product.name !== selectedPartId) {
-        console.log('Product filtered out - part ID mismatch');
-        return false;
-      }
-      
-      if (!selectedPartId && searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-        console.log('Product filtered out - search term mismatch');
-        return false;
-      }
-      
-      console.log('Product passed all filters:', product.name);
-      return true;
-    });
-    
-    console.log('Final filtered products:', filtered.length, 'out of', dbProducts.length);
-    return filtered;
-  }, [dbProducts, selectedVehicle, selectedPartId, searchTerm, getVehicleCompatibility]);
 
   const clearFilters = () => {
     const availableBrands = getAvailableBrands();
@@ -250,6 +235,12 @@ export const useProductFilters = () => {
     if (selectedPartId && value !== selectedPartId) {
       setSelectedPartId('');
     }
+  };
+
+  // Simple vehicle compatibility function for compatibility
+  const getVehicleCompatibility = (product: DbProduct): string => {
+    const processedProduct = processedProducts.find(p => p.id === product.id);
+    return processedProduct?.vehicleType || '';
   };
 
   return {

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -15,11 +14,7 @@ const OrderConfirmationPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { cart, clearCart } = useCart();
-  
-  // PayPal parameters
-  const paypalOrderId = searchParams.get('token');
-  const payerId = searchParams.get('PayerID');
-  
+  const sessionId = searchParams.get('session_id');
   const [loading, setLoading] = useState(true);
   const [orderCreated, setOrderCreated] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
@@ -30,8 +25,7 @@ const OrderConfirmationPage: React.FC = () => {
   useEffect(() => {
     const handleOrderConfirmation = async () => {
       console.log("Order confirmation page loaded");
-      console.log("PayPal Order ID:", paypalOrderId);
-      console.log("Payer ID:", payerId);
+      console.log("Session ID:", sessionId);
       console.log("Existing Order ID:", existingOrderId);
       console.log("User:", user);
       console.log("Cart:", cart);
@@ -52,63 +46,101 @@ const OrderConfirmationPage: React.FC = () => {
         return;
       }
       
-      // If no PayPal order ID, redirect to home
-      if (!paypalOrderId) {
-        console.error("No PayPal order ID found");
+      // If no session ID, redirect to home
+      if (!sessionId) {
+        console.error("No session ID found");
         toast.error("No order information found");
         navigate('/');
         return;
       }
 
       try {
-        // Capture the PayPal payment
-        console.log("Capturing PayPal payment...");
-        const { data: captureData, error: captureError } = await supabase.functions.invoke("capture-paypal-order", {
-          body: { 
-            orderId: paypalOrderId,
-            userId: user?.id || 'guest',
-            cartItems: cart.map(item => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.price,
-            }))
-          }
+        // Verify the payment with Stripe
+        console.log("Verifying payment with Stripe...");
+        const { data: verificationData, error: verificationError } = await supabase.functions.invoke("verify-stripe-session", {
+          body: { sessionId }
         });
 
-        if (captureError) {
-          console.error("Error capturing PayPal payment:", captureError);
-          toast.error("Payment capture failed");
+        if (verificationError) {
+          console.error("Error verifying payment:", verificationError);
+          toast.error("Payment verification failed");
           navigate('/');
           return;
         }
 
-        if (!captureData.success) {
-          console.error("PayPal payment capture failed:", captureData.error);
+        if (!verificationData.success) {
+          console.error("Payment verification failed:", verificationData.error);
           toast.error("Payment was not successful");
           navigate('/');
           return;
         }
 
-        console.log("PayPal payment captured successfully:", captureData);
+        console.log("Payment verified successfully:", verificationData);
 
-        setOrderCreated(true);
-        setOrderDetails({
-          id: captureData.orderId,
-          total: captureData.total,
-          paypalOrderId: captureData.paypalOrderId
-        });
+        // Extract order information from verified session
+        const { line_items, amount_total, shipping, customer_email } = verificationData;
         
-        // Clear cart after successful PayPal payment
+        // Use cart items if available, otherwise fall back to line items
+        let orderItems;
+        let orderTotal;
+        
         if (user && cart.length > 0) {
-          console.log("Clearing cart after successful PayPal payment...");
-          await clearCart();
-          console.log("Cart cleared successfully");
+          // Use cart items if user is logged in and cart exists
+          orderItems = cart.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+          }));
+          orderTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        } else {
+          // Fall back to line items from Stripe
+          orderItems = line_items.map((item: any) => ({
+            productId: typeof item.price?.product === 'string' ? item.price.product : item.price?.product?.id || 'unknown',
+            quantity: item.quantity,
+            price: (item.amount_total || 0) / 100, // Convert from cents to dollars
+          }));
+          orderTotal = (amount_total || 0) / 100; // Convert from cents to dollars
         }
+
+        // Create order in database with verified payment status
+        const orderData = {
+          userId: user?.id || 'guest',
+          items: orderItems,
+          total: orderTotal,
+          status: 'approved' as const, // Set as approved since payment was verified
+          stripeSessionId: sessionId,
+          shipping: shipping ? {
+            name: shipping.name,
+            email: shipping.email || customer_email,
+            address: shipping.address?.line1,
+            city: shipping.address?.city,
+            state: shipping.address?.state,
+            zipCode: shipping.address?.postal_code,
+          } : undefined
+        };
+
+        console.log("Creating order with verified data:", orderData);
+        const createdOrder = await addOrder(orderData);
         
-        toast.success("Your order has been confirmed and payment processed!");
-        
+        if (createdOrder) {
+          console.log("Order created successfully:", createdOrder.id);
+          setOrderCreated(true);
+          setOrderDetails(createdOrder);
+          
+          // Clear cart after successful order creation for Stripe payments
+          if (user && cart.length > 0) {
+            console.log("Clearing cart after successful Stripe payment...");
+            await clearCart();
+            console.log("Cart cleared successfully");
+          }
+          
+          toast.success("Your order has been confirmed and payment verified!");
+        } else {
+          console.error("Failed to create order");
+          toast.error("Order creation failed, but payment was successful. Please contact support.");
+        }
       } catch (error) {
-        console.error("Error in PayPal payment capture and order creation:", error);
+        console.error("Error in payment verification and order creation:", error);
         toast.error("An error occurred while processing your order. Please contact support.");
       } finally {
         setLoading(false);
@@ -121,7 +153,7 @@ const OrderConfirmationPage: React.FC = () => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [paypalOrderId, payerId, existingOrderId, user, cart, navigate, clearCart]);
+  }, [sessionId, existingOrderId, user, cart, navigate, clearCart]);
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -150,11 +182,6 @@ const OrderConfirmationPage: React.FC = () => {
                 <p className="text-lg mb-2">
                   Total: <span className="font-semibold">${orderDetails.total.toFixed(2)}</span>
                 </p>
-                {orderDetails.paypalOrderId && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    PayPal Order ID: <span className="font-mono">{orderDetails.paypalOrderId}</span>
-                  </p>
-                )}
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Status: <span className="font-semibold text-green-600">Approved</span>
                 </p>

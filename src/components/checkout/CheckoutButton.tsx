@@ -12,7 +12,7 @@ interface CheckoutButtonProps {
   paymentMethod: string;
   userId?: string;
   formData: any;
-  createOrder: (paypalOrderId?: string) => Promise<Order | null>;
+  createOrder: (stripeSessionId?: string) => Promise<Order | null>;
 }
 
 const CheckoutButton: React.FC<CheckoutButtonProps> = ({ 
@@ -25,9 +25,9 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
   const { cart } = useCart();
   const navigate = useNavigate();
 
-  const handlePayPalCheckout = async () => {
+  const handleStripeCheckout = async () => {
     try {
-      console.log("=== PAYPAL CHECKOUT STARTED ===");
+      console.log("=== STRIPE CHECKOUT STARTED ===");
       
       if (!userId) {
         toast.error("You must be logged in to checkout");
@@ -39,9 +39,9 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
         return;
       }
 
-      toast.info("Preparing your PayPal checkout...");
+      toast.info("Preparing your Stripe checkout...");
       
-      // Transform cart items for PayPal checkout
+      // Transform cart items for the stripe checkout
       const cartItems = cart.map(item => ({
         productId: item.productId,
         name: item.name,
@@ -50,10 +50,10 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
         imageUrl: item.imageUrl,
       }));
       
-      console.log("Cart items for PayPal:", cartItems);
+      console.log("Cart items for Stripe:", cartItems);
       
-      // Call the Supabase Edge Function to create a PayPal order
-      const { data, error } = await supabase.functions.invoke("create-paypal-order", {
+      // Call the Supabase Edge Function to create a Stripe checkout session
+      const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
         body: { 
           cartItems, 
           userId
@@ -61,30 +61,30 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
       });
       
       if (error) {
-        console.error("Error from PayPal Edge Function:", error);
-        throw new Error(error.message || "Failed to create PayPal order");
+        console.error("Error from Stripe Edge Function:", error);
+        throw new Error(error.message || "Failed to create checkout session");
       }
       
-      console.log("PayPal order response:", data);
+      console.log("Stripe checkout response:", data);
       
-      if (data?.approvalUrl) {
-        // If it's a test/sandbox mode, show a message
+      if (data?.url) {
+        // If it's a test URL, show a message
         if (data.isTestMode) {
-          toast.info("Using PayPal Sandbox mode for testing");
+          toast.info("Using Stripe test mode - use test card 4242 4242 4242 4242");
         }
         
-        console.log("Redirecting to PayPal checkout:", data.approvalUrl);
-        // Redirect to PayPal checkout
-        window.location.href = data.approvalUrl;
+        console.log("Redirecting to Stripe checkout:", data.url);
+        // Redirect directly to Stripe checkout
+        window.location.href = data.url;
       } else {
-        console.error("No approval URL received from PayPal");
-        toast.error("No checkout URL received from PayPal");
+        console.error("No checkout URL received from Stripe");
+        toast.error("No checkout URL received from Stripe");
       }
     } catch (error) {
-      console.error("=== PAYPAL CHECKOUT ERROR ===");
+      console.error("=== STRIPE CHECKOUT ERROR ===");
       console.error("Error details:", error);
       
-      let errorMessage = "Failed to create PayPal checkout session. Please try again later.";
+      let errorMessage = "Failed to create checkout session. Please try again later.";
       if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -94,8 +94,8 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
   };
 
   const handleClick = async () => {
-    if (paymentMethod === 'paypal') {
-      await handlePayPalCheckout();
+    if (paymentMethod === 'stripe') {
+      await handleStripeCheckout();
     }
     // For credit_card, the form submission will handle it
   };
@@ -104,14 +104,14 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
     ? 'Processing...' 
     : paymentMethod === 'credit_card' 
       ? 'Complete Order' 
-      : 'Pay with PayPal';
+      : 'Pay with Stripe';
 
   return (
     <Button
       type={paymentMethod === 'credit_card' ? 'submit' : 'button'}
       disabled={isSubmitting}
       className="w-full py-3"
-      onClick={paymentMethod === 'paypal' ? handleClick : undefined}
+      onClick={paymentMethod === 'stripe' ? handleClick : undefined}
     >
       {buttonText}
     </Button>

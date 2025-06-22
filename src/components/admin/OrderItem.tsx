@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Order, OrderStatus, updateOrderStatus } from '../../models/Order';
 import { Card, CardContent } from '../ui/card';
@@ -87,8 +86,8 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
     order.shipping.email
   );
 
-  // Check if this order was processed via PayPal (has PayPal data)
-  const isPayPalOrder = !!(order.paypalOrderId || order.paypalPaymentId);
+  // Check if this order was processed via webhook (has stripe data)
+  const isWebhookOrder = !!(order.stripeSessionId || order.stripeCustomerId || order.stripePaymentIntentId);
   
   return (
     <Card className="mb-4">
@@ -100,9 +99,9 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
               <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(order.status)}`}>
                 {order.status.toUpperCase()}
               </span>
-              {isPayPalOrder && (
-                <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                  PAYPAL
+              {isWebhookOrder && (
+                <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                  STRIPE
                 </span>
               )}
             </div>
@@ -114,10 +113,10 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
             </p>
             <p className="font-medium mt-1">Total: ${order.total.toFixed(2)}</p>
             
-            {/* Show PayPal payment info if available */}
-            {order.paypalOrderId && (
+            {/* Show Stripe payment info if available */}
+            {order.stripeSessionId && (
               <p className="text-sm text-muted-foreground">
-                PayPal Order: {order.paypalOrderId.substring(0, 20)}...
+                Stripe Session: {order.stripeSessionId.substring(0, 20)}...
               </p>
             )}
           </div>
@@ -184,7 +183,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Cancel Approved Order</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to cancel this approved order? This is typically done when a refund has been processed through PayPal. This action cannot be undone.
+                            Are you sure you want to cancel this approved order? This is typically done when a refund has been processed through Stripe. This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -265,7 +264,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
                 </Table>
               </div>
               
-              {/* Shipping Information */}
+              {/* Shipping Information - now from webhook data */}
               {hasShippingInfo && (
                 <div>
                   <h4 className="text-sm font-medium mb-2">Shipping Information:</h4>
@@ -289,16 +288,19 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onStatusUpdate }) => {
                 </div>
               )}
 
-              {/* PayPal Payment Details */}
-              {isPayPalOrder && (
+              {/* Stripe Payment Details */}
+              {isWebhookOrder && (
                 <div className="md:col-span-2">
                   <h4 className="text-sm font-medium mb-2">Payment Details:</h4>
                   <div className="bg-muted p-3 rounded-md space-y-1">
-                    {order.paypalOrderId && (
-                      <p className="text-sm">PayPal Order ID: {order.paypalOrderId}</p>
+                    {order.stripeSessionId && (
+                      <p className="text-sm">Session ID: {order.stripeSessionId}</p>
                     )}
-                    {order.paypalPaymentId && (
-                      <p className="text-sm">PayPal Payment ID: {order.paypalPaymentId}</p>
+                    {order.stripeCustomerId && (
+                      <p className="text-sm">Customer ID: {order.stripeCustomerId}</p>
+                    )}
+                    {order.stripePaymentIntentId && (
+                      <p className="text-sm">Payment Intent: {order.stripePaymentIntentId}</p>
                     )}
                   </div>
                 </div>

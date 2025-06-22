@@ -27,8 +27,9 @@ export interface Order {
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
-  paypalOrderId?: string;
-  paypalPaymentId?: string;
+  stripeSessionId?: string;
+  stripeCustomerId?: string;
+  stripePaymentIntentId?: string;
   items?: OrderItem[];
   shipping?: ShippingInfo;
   guestName?: string;
@@ -44,8 +45,9 @@ export interface OrderInput {
   }[];
   total: number;
   status: OrderStatus;
-  paypalOrderId?: string;
-  paypalPaymentId?: string;
+  stripeSessionId?: string;
+  stripeCustomerId?: string;
+  stripePaymentIntentId?: string;
   shipping?: ShippingInfo;
 }
 
@@ -92,8 +94,9 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       user_id: orderInput.userId,
       total: orderInput.total,
       status: orderInput.status,
-      paypal_order_id: orderInput.paypalOrderId,
-      paypal_payment_id: orderInput.paypalPaymentId,
+      stripe_session_id: orderInput.stripeSessionId,
+      stripe_customer_id: orderInput.stripeCustomerId,
+      stripe_payment_intent_id: orderInput.stripePaymentIntentId,
       shipping_name: orderInput.shipping?.name,
       shipping_address: orderInput.shipping?.address,
       shipping_city: orderInput.shipping?.city,
@@ -168,8 +171,9 @@ export const addOrder = async (orderInput: OrderInput): Promise<Order | null> =>
       userId: orderInput.userId,
       total: orderInput.total,
       status: orderInput.status,
-      paypalOrderId: (orderData_result as any).paypal_order_id,
-      paypalPaymentId: (orderData_result as any).paypal_payment_id,
+      stripeSessionId: orderData_result.stripe_session_id,
+      stripeCustomerId: orderData_result.stripe_customer_id,
+      stripePaymentIntentId: orderData_result.stripe_payment_intent_id,
       createdAt: new Date(orderData_result.created_at),
       updatedAt: new Date(orderData_result.updated_at),
       shipping: {
@@ -242,8 +246,9 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
             status: order.status as OrderStatus,
             createdAt: new Date(order.created_at),
             updatedAt: new Date(order.updated_at),
-            paypalOrderId: (order as any).paypal_order_id,
-            paypalPaymentId: (order as any).paypal_payment_id,
+            stripeSessionId: order.stripe_session_id,
+            stripeCustomerId: order.stripe_customer_id,
+            stripePaymentIntentId: order.stripe_payment_intent_id,
             shipping: {
               name: order.shipping_name,
               address: order.shipping_address,
@@ -273,8 +278,9 @@ export const fetchOrders = async (userId?: string): Promise<Order[]> => {
           status: order.status as OrderStatus,
           createdAt: new Date(order.created_at),
           updatedAt: new Date(order.updated_at),
-          paypalOrderId: (order as any).paypal_order_id,
-          paypalPaymentId: (order as any).paypal_payment_id,
+          stripeSessionId: order.stripe_session_id,
+          stripeCustomerId: order.stripe_customer_id,
+          stripePaymentIntentId: order.stripe_payment_intent_id,
           shipping: {
             name: order.shipping_name,
             address: order.shipping_address,

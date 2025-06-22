@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Order, fetchOrders } from '../../models/Order';
 import OrderItem from './OrderItem';
-import { Loader2, CreditCard } from 'lucide-react';
+import { Loader2, Webhook } from 'lucide-react';
 
 const AdminOrders: React.FC = () => {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [filter, setFilter] = useState<'all' | 'paypal' | 'manual'>('all');
+  const [filter, setFilter] = useState<'all' | 'webhook' | 'manual'>('all');
 
   useEffect(() => {
     loadOrders();
@@ -37,17 +37,17 @@ const AdminOrders: React.FC = () => {
 
   // Filter orders based on source
   const filteredOrders = allOrders.filter(order => {
-    if (filter === 'paypal') {
-      return !!(order.paypalOrderId || order.paypalPaymentId);
+    if (filter === 'webhook') {
+      return !!(order.stripeSessionId || order.stripeCustomerId);
     }
     if (filter === 'manual') {
-      return !(order.paypalOrderId || order.paypalPaymentId);
+      return !(order.stripeSessionId || order.stripeCustomerId);
     }
     return true; // 'all'
   });
 
-  const paypalOrdersCount = allOrders.filter(order => 
-    !!(order.paypalOrderId || order.paypalPaymentId)
+  const webhookOrdersCount = allOrders.filter(order => 
+    !!(order.stripeSessionId || order.stripeCustomerId)
   ).length;
 
   return (
@@ -68,15 +68,15 @@ const AdminOrders: React.FC = () => {
             All Orders ({allOrders.length})
           </button>
           <button
-            onClick={() => setFilter('paypal')}
+            onClick={() => setFilter('webhook')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
-              filter === 'paypal' 
+              filter === 'webhook' 
                 ? 'bg-primary text-primary-foreground' 
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >
-            <CreditCard className="h-4 w-4" />
-            PayPal Orders ({paypalOrdersCount})
+            <Webhook className="h-4 w-4" />
+            Stripe Orders ({webhookOrdersCount})
           </button>
           <button
             onClick={() => setFilter('manual')}
@@ -86,7 +86,7 @@ const AdminOrders: React.FC = () => {
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >
-            Manual Orders ({allOrders.length - paypalOrdersCount})
+            Manual Orders ({allOrders.length - webhookOrdersCount})
           </button>
         </div>
       </div>
@@ -99,13 +99,13 @@ const AdminOrders: React.FC = () => {
       ) : filteredOrders.length === 0 ? (
         <div className="bg-white p-8 rounded-lg shadow text-center dark:bg-gray-800">
           <p className="text-xl mb-6">
-            {filter === 'paypal' ? 'No PayPal orders found' : 
+            {filter === 'webhook' ? 'No Stripe webhook orders found' : 
              filter === 'manual' ? 'No manual orders found' : 
              'No orders found'}
           </p>
-          {filter === 'paypal' && (
+          {filter === 'webhook' && (
             <p className="text-sm text-muted-foreground">
-              Orders will appear here automatically when customers complete payments through PayPal.
+              Orders will appear here automatically when customers complete payments through Stripe.
             </p>
           )}
         </div>

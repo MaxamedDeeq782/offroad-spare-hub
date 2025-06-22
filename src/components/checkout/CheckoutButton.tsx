@@ -22,7 +22,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
   formData,
   createOrder 
 }) => {
-  const { cart } = useCart();
+  const { cart, getCartTotal } = useCart();
   const navigate = useNavigate();
 
   const handleStripeCheckout = async () => {
@@ -36,6 +36,14 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
 
       if (cart.length === 0) {
         toast.error("Your cart is empty");
+        return;
+      }
+
+      // Check minimum amount requirement
+      const cartTotal = getCartTotal();
+      const minimumAmount = 0.50;
+      if (cartTotal < minimumAmount) {
+        toast.error(`Minimum order amount is $${minimumAmount.toFixed(2)}. Your current total is $${cartTotal.toFixed(2)}.`);
         return;
       }
 

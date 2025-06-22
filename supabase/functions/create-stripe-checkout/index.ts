@@ -44,6 +44,16 @@ serve(async (req) => {
       throw new Error("Invalid cart items");
     }
     
+    // Calculate total amount
+    const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    console.log(`Cart total: $${totalAmount.toFixed(2)}`);
+    
+    // Check minimum amount requirement (Stripe requires at least $0.50 USD)
+    const minimumAmount = 0.50;
+    if (totalAmount < minimumAmount) {
+      throw new Error(`Minimum order amount is $${minimumAmount.toFixed(2)}. Current total: $${totalAmount.toFixed(2)}`);
+    }
+    
     // Initialize Stripe
     const stripe = new Stripe(stripeSecretKey);
     

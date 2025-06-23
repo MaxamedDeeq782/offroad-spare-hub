@@ -50,6 +50,7 @@ function App() {
                   <Route path="/orders" element={<OrdersPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="/vehicle/:vehicleId" element={<VehiclePage />} />
+                  <Route path="/generate-hero" element={<GenerateHeroPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>

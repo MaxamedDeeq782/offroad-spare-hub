@@ -68,15 +68,6 @@ const HomePage: React.FC = () => {
             <p className="text-base md:text-xl mb-8 md:mb-10 text-gray-400 animate-fade-in delay-300">
               Soo hel qaybo dheeri ah oo sax ah Toyota Hilux, Land Cruiser, Nissan Patrol, iyo Mitsubishi L200
             </p>
-            
-            <div className="flex justify-center animate-fade-in delay-500">
-              <Link 
-                to="/products" 
-                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-2xl transform hover:scale-105 transition-all duration-300 hover:shadow-orange-500/25"
-              >
-                Shop Now
-              </Link>
-            </div>
           </div>
         </div>
         

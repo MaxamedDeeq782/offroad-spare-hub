@@ -86,8 +86,11 @@ const HomePage: React.FC = () => {
             <h2 className="text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
               Shop by Vehicle
             </h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-2">
               Find the perfect parts for your off-road machine
+            </p>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              U hel qaybaha ugu fiican mashiinkaaga wadada ka baxsan
             </p>
           </div>
           

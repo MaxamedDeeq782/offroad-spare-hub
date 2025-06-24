@@ -21,16 +21,16 @@ export const useProductFilters = () => {
     return processProductsWithVehicleTypes(dbProducts, brands);
   }, [dbProducts, brands]);
 
-  // Set default vehicle selection when products are loaded
+  // Set default vehicle selection when products are loaded (only if no search term)
   useEffect(() => {
-    if (!loading && processedProducts.length > 0 && !selectedVehicle) {
+    if (!loading && processedProducts.length > 0 && !selectedVehicle && !searchTerm) {
       const availableVehicles = getAvailableVehicles(processedProducts);
       
       if (availableVehicles.length > 0) {
         setSelectedVehicle(availableVehicles[0]);
       }
     }
-  }, [loading, processedProducts, selectedVehicle, setSelectedVehicle]);
+  }, [loading, processedProducts, selectedVehicle, searchTerm, setSelectedVehicle]);
 
   // Optimized filtered products
   const filteredDbProducts = useMemo(() => {

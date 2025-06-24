@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Truck, Star, Shield, Clock, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Image from '../components/Image';
+import SearchBar from '../components/SearchBar';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -68,6 +70,17 @@ const HomePage: React.FC = () => {
             <p className="text-base md:text-xl mb-8 md:mb-10 text-gray-400 animate-fade-in delay-300">
               Soo hel qaybo dheeri ah oo sax ah Toyota Hilux, Land Cruiser, Nissan Patrol, iyo Mitsubishi L200
             </p>
+            
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto animate-fade-in delay-400">
+              <SearchBar 
+                placeholder="Search for parts, vehicles, or brands..." 
+                className="mb-6"
+              />
+              <p className="text-sm text-gray-400">
+                Try searching: "Patrol", "Hilux", "brake pads", "radiator"
+              </p>
+            </div>
           </div>
         </div>
         

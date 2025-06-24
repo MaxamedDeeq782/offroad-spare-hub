@@ -13,6 +13,7 @@ export const useUrlParams = () => {
     const queryParams = new URLSearchParams(location.search);
     const vehicleParam = queryParams.get('vehicle');
     const partIdParam = queryParams.get('partId');
+    const searchParam = queryParams.get('search');
     
     if (vehicleParam) {
       setSelectedVehicle(vehicleParam);
@@ -21,6 +22,11 @@ export const useUrlParams = () => {
     if (partIdParam) {
       setSelectedPartId(partIdParam);
       setSearchTerm(partIdParam);
+    } else if (searchParam) {
+      setSearchTerm(searchParam);
+      // Clear vehicle selection when searching globally
+      setSelectedVehicle('');
+      setSelectedPartId('');
     }
   }, [location.search]);
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../integrations/supabase/client';
@@ -95,7 +96,27 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onProductAdded }) => 
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `products/${fileName}`;
 
-      console.log('Uploading image to:', filePath);
+      console.log('Uploading image to bucket: product Images');
+      console.log('File path:', filePath);
+
+      // First, let's check if the bucket exists
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        console.error('Error listing buckets:', bucketsError);
+        toast.error('Failed to access storage');
+        return;
+      }
+
+      console.log('Available buckets:', buckets?.map(b => b.name));
+      
+      const bucketExists = buckets?.some(bucket => bucket.name === 'product Images');
+      
+      if (!bucketExists) {
+        console.error('Bucket "product Images" not found');
+        toast.error('Storage bucket not found. Please contact administrator.');
+        return;
+      }
 
       // Upload file to Supabase Storage
       const { data, error } = await supabase.storage

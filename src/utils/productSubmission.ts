@@ -1,9 +1,9 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface ProductSubmissionData {
   productName: string;
-  description: string;
   price: string;
   selectedBrand: string;
   imageUrl?: string | null;
@@ -13,7 +13,6 @@ export const submitProduct = async (data: ProductSubmissionData) => {
   console.log('=== PRODUCT SUBMISSION STARTED ===');
   console.log('Form data received:', { 
     productName: data.productName, 
-    description: data.description,
     price: data.price, 
     selectedBrand: data.selectedBrand,
     imageUrl: data.imageUrl 
@@ -24,12 +23,6 @@ export const submitProduct = async (data: ProductSubmissionData) => {
     console.error('❌ Validation failed: Product name is empty');
     toast.error('Please enter a product name');
     throw new Error('Product name is required');
-  }
-
-  if (!data.description?.trim()) {
-    console.error('❌ Validation failed: Description is empty');
-    toast.error('Please enter a product description');
-    throw new Error('Description is required');
   }
 
   if (!data.price?.trim()) {
@@ -98,10 +91,9 @@ export const submitProduct = async (data: ProductSubmissionData) => {
 
   console.log('✅ Brand verified:', brandData);
 
-  // Create the product data - Note: products table doesn't have description column
-  // We're only storing name, price, brand_id, and image_url based on the database schema
+  // Create the product data - just using the product name directly
   const productData = {
-    name: `${data.productName.trim()} - ${data.description.trim()}`, // Combine name and description
+    name: data.productName.trim(),
     price: priceNum,
     brand_id: brandId,
     image_url: data.imageUrl

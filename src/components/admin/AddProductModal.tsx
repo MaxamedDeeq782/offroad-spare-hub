@@ -14,7 +14,6 @@ import {
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
 import {
   Select,
   SelectContent,
@@ -41,7 +40,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onProductAdded }) => 
   
   // Form state
   const [productName, setProductName] = useState('');
-  const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -153,7 +151,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onProductAdded }) => 
 
   const resetForm = () => {
     setProductName('');
-    setDescription('');
     setPrice('');
     setSelectedBrand('');
     setImageFile(null);
@@ -174,18 +171,12 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onProductAdded }) => 
       return;
     }
 
-    if (!description.trim()) {
-      toast.error('Please enter a product description');
-      return;
-    }
-
     console.log('Form submission started');
     setLoading(true);
 
     try {
       await submitProduct({
         productName,
-        description,
         price,
         selectedBrand,
         imageUrl
@@ -232,19 +223,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onProductAdded }) => 
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
               placeholder="Enter product name"
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <Label htmlFor="description">Description *</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter product description"
-              rows={3}
               required
             />
           </div>

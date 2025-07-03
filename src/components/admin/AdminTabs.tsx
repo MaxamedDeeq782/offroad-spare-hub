@@ -3,12 +3,11 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import AdminOrders from './AdminOrders';
 import AdminUsers from './AdminUsers';
-import AdminProducts from './AdminProducts';
 import AddProductModal from './AddProductModal';
 
 interface AdminTabsProps {
-  activeTab: 'orders' | 'users' | 'products';
-  onTabChange: (tab: 'orders' | 'users' | 'products') => void;
+  activeTab: 'orders' | 'users';
+  onTabChange: (tab: 'orders' | 'users') => void;
   showProducts?: boolean;
 }
 
@@ -20,7 +19,7 @@ const AdminTabs: React.FC<AdminTabsProps> = ({
   const [refreshKey, setRefreshKey] = React.useState(0);
 
   const handleProductAdded = () => {
-    // Trigger a refresh of the products list
+    // Trigger a refresh if needed in the future
     setRefreshKey(prev => prev + 1);
   };
 
@@ -29,16 +28,15 @@ const AdminTabs: React.FC<AdminTabsProps> = ({
       {/* Header with Add Product Button */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Admin Panel</h2>
-        {showProducts && activeTab === 'products' && (
+        {showProducts && (
           <AddProductModal onProductAdded={handleProductAdded} />
         )}
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as 'orders' | 'users' | 'products')}>
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as 'orders' | 'users')}>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
-          {showProducts && <TabsTrigger value="products">Products</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="orders" className="space-y-4">
@@ -48,12 +46,6 @@ const AdminTabs: React.FC<AdminTabsProps> = ({
         <TabsContent value="users" className="space-y-4">
           <AdminUsers />
         </TabsContent>
-
-        {showProducts && (
-          <TabsContent value="products" className="space-y-4">
-            <AdminProducts key={refreshKey} />
-          </TabsContent>
-        )}
       </Tabs>
     </div>
   );

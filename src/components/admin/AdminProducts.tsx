@@ -45,7 +45,7 @@ const AdminProducts: React.FC = () => {
             name
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('name');
       
       if (error) {
         console.error('Error fetching products:', error);

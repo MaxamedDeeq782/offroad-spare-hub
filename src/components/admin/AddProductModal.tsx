@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../integrations/supabase/client';
@@ -165,6 +164,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onProductAdded }) => 
     try {
       await submitProduct({
         productName,
+        description,
         price,
         selectedBrand,
         imageUrl

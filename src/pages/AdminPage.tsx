@@ -8,7 +8,7 @@ import { useState } from 'react';
 
 const AdminPage: React.FC = () => {
   const { hasAccess, isLoading, user } = useAdminAccess();
-  const [activeTab, setActiveTab] = useState<'orders' | 'users'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products'>('orders');
 
   if (isLoading) {
     return (
@@ -31,7 +31,7 @@ const AdminPage: React.FC = () => {
       <AdminTabs 
         activeTab={activeTab} 
         onTabChange={setActiveTab}
-        showProducts={false}
+        showProducts={true}
       />
     </div>
   );

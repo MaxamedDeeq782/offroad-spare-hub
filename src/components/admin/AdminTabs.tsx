@@ -1,38 +1,60 @@
 
 import React from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import AdminOrders from './AdminOrders';
 import AdminUsers from './AdminUsers';
 import AdminProducts from './AdminProducts';
+import AddProductModal from './AddProductModal';
 
 interface AdminTabsProps {
-  activeTab: 'orders' | 'users';
-  onTabChange: (tab: 'orders' | 'users') => void;
+  activeTab: 'orders' | 'users' | 'products';
+  onTabChange: (tab: 'orders' | 'users' | 'products') => void;
   showProducts?: boolean;
 }
 
-const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange, showProducts }) => {
+const AdminTabs: React.FC<AdminTabsProps> = ({ 
+  activeTab, 
+  onTabChange, 
+  showProducts = true 
+}) => {
+  const [refreshKey, setRefreshKey] = React.useState(0);
+
+  const handleProductAdded = () => {
+    // Trigger a refresh of the products list
+    setRefreshKey(prev => prev + 1);
+  };
+
   return (
-    <div>
-      <div className="mb-8 border-b">
-        <nav className="flex space-x-8">
-          <button 
-            className={`pb-4 px-1 ${activeTab === 'orders' ? 'border-b-2 border-primary font-medium text-primary' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
-            onClick={() => onTabChange('orders')}
-          >
-            Orders
-          </button>
-          <button 
-            className={`pb-4 px-1 ${activeTab === 'users' ? 'border-b-2 border-primary font-medium text-primary' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
-            onClick={() => onTabChange('users')}
-          >
-            Users
-          </button>
-        </nav>
+    <div className="space-y-6">
+      {/* Header with Add Product Button */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold">Admin Panel</h2>
+        {showProducts && activeTab === 'products' && (
+          <AddProductModal onProductAdded={handleProductAdded} />
+        )}
       </div>
-      
-      {activeTab === 'orders' && <AdminOrders />}
-      {showProducts && <AdminProducts />}
-      {activeTab === 'users' && <AdminUsers />}
+
+      <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as 'orders' | 'users' | 'products')}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          {showProducts && <TabsTrigger value="products">Products</TabsTrigger>}
+        </TabsList>
+
+        <TabsContent value="orders" className="space-y-4">
+          <AdminOrders />
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-4">
+          <AdminUsers />
+        </TabsContent>
+
+        {showProducts && (
+          <TabsContent value="products" className="space-y-4">
+            <AdminProducts key={refreshKey} />
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 };

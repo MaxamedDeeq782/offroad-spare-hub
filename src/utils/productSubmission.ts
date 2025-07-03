@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 
 interface ProductSubmissionData {
   productName: string;
+  description?: string;
   price: string;
   selectedBrand: string;
   imageUrl?: string | null;
@@ -13,6 +14,7 @@ export const submitProduct = async (data: ProductSubmissionData) => {
   console.log('=== PRODUCT SUBMISSION STARTED ===');
   console.log('Form data received:', { 
     productName: data.productName, 
+    description: data.description,
     price: data.price, 
     selectedBrand: data.selectedBrand,
     imageUrl: data.imageUrl 

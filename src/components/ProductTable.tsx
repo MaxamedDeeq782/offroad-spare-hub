@@ -60,29 +60,49 @@ const ProductTable: React.FC<ProductTableProps> = ({
     addToCart(mockModelProduct, 1);
   };
 
-  // Memoized function to get the appropriate image URL for a product
+  // Improved function to get the appropriate image URL for a product
   const getProductImage = useMemo(() => {
     return (product: DbProduct): string => {
-      if (product.image_url) {
+      console.log(`Getting image for product ${product.id}: ${product.name}, image_url: ${product.image_url}`);
+      
+      // If product has a valid image URL and it's not placeholder, use it
+      if (product.image_url && product.image_url !== "/placeholder.svg" && product.image_url !== "null") {
         return product.image_url;
       }
       
-      if (product.name.includes("Tie Rod End Kit for Toyota Land Cruiser")) {
+      // Enhanced product name matching with more flexible patterns
+      const productName = product.name.toLowerCase();
+      
+      if (productName.includes("tie rod") && productName.includes("land cruiser")) {
         return "/lovable-uploads/24d8adc5-ed35-48c1-8cc9-e09314fa4597.png";
       }
       
-      if (product.name.includes("Toyota Hilux Gearbox 5-Speed Manual")) {
+      if (productName.includes("gearbox") && productName.includes("hilux")) {
         return "/lovable-uploads/8141ace2-fd8d-4f8e-bace-f155332b298f.png";
       }
       
-      if (product.name.includes("Fit Nissan Patrol Y62 & Armada 5.6L")) {
+      if (productName.includes("radiator") && (productName.includes("nissan patrol") || productName.includes("armada"))) {
         return "/lovable-uploads/00d7891c-ee78-4e3a-a14c-e516197e30dd.png";
       }
       
-      if (product.name.includes("Exhaust Pipe Kit") && product.name.includes("MITSUBISHI L200")) {
+      if (productName.includes("exhaust") && productName.includes("l200")) {
         return "/lovable-uploads/6bd92b92-92f2-45e4-99fa-75c2ee81ee77.png";
       }
       
+      // Default fallback based on vehicle type or product category
+      if (productName.includes("toyota")) {
+        return "/lovable-uploads/24d8adc5-ed35-48c1-8cc9-e09314fa4597.png";
+      }
+      
+      if (productName.includes("nissan")) {
+        return "/lovable-uploads/00d7891c-ee78-4e3a-a14c-e516197e30dd.png";
+      }
+      
+      if (productName.includes("mitsubishi") || productName.includes("l200")) {
+        return "/lovable-uploads/6bd92b92-92f2-45e4-99fa-75c2ee81ee77.png";
+      }
+      
+      // Final fallback
       return "/placeholder.svg";
     };
   }, []);
@@ -123,6 +143,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
             const imageUrl = getProductImage(product);
             
             console.log(`Rendering product ${product.id}:`, product.name);
+            console.log(`Using image URL:`, imageUrl);
             
             return (
               <TableRow key={product.id}>

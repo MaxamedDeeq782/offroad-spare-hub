@@ -16,17 +16,27 @@ export const useProductFilters = () => {
     setSearchTerm
   } = useUrlParams();
 
+  console.log('=== PRODUCT FILTERS DEBUG ===');
+  console.log('Raw dbProducts from useSupabaseData:', dbProducts);
+  console.log('Raw brands from useSupabaseData:', brands);
+  console.log('Loading state:', loading);
+
   // Pre-process products with cached vehicle types
   const processedProducts = useMemo(() => {
-    return processProductsWithVehicleTypes(dbProducts, brands);
+    console.log('Processing products with vehicle types...');
+    const processed = processProductsWithVehicleTypes(dbProducts, brands);
+    console.log('Processed products:', processed);
+    return processed;
   }, [dbProducts, brands]);
 
   // Set default vehicle selection when products are loaded (only if no search term)
   useEffect(() => {
     if (!loading && processedProducts.length > 0 && !selectedVehicle && !searchTerm) {
       const availableVehicles = getAvailableVehicles(processedProducts);
+      console.log('Available vehicles:', availableVehicles);
       
       if (availableVehicles.length > 0) {
+        console.log('Setting default vehicle to:', availableVehicles[0]);
         setSelectedVehicle(availableVehicles[0]);
       }
     }
@@ -34,7 +44,15 @@ export const useProductFilters = () => {
 
   // Optimized filtered products
   const filteredDbProducts = useMemo(() => {
-    return filterProducts(processedProducts, selectedVehicle, selectedPartId, searchTerm);
+    console.log('Filtering products...');
+    console.log('Selected vehicle:', selectedVehicle);
+    console.log('Selected part ID:', selectedPartId);
+    console.log('Search term:', searchTerm);
+    
+    const filtered = filterProducts(processedProducts, selectedVehicle, selectedPartId, searchTerm);
+    console.log('Filtered products result:', filtered);
+    console.log('Number of filtered products:', filtered.length);
+    return filtered;
   }, [processedProducts, selectedVehicle, selectedPartId, searchTerm]);
 
   // Memoized function to get available brands

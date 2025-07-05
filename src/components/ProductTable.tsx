@@ -39,6 +39,12 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const { addToCart } = useCart();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
+  console.log('=== PRODUCT TABLE DEBUG ===');
+  console.log('Products received in ProductTable:', products);
+  console.log('Number of products:', products.length);
+  console.log('Loading state:', loading);
+  console.log('Selected vehicle:', selectedVehicle);
+  
   const handleAddToCart = (product: DbProduct) => {
     const mockModelProduct = {
       id: product.id.toString(),
@@ -82,16 +88,23 @@ const ProductTable: React.FC<ProductTableProps> = ({
   }, []);
 
   if (loading) {
+    console.log('ProductTable: Showing loading skeleton');
     return <ProductTableSkeleton />;
   }
 
   if (products.length === 0) {
+    console.log('ProductTable: No products to display');
     return (
       <div className="text-center py-8">
         <p>No products found for {selectedVehicle || "selected filters"}</p>
+        <p className="text-sm text-gray-500 mt-2">
+          Debug: Check console for data fetching details
+        </p>
       </div>
     );
   }
+
+  console.log('ProductTable: Rendering', products.length, 'products');
 
   return (
     <>
@@ -108,6 +121,8 @@ const ProductTable: React.FC<ProductTableProps> = ({
           {products.map((product) => {
             const vehicleType = getVehicleFromProductName(product.name);
             const imageUrl = getProductImage(product);
+            
+            console.log(`Rendering product ${product.id}:`, product.name);
             
             return (
               <TableRow key={product.id}>

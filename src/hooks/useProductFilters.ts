@@ -89,10 +89,12 @@ export const useProductFilters = () => {
     }
   };
 
-  // Simple vehicle compatibility function for compatibility
+  // Enhanced vehicle compatibility function
   const getVehicleFromProductName = (product: DbProduct): string => {
     const processedProduct = processedProducts.find(p => p.id === product.id);
-    return processedProduct?.vehicleType || '';
+    const vehicleType = processedProduct?.vehicleType || '';
+    console.log(`Getting vehicle for product ${product.id}: ${vehicleType}`);
+    return vehicleType;
   };
 
   return {

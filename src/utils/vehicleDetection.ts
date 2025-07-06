@@ -1,51 +1,107 @@
 
-export const getVehicleFromProductName = (productName: string): string => {
-  const vehicleKeywords = {
-    'Toyota Hilux': ['hilux', 'toyota hilux'],
-    'Toyota Land Cruiser': ['land cruiser', 'toyota land cruiser', 'fj80', 'fzj80'],
-    'Nissan Patrol': ['patrol', 'nissan patrol', 'y62', 'armada'],
-    'Mitsubishi L200': ['l200', 'mitsubishi l200']
-  };
+import { Brand } from './productProcessing';
 
-  const lowercaseName = productName.toLowerCase();
+// Vehicle brand mapping - maps brand IDs to vehicle types
+const BRAND_TO_VEHICLE_MAP: Record<number, string> = {
+  1: "Toyota Hilux",
+  2: "Toyota Land Cruiser", 
+  3: "Nissan Patrol",
+  4: "Mitsubishi L200"
+};
+
+// Enhanced function to get vehicle from product name
+export const getVehicleFromProductName = (productName: string): string => {
+  const nameLower = productName.toLowerCase();
   
-  for (const [vehicle, keywords] of Object.entries(vehicleKeywords)) {
-    if (keywords.some(keyword => lowercaseName.includes(keyword.toLowerCase()))) {
-      return vehicle;
-    }
+  // Direct name matching for existing products
+  if (nameLower.includes("toyota hilux") || nameLower.includes("hilux")) {
+    return "Toyota Hilux";
   }
   
-  return '';
+  if (nameLower.includes("land cruiser") || nameLower.includes("landcruiser")) {
+    return "Toyota Land Cruiser";
+  }
+  
+  if (nameLower.includes("nissan patrol") || nameLower.includes("patrol")) {
+    return "Nissan Patrol";
+  }
+  
+  if (nameLower.includes("mitsubishi l200") || nameLower.includes("l200")) {
+    return "Mitsubishi L200";
+  }
+  
+  // Fallback for brand mentions
+  if (nameLower.includes("toyota")) {
+    return "Toyota Hilux"; // Default Toyota to Hilux
+  }
+  
+  if (nameLower.includes("nissan")) {
+    return "Nissan Patrol";
+  }
+  
+  if (nameLower.includes("mitsubishi")) {
+    return "Mitsubishi L200";
+  }
+  
+  return "";
 };
 
-export const getVehicleFromBrand = (brandId: number | null, brands: Array<{id: number; name: string}>): string => {
-  if (!brandId) return '';
+// Enhanced function to get vehicle from brand ID
+export const getVehicleFromBrand = (brandId: number | null, brands: Brand[]): string => {
+  if (!brandId) return "";
   
+  // First check our predefined mapping
+  if (BRAND_TO_VEHICLE_MAP[brandId]) {
+    return BRAND_TO_VEHICLE_MAP[brandId];
+  }
+  
+  // Fallback to brand name matching
   const brand = brands.find(b => b.id === brandId);
-  if (!brand) return '';
+  if (!brand) return "";
   
-  const brandVehicleMapping: Record<string, string> = {
-    'Toyota': 'Toyota Hilux',
-    'Nissan': 'Nissan Patrol',
-    'Mitsubishi': 'Mitsubishi L200'
-  };
+  const brandNameLower = brand.name.toLowerCase();
   
-  const brandName = brand.name.toLowerCase();
-  if (brandName.includes('hilux')) return 'Toyota Hilux';
-  if (brandName.includes('land cruiser')) return 'Toyota Land Cruiser';
-  if (brandName.includes('patrol')) return 'Nissan Patrol';
-  if (brandName.includes('l200')) return 'Mitsubishi L200';
+  if (brandNameLower.includes("toyota hilux") || brandNameLower.includes("hilux")) {
+    return "Toyota Hilux";
+  }
   
-  return brandVehicleMapping[brand.name] || '';
+  if (brandNameLower.includes("land cruiser") || brandNameLower.includes("landcruiser")) {
+    return "Toyota Land Cruiser";
+  }
+  
+  if (brandNameLower.includes("nissan patrol") || brandNameLower.includes("patrol")) {
+    return "Nissan Patrol";
+  }
+  
+  if (brandNameLower.includes("mitsubishi l200") || brandNameLower.includes("l200")) {
+    return "Mitsubishi L200";
+  }
+  
+  // Generic brand matching
+  if (brandNameLower.includes("toyota")) {
+    return "Toyota Hilux"; // Default Toyota to Hilux
+  }
+  
+  if (brandNameLower.includes("nissan")) {
+    return "Nissan Patrol";
+  }
+  
+  if (brandNameLower.includes("mitsubishi")) {
+    return "Mitsubishi L200";
+  }
+  
+  return "";
 };
 
+// Function to get specific part suggestions for a vehicle
 export const getSpecificPartForVehicle = (vehicle: string): string => {
-  const partMap: Record<string, string> = {
-    'Toyota Hilux': 'Toyota Hilux Gearbox 5-Speed Manual',
-    'Toyota Land Cruiser': 'Tie Rod End Kit for Toyota Land Cruiser FJ80 FzJ80 91-97 Lexus LX450',
-    'Nissan Patrol': 'Fit Nissan Patrol Y62 & Armada 5.6L 8 Cyl AT 2010 - 2023 aluminum radiator',
-    'Mitsubishi L200': 'Exhaust Pipe Kit Full System for MITSUBISHI L200 2.5L Diesel'
+  const suggestions: Record<string, string[]> = {
+    "Toyota Hilux": ["Air Filter", "Oil Filter", "Brake Pads", "Shock Absorber"],
+    "Toyota Land Cruiser": ["Tie Rod End Kit", "Timing Belt", "Radiator"],
+    "Nissan Patrol": ["Radiator", "Brake Pads", "Air Filter"],
+    "Mitsubishi L200": ["Exhaust Pipe Kit", "Oil Filter", "Drive Belt"]
   };
   
-  return partMap[vehicle] || '';
+  const parts = suggestions[vehicle];
+  return parts ? parts[0] : "";
 };

@@ -61,6 +61,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onProductAdded }) => 
         console.error('Error fetching brands:', error);
         toast.error('Failed to load brands');
       } else {
+        console.log('Fetched brands for product modal:', data);
         setBrands(data || []);
       }
     } catch (error) {
@@ -171,27 +172,29 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onProductAdded }) => 
       return;
     }
 
-    console.log('Form submission started');
+    console.log('Form submission started with brand ID:', selectedBrand);
     setLoading(true);
 
     try {
-      await submitProduct({
+      const result = await submitProduct({
         productName,
         price,
         selectedBrand,
         imageUrl
       });
 
+      console.log('Product added successfully:', result);
+
       // Success - reset form and close modal
       resetForm();
       setOpen(false);
       
-      // Notify parent component to refresh data
+      // Notify parent component to refresh data - this is crucial!
       if (onProductAdded) {
+        console.log('Calling onProductAdded callback to refresh admin data');
         onProductAdded();
       }
 
-      console.log('Product added successfully!');
     } catch (error) {
       console.error('Failed to add product:', error);
       // Error handling is done in submitProduct function

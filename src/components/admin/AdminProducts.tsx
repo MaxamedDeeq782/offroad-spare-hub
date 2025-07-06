@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../integrations/supabase/client';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table';
+import AddProductModal from './AddProductModal';
+import { processProductsWithVehicleTypes } from '../../utils/productProcessing';
 
 interface Brand {
   id: number;
@@ -18,6 +20,7 @@ interface Product {
   brands?: {
     name: string;
   };
+  vehicleType?: string;
 }
 
 const AdminProducts: React.FC = () => {
@@ -27,59 +30,69 @@ const AdminProducts: React.FC = () => {
 
   // Fetch products and brands on component mount
   useEffect(() => {
-    fetchProducts();
-    fetchBrands();
+    fetchProductsAndBrands();
   }, []);
 
-  // Fetch all products from the database with brand information
-  const fetchProducts = async () => {
+  const fetchProductsAndBrands = async () => {
     try {
       setLoading(true);
-      console.log('=== FETCHING PRODUCTS FOR ADMIN ===');
+      console.log('=== FETCHING PRODUCTS AND BRANDS FOR ADMIN ===');
       
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          brands (
-            name
-          )
-        `)
-        .order('name');
+      // Fetch both in parallel
+      const [productsResponse, brandsResponse] = await Promise.all([
+        supabase
+          .from('products')
+          .select(`
+            *,
+            brands (
+              name
+            )
+          `)
+          .order('name'),
+        supabase
+          .from('brands')
+          .select('*')
+          .order('name')
+      ]);
       
-      if (error) {
-        console.error('Error fetching products:', error);
+      if (productsResponse.error) {
+        console.error('Error fetching products:', productsResponse.error);
         toast.error('Failed to load products');
+      } else if (brandsResponse.error) {
+        console.error('Error fetching brands:', brandsResponse.error);
+        toast.error('Failed to load brands');
       } else {
-        console.log('Fetched products with brands:', data);
-        setProducts(data || []);
+        console.log('Fetched products:', productsResponse.data);
+        console.log('Fetched brands:', brandsResponse.data);
+        
+        const brandsData = brandsResponse.data || [];
+        const productsData = productsResponse.data || [];
+        
+        // Process products with vehicle types
+        const processedProducts = processProductsWithVehicleTypes(productsData, brandsData);
+        
+        setBrands(brandsData);
+        setProducts(processedProducts);
       }
     } catch (error) {
-      console.error('Unexpected error fetching products:', error);
+      console.error('Unexpected error fetching data:', error);
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
-  
-  // Fetch all brands from the database
-  const fetchBrands = async () => {
-    try {
-      const { data, error } = await supabase.from('brands').select('*');
-      if (error) {
-        console.error('Error fetching brands:', error);
-      } else {
-        setBrands(data || []);
-      }
-    } catch (error) {
-      console.error('Unexpected error fetching brands:', error);
-    }
+
+  // Callback function to refresh data when a new product is added
+  const handleProductAdded = () => {
+    console.log('Product added - refreshing admin products list');
+    fetchProductsAndBrands();
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Manage Products</h2>
+        <AddProductModal onProductAdded={handleProductAdded} />
       </div>
       
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -100,14 +113,6 @@ const AdminProducts: React.FC = () => {
             <TableBody>
               {products.map((product) => {
                 const brandName = product.brands?.name || brands.find(b => b.id === product.brand_id)?.name || 'No brand';
-                
-                // Determine the vehicle type
-                let vehicleType = "";
-                const productName = product.name.toLowerCase();
-                if (productName.includes('toyota hilux')) vehicleType = "Toyota Hilux";
-                else if (productName.includes('land cruiser')) vehicleType = "Toyota Land Cruiser";
-                else if (productName.includes('nissan patrol')) vehicleType = "Nissan Patrol";
-                else if (productName.includes('mitsubishi l200')) vehicleType = "Mitsubishi L200";
                 
                 return (
                   <TableRow key={product.id}>
@@ -132,7 +137,15 @@ const AdminProducts: React.FC = () => {
                         {product.brand_id || 'NULL'}
                       </span>
                     </TableCell>
-                    <TableCell>{vehicleType || 'Unknown'}</TableCell>
+                    <TableCell>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        product.vehicleType 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {product.vehicleType || 'Unknown'}
+                      </span>
+                    </TableCell>
                   </TableRow>
                 );
               })}
